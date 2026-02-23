@@ -25,14 +25,12 @@ type Payload struct {
 	Table string `json:"table"`
 }
 
-const webPagePath string = "../../client/build/index.html"
-
 func main() {
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile(webPagePath, true)))
+	router.Use(static.Serve("/", static.LocalFile("./frontend/build", true)))
 
 	router.GET("/ws", func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
