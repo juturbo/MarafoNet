@@ -25,12 +25,14 @@ type Payload struct {
 	Table string `json:"table"`
 }
 
+const rootPath string = "/"
+
 func main() {
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile("./frontend/build", true)))
+	router.Use(static.Serve(rootPath, static.LocalFile("./frontend/build", true)))
 
 	router.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
