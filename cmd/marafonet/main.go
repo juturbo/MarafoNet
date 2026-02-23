@@ -30,7 +30,16 @@ func main() {
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile("./frontend", true)))
+	router.Use(static.Serve("/", static.LocalFile("./frontend/build", true)))
+
+	router.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if path == "/ws" {
+			c.String(404, "Not Found")
+		} else {
+			c.File("./frontend/build/index.html")
+		}
+	})
 
 	router.GET("/ws", func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
