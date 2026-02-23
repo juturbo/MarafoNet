@@ -9,7 +9,7 @@ import (
 
 func TestInitializeGame(t *testing.T) {
 	expectedPlayers := []model.Player{
-		{Name: "Player 1", TeamId: 2},
+		{Name: "Player 1", TeamId: 0},
 		{Name: "Player 2", TeamId: 1},
 		{Name: "Player 3", TeamId: 0},
 		{Name: "Player 4", TeamId: 1},
