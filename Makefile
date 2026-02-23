@@ -10,7 +10,3 @@ run:
 
 dockerize:
 	docker build -f deployment/Dockerfile -t marafonet:latest .
-
-
-clean:
-	cd cmd/marafonet && rm -f marafonet
