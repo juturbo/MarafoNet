@@ -26,24 +26,28 @@ type Payload struct {
 }
 
 const rootPath string = "/"
+const indexPath string = "./frontend/index.html"
+const localFilePath string = "./frontend"
+
+const webSocketPath = "/ws"
 
 func main() {
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve(rootPath, static.LocalFile("./frontend", true)))
+	router.Use(static.Serve(rootPath, static.LocalFile(localFilePath, true)))
 
 	router.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
-		if path == "/ws" {
+		if path == webSocketPath {
 			c.String(404, "Not Found")
 		} else {
-			c.File("./frontend/build/index.html")
+			c.File(indexPath)
 		}
 	})
 
-	router.GET("/ws", func(c *gin.Context) {
+	router.GET(webSocketPath, func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.String(400, "websocket upgrade failed")
