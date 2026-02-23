@@ -32,7 +32,7 @@ func main() {
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve(rootPath, static.LocalFile("./frontend/build", true)))
+	router.Use(static.Serve(rootPath, static.LocalFile("./frontend", true)))
 
 	router.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
