@@ -71,3 +71,18 @@ func (card1 Card) Equal(card2 Card) bool {
 	isValid = false
 	return isValid
 }
+
+func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
+	var card1IsTrump = card1.Suit == trumpSuit
+	var card2IsTrump = card2.Suit == trumpSuit
+	if card1IsTrump && !card2IsTrump {
+		return true
+	}
+	if !card1IsTrump && card2IsTrump {
+		return false
+	}
+	if card1.Suit == card2.Suit {
+		return card1.Rank > card2.Rank
+	}
+	return false
+}
