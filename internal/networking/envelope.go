@@ -1,28 +1,37 @@
-package envelope
+package networking
 
 import "encoding/json"
 
-// MessageType is the type of message being sent by the client.
+// A type of message sent from the client.
+type MessageType string
+
 const (
+	// A message sent by the client when they first connect to the server.
 	FirstJoinType MessageType = "first_join"
-	PlayCardType  MessageType = "play_card"
+	// A message send by the client to play a card.
+	PlayCardType MessageType = "play_card"
 )
 
 type Envelope interface {
-	getMessageType() (MessageType, error)
-	getPayload() (json.RawMessage, error)
+	getMessageType() MessageType
+	getPayload() json.RawMessage
+	EqualsType(otherType MessageType) bool
 }
 
-// A WebSocket message from the client. 
+// A WebSocket message from the client.
 type WSEnvelope struct {
-    MessageType    	string          `json:"type"`
-    Payload 		json.RawMessage `json:"payload"`
+	MessageType string          `json:"type"`
+	Payload     json.RawMessage `json:"payload"`
 }
 
-func (e *WSEnvelope) getMessageType() (MessageType, error) {
-	return MessageType(e.MessageType), nil
+func (e *WSEnvelope) getMessageType() MessageType {
+	return MessageType(e.MessageType)
 }
 
-func (e *WSEnvelope) getPayload() (json.RawMessage, error) {
-	return e.Payload, nil
+func (e *WSEnvelope) getPayload() json.RawMessage {
+	return e.Payload
+}
+
+func (e *WSEnvelope) equalsType(otherType MessageType) bool {
+	return e.getMessageType() == otherType
 }
