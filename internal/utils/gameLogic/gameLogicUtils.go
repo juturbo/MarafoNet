@@ -32,22 +32,27 @@ func StartMatch(match model.Match) model.Match {
 }
 
 func SetTrumpSuit(match model.Match, playerName string, suit string) model.Match {
-	var trumpSuitAlreadyChosen = match.TrumpSuit != ""
-	if trumpSuitAlreadyChosen {
+	if isTrumpSuitChosen(match) {
 		//TODO: handle this case properly, maybe return an error instead of panicking
 		panic(errors.New("trump suit has already been chosen"))
 	}
-	var isFirstPlayer = match.FirstPlayer == playerName
-	if isFirstPlayer {
+	if isFirstPlayerTurn(match, playerName) {
 		match.TrumpSuit = suit
 	}
 	return match
 }
 
+func isTrumpSuitChosen(match model.Match) bool {
+	return match.TrumpSuit != ""
+}
+
+func isFirstPlayerTurn(match model.Match, playerName string) bool {
+	return match.FirstPlayer == playerName
+}
+
 func isTheCardPlayable(match model.Match, playerName string, card model.Card) bool {
 	var isValid = false
-	var isTrumpSuitChosen = match.TrumpSuit != ""
-	if !isTrumpSuitChosen {
+	if !isTrumpSuitChosen(match) {
 		isValid = false
 		return isValid
 	}
@@ -59,54 +64,113 @@ func isTheCardPlayable(match model.Match, playerName string, card model.Card) bo
 		isValid = false
 		return isValid
 	}
+	if !isFirstPlayerTurn(match, playerName) {
+		if !isCardOfLeadingSuit(match, playerName, card) {
+			isValid = false
+			return isValid
+		}
+	}
 	isValid = true
 	return isValid
 }
 
 func isPlayerTurnValid(match model.Match, playerName string) bool {
-	var isValid = false
-	var tableIsFull = len(match.Table) >= len(match.Players)
-	if tableIsFull {
-		isValid = false
-		return isValid
+	if isTableFull(match) {
+		return false
 	}
-	var isFirstTurn = len(match.Table) == 0
-	if isFirstTurn {
-		isValid = match.FirstPlayer == playerName
-		return isValid
-	}
-	var currentPlayer = lastPlayerToPlay(match)
-	isValid = currentPlayer == playerName
-	return isValid
+	return getCurrentPlayer(match) == playerName
 }
 
-func playerHasCardInHand(players []model.Player, playerName string, card model.Card) bool {
+func playerHasCardInHand(players []model.Player, playerName string, playedCard model.Card) bool {
+	var hasCardInHand = false
+	var cardInHandPredicate = func(cardInHand model.Card) bool {
+		return cardInHand.Equal(playedCard)
+	}
+	hasCardInHand = playerSatisfies(players, playerName, cardInHandPredicate)
+	return hasCardInHand
+}
+
+/*
+A card is of the leading suit if it has the same suit as the first card played in the trick.
+If a player has a card of the leading suit, they must play it.
+If they don't have a card of the leading suit, they can play any card.
+*/
+func isCardOfLeadingSuit(match model.Match, playerName string, card model.Card) bool {
+	var isValid = false
+	if !isTableEmpty(match) {
+		var leadingSuit = match.Table[0].Card.Suit
+		var cardSuitIsLeadingSuit = card.Suit == leadingSuit
+		if !cardSuitIsLeadingSuit {
+			if playerHasCardOfLeadingSuit(match.Players, playerName, leadingSuit) {
+				isValid = false
+				return isValid
+			}
+		}
+	}
+	isValid = true
+	return isValid
+	/*
+		if isTableEmpty(match) { // if the table is empty, any card can be played, so we consider it valid
+			isValid = true
+			return isValid
+		}
+		var leadingSuit = match.Table[0].Card.Suit
+		var cardSuitIsLeadingSuit = card.Suit == leadingSuit
+		if cardSuitIsLeadingSuit {
+			isValid = true
+			return isValid
+		}
+		if !playerHasCardOfLeadingSuit(match.Players, playerName, leadingSuit) {
+			isValid = true
+			return isValid
+		}
+		isValid = false
+		return isValid
+	*/
+}
+
+func playerHasCardOfLeadingSuit(players []model.Player, playerName string, leadingSuit model.Suit) bool {
+	var hasCardOfLeadingSuit = false
+	var leadingSuitPredicate = func(card model.Card) bool {
+		return card.Suit == leadingSuit
+	}
+	hasCardOfLeadingSuit = playerSatisfies(players, playerName, leadingSuitPredicate)
+	return hasCardOfLeadingSuit
+}
+
+func playerSatisfies(players []model.Player, playerName string, predicate func(model.Card) bool) bool {
 	var isValid = false
 	for _, player := range players {
-		var playerNameMatches = player.Name == playerName
-		if playerNameMatches {
+		if player.Name == playerName {
 			for _, cardInHand := range player.Hand {
-				var cardMatchesRank = cardInHand.Rank == card.Rank
-				var cardMatchesSuit = cardInHand.Suit == card.Suit
-				if cardMatchesRank && cardMatchesSuit {
+				if predicate(cardInHand) {
 					isValid = true
 					return isValid
 				}
 			}
+			isValid = false
+			return isValid
 		}
 	}
 	isValid = false
 	return isValid
 }
 
-func lastPlayerToPlay(match model.Match) string {
-	var tableIsEmpty = len(match.Table) == 0
-	if tableIsEmpty {
-		panic(errors.New("no cards have been played yet"))
+func getCurrentPlayer(match model.Match) string {
+	if isTableEmpty(match) {
+		return match.FirstPlayer
 	}
 	indexOfLastPlayer := len(match.Table) - 1
 	var lastPlayerName = match.Table[indexOfLastPlayer].PlayerName
 	return lastPlayerName
+}
+
+func isTableFull(match model.Match) bool {
+	return len(match.Table) >= len(match.Players)
+}
+
+func isTableEmpty(match model.Match) bool {
+	return len(match.Table) == 0
 }
 
 func initializePlayers(players []model.Player) []model.Player {
