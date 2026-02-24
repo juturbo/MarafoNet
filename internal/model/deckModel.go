@@ -59,3 +59,15 @@ func (hand Hand) String() string {
 	}
 	return strings.Join(strs, ", ")
 }
+
+func (card1 Card) Equal(card2 Card) bool {
+	var isValid = false
+	var cardMatchesRank = card1.Rank == card2.Rank
+	var cardMatchesSuit = card1.Suit == card2.Suit
+	if cardMatchesRank && cardMatchesSuit {
+		isValid = true
+		return isValid
+	}
+	isValid = false
+	return isValid
+}
