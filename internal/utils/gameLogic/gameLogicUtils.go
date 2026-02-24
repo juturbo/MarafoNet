@@ -31,7 +31,7 @@ func StartMatch(match model.Match) model.Match {
 	return match
 }
 
-func SetTrumpSuit(match model.Match, playerName string, suit string) model.Match {
+func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) model.Match {
 	if isTrumpSuitChosen(match) {
 		//TODO: handle this case properly, maybe return an error instead of panicking
 		panic(errors.New("trump suit has already been chosen"))
@@ -42,8 +42,37 @@ func SetTrumpSuit(match model.Match, playerName string, suit string) model.Match
 	return match
 }
 
+func PlayCard(match model.Match, playerName string, card model.Card) model.Match {
+	if !isTheCardPlayable(match, playerName, card) {
+		//TODO: handle this case properly, maybe return an error instead of panicking
+		panic(errors.New("the card is not playable"))
+	}
+	match.Table = append(match.Table, model.PlayedCard{
+		PlayerName: playerName,
+		Card:       card,
+	})
+	if isTableFull(match) {
+		calculateTrickWinnerAndUpdate(match)
+	}
+	return match
+}
+
+func calculateTrickWinnerAndUpdate(match model.Match) {
+	var cardsOnTable []model.Card
+	for _, playedCard := range match.Table {
+		cardsOnTable = append(cardsOnTable, playedCard.Card)
+	}
+	var winningCard model.Card
+	winningCard = cardsOnTable[0]
+	for _, card := range cardsOnTable {
+		if card.IsHigherThan(winningCard, match.TrumpSuit) {
+			winningCard = card
+		}
+	}
+}
+
 func isTrumpSuitChosen(match model.Match) bool {
-	return match.TrumpSuit != ""
+	return match.TrumpSuit != 0
 }
 
 func isFirstPlayerTurn(match model.Match, playerName string) bool {

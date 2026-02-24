@@ -24,7 +24,7 @@ type Match struct {
 	Players     []Player     `json:"players"`
 	Table       []PlayedCard `json:"table"`
 	FirstPlayer string       `json:"firstPlayer"`
-	TrumpSuit   string       `json:"trumpSuit"`
+	TrumpSuit   Suit         `json:"trumpSuit"`
 }
 
 // TODO: check
@@ -34,7 +34,7 @@ func (match Match) String() string {
 		sb.WriteString("Player " + string(rune(i+1)) + ": " + player.String() + "\n")
 	}
 	sb.WriteString("Table: " + fmt.Sprintf("%+v", match.Table) + "\n")
-	sb.WriteString("Trump Suit: " + match.TrumpSuit + "\n")
+	sb.WriteString("Trump Suit: " + match.TrumpSuit.String() + "\n")
 	return sb.String()
 }
 
