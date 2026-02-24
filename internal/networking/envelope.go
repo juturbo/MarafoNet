@@ -24,14 +24,17 @@ type WSEnvelope struct {
 	Payload     json.RawMessage `json:"payload"`
 }
 
+// Returns the message type of the envelope.
 func (e *WSEnvelope) getMessageType() MessageType {
 	return MessageType(e.MessageType)
 }
 
+// Returns the payload of the envelope.
 func (e *WSEnvelope) getPayload() json.RawMessage {
 	return e.Payload
 }
 
+// Returns true if the message type of the envelope is equal to the given type.
 func (e *WSEnvelope) equalsType(otherType MessageType) bool {
 	return e.getMessageType() == otherType
 }
