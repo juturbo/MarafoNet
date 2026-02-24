@@ -86,3 +86,14 @@ func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
 	}
 	return false
 }
+
+func (card Card) PointValue() Point {
+	switch card.Rank {
+	case Asso:
+		return 3
+	case Due, Tre, Fante, Cavallo, Re:
+		return 1
+	default:
+		return 0
+	}
+}

@@ -7,11 +7,13 @@ import (
 
 const CardsPerPlayer = 10
 
+type Point int
+
 type Player struct {
 	TeamId      int    `json:"TeamId"`
 	Name        string `json:"Name"`
 	Hand        Hand   `json:"Hand"`
-	MatchPoints int    `json:"MatchPoints"`
+	MatchPoints Point  `json:"MatchPoints"`
 	TotalPoints int    `json:"TotalPoints"`
 }
 
