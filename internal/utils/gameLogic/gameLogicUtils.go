@@ -31,11 +31,36 @@ func StartMatch(match model.Match) model.Match {
 	return match
 }
 
-func ChooseTrumpSuit(match model.Match, playerName string, suit string) model.Match {
-	if match.FirstPlayer == playerName {
+func SetTrumpSuit(match model.Match, playerName string, suit string) model.Match {
+	var trumpSuitAlreadyChosen = match.TrumpSuit != ""
+	if trumpSuitAlreadyChosen {
+		//TODO: handle this case properly, maybe return an error instead of panicking
+		panic(errors.New("trump suit has already been chosen"))
+	}
+	var isFirstPlayer = match.FirstPlayer == playerName
+	if isFirstPlayer {
 		match.TrumpSuit = suit
 	}
 	return match
+}
+
+func isTheCardPlayable(match model.Match, playerName string, card model.Card) bool {
+	var isValid = false
+	var isTrumpSuitChosen = match.TrumpSuit != ""
+	if !isTrumpSuitChosen {
+		isValid = false
+		return isValid
+	}
+	if !isPlayerTurnValid(match, playerName) {
+		isValid = false
+		return isValid
+	}
+	if !playerHasCardInHand(match.Players, playerName, card) {
+		isValid = false
+		return isValid
+	}
+	isValid = true
+	return isValid
 }
 
 func isPlayerTurnValid(match model.Match, playerName string) bool {
@@ -52,6 +77,25 @@ func isPlayerTurnValid(match model.Match, playerName string) bool {
 	}
 	var currentPlayer = lastPlayerToPlay(match)
 	isValid = currentPlayer == playerName
+	return isValid
+}
+
+func playerHasCardInHand(players []model.Player, playerName string, card model.Card) bool {
+	var isValid = false
+	for _, player := range players {
+		var playerNameMatches = player.Name == playerName
+		if playerNameMatches {
+			for _, cardInHand := range player.Hand {
+				var cardMatchesRank = cardInHand.Rank == card.Rank
+				var cardMatchesSuit = cardInHand.Suit == card.Suit
+				if cardMatchesRank && cardMatchesSuit {
+					isValid = true
+					return isValid
+				}
+			}
+		}
+	}
+	isValid = false
 	return isValid
 }
 
