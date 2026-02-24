@@ -51,24 +51,92 @@ func PlayCard(match model.Match, playerName string, card model.Card) model.Match
 		PlayerName: playerName,
 		Card:       card,
 	})
+	removeCardFromPlayerHand(match.Players, playerName, card)
 	if isTableFull(match) {
 		calculateTrickWinnerAndUpdate(match)
 	}
+	/*
+		TODO: Se nessuno ha più carte in mano ho finito il match -> aggiorno i total points dei giocatori (match/3),
+		resetto i match points, resetto la mano dei giocatori, resetto il tavolo,
+		estraggo un nuovo primo giocatore e ricomincio con la scelta del seme di briscola
+		match.Table = nil
+		match.FirstPlayer = nextPlayerName(match)
+	*/
 	return match
 }
 
-func calculateTrickWinnerAndUpdate(match model.Match) {
-	var cardsOnTable []model.Card
-	for _, playedCard := range match.Table {
-		cardsOnTable = append(cardsOnTable, playedCard.Card)
-	}
-	var winningCard model.Card
-	winningCard = cardsOnTable[0]
-	for _, card := range cardsOnTable {
-		if card.IsHigherThan(winningCard, match.TrumpSuit) {
-			winningCard = card
+func removeCardFromPlayerHand(player []model.Player, playerName string, card model.Card) {
+	for _, player := range player {
+		if player.Name == playerName {
+			for j, cardInHand := range player.Hand {
+				if cardInHand.Equal(card) {
+					player.Hand = append(player.Hand[:j], player.Hand[j+1:]...)
+					return
+				}
+			}
 		}
 	}
+}
+
+func calculateTrickWinnerAndUpdate(match model.Match) {
+	winningPlayerName := getTrickWinner(match)
+	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
+	trickPoints := calculateTrickPoints(match)
+	updateMatchPoints(match, winningTeamId, trickPoints)
+}
+
+func nextPlayerName(match model.Match) string {
+	var currentFirstPlayerIndex int
+	for i, player := range match.Players {
+		if player.Name == match.FirstPlayer {
+			currentFirstPlayerIndex = i
+			break
+		}
+	}
+	var nextPlayerIndex = (currentFirstPlayerIndex + 1) % len(match.Players)
+	return match.Players[nextPlayerIndex].Name
+}
+
+func updateMatchPoints(match model.Match, winningTeamId int, trickPoints model.Point) {
+	for _, player := range match.Players {
+		if player.TeamId == winningTeamId {
+			player.MatchPoints += trickPoints
+		}
+	}
+}
+
+func calculateTrickPoints(match model.Match) model.Point {
+	var trickPoints model.Point
+	for _, playedCard := range match.Table {
+		trickPoints += playedCard.Card.PointValue()
+	}
+	return trickPoints
+}
+
+func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
+	var winningTeamId int
+	for _, player := range match.Players {
+		if player.Name == winningPlayerName {
+			winningTeamId = player.TeamId
+			break
+		}
+	}
+	return winningTeamId
+}
+
+func getTrickWinner(match model.Match) string {
+	var winningCard model.Card
+	var winningPlayerName string
+	winningCard = match.Table[0].Card
+	winningPlayerName = match.Table[0].PlayerName
+	for i := 1; i < len(match.Table); i++ {
+		card := match.Table[i].Card
+		if card.IsHigherThan(winningCard, match.TrumpSuit) {
+			winningCard = card
+			winningPlayerName = match.Table[i].PlayerName
+		}
+	}
+	return winningPlayerName
 }
 
 func isTrumpSuitChosen(match model.Match) bool {
