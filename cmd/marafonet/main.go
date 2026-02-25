@@ -17,12 +17,6 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Payload struct {
-	Seed  string `json:"seed"`
-	Power int    `json:"power"`
-	Table string `json:"table"`
-}
-
 const rootPath string = "/"
 const indexPath string = "./frontend/index.html"
 const localFilePath string = "./frontend"
