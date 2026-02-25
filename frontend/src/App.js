@@ -6,6 +6,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import NameEntryScreen from './components/NameEntryScreen';
 import LobbyScreen from './components/LobbyScreen';
 import TableScreen from './components/TableScreen';
+import BackgroundButton from './components/BackgroundButton';
 
 function App() {
   const { ws, isConnected } = useContext(WebSocketContext);
@@ -13,29 +14,6 @@ function App() {
   // Define your state here
   const [phase, setPhase] = useState('NAME_ENTRY'); // 'NAME_ENTRY' | 'LOBBY' | 'PLAYING'
   const [gameState, setGameState] = useState(null);
-  const [theme, setTheme] = useState('table_green');
-
-  useEffect(() => {
-    const greenFeltBg = 'url("/images/green-felt.jpg")'; 
-    const woodTableBg = 'url("/images/wood-table.jpg")';
-
-    if (theme === 'table_wood') {
-      document.body.style.backgroundImage = woodTableBg;
-      document.body.style.color = '#ecf0f1'; // Light text for dark wood
-    } else {
-      document.body.style.backgroundImage = greenFeltBg;
-      document.body.style.color = '#ffffff'; // White text for green felt
-    }
-
-    // Essential CSS to make the image look good on any screen size
-    document.body.style.backgroundSize = 'cover';       // Stretches/shrinks to cover the whole screen
-    document.body.style.backgroundPosition = 'center';  // Centers the image
-    document.body.style.backgroundAttachment = 'fixed'; // Prevents the image from moving if you scroll
-    document.body.style.backgroundRepeat = 'no-repeat'; // Stops the image from tiling
-    
-    // Optional: Add a smooth fade effect when switching
-    document.body.style.transition = 'background-image 0.5s ease-in-out';
-  }, [theme]);
 
   useEffect(() => {
     if (!ws) return;
@@ -88,19 +66,7 @@ function App() {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', padding: '20px' }}>
-      
-      {/* 3. The Persistent Button */}
-      {/* Because this is outside the switch statement, it NEVER unmounts */}
-      <button 
-        onClick={() => setTheme(theme === 'table_green' ? 'table_wood' : 'table_green')}
-        style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1000 }}
-      >
-        Toggle {theme === 'table_green' ? 'Wood Table' : 'Green Felt'} Theme
-      </button>
-
-      {/* 4. The dynamic screen content */}
       {renderScreen()}
-      
     </div>
   );
 }
