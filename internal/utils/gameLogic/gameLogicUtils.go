@@ -31,15 +31,15 @@ func StartMatch(match model.Match) model.Match {
 	return match
 }
 
-func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) model.Match {
+func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.Match, error) {
 	if isTrumpSuitChosen(match) {
 		//TODO: handle this case properly, maybe return an error instead of panicking
-		panic(errors.New("trump suit has already been chosen"))
+		return match, errors.New("trump suit has already been chosen")
 	}
 	if isFirstPlayerTurn(match, playerName) {
 		match.TrumpSuit = suit
 	}
-	return match
+	return match, nil
 }
 
 func PlayCard(match model.Match, playerName string, card model.Card) model.Match {
@@ -53,7 +53,7 @@ func PlayCard(match model.Match, playerName string, card model.Card) model.Match
 	})
 	removeCardFromPlayerHand(match.Players, playerName, card)
 	if isTableFull(match) {
-		calculateTrickWinnerAndUpdate(match)
+		match = calculateTrickWinnerAndUpdate(match)
 	}
 	/*
 		TODO: Se nessuno ha più carte in mano ho finito il match -> aggiorno i total points dei giocatori (match/3),
@@ -65,24 +65,23 @@ func PlayCard(match model.Match, playerName string, card model.Card) model.Match
 	return match
 }
 
-func removeCardFromPlayerHand(player []model.Player, playerName string, card model.Card) {
-	for _, player := range player {
-		if player.Name == playerName {
-			for j, cardInHand := range player.Hand {
-				if cardInHand.Equal(card) {
-					player.Hand = append(player.Hand[:j], player.Hand[j+1:]...)
-					return
-				}
-			}
-		}
+func initializePlayers(players []model.Player) []model.Player {
+	var initializedPlayers []model.Player
+	for i := range players {
+		initializedPlayers = append(initializedPlayers, model.Player{
+			TeamId:      i % 2,
+			Name:        players[i].Name,
+			Hand:        nil,
+			MatchPoints: 0,
+			TotalPoints: 0,
+		})
 	}
+	return initializedPlayers
 }
 
-func calculateTrickWinnerAndUpdate(match model.Match) {
-	winningPlayerName := getTrickWinner(match)
-	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
-	trickPoints := calculateTrickPoints(match)
-	updateMatchPoints(match, winningTeamId, trickPoints)
+func extractFirstPlayer(player []model.Player) string {
+	randomIndex := rand.Intn(len(player))
+	return player[randomIndex].Name
 }
 
 func nextPlayerName(match model.Match) string {
@@ -97,54 +96,15 @@ func nextPlayerName(match model.Match) string {
 	return match.Players[nextPlayerIndex].Name
 }
 
-func updateMatchPoints(match model.Match, winningTeamId int, trickPoints model.Point) {
-	for _, player := range match.Players {
-		if player.TeamId == winningTeamId {
-			player.MatchPoints += trickPoints
-		}
+func initializeDeck() model.Deck {
+	return deckUtils.NewShuffledDeck()
+}
+
+func distributeCards(deck model.Deck, players []model.Player) ([]model.Player, model.Deck) {
+	for i := range len(players) {
+		players[i].Hand, deck = deckUtils.DrawCards(deck, model.CardsPerPlayer)
 	}
-}
-
-func calculateTrickPoints(match model.Match) model.Point {
-	var trickPoints model.Point
-	for _, playedCard := range match.Table {
-		trickPoints += playedCard.Card.PointValue()
-	}
-	return trickPoints
-}
-
-func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
-	var winningTeamId int
-	for _, player := range match.Players {
-		if player.Name == winningPlayerName {
-			winningTeamId = player.TeamId
-			break
-		}
-	}
-	return winningTeamId
-}
-
-func getTrickWinner(match model.Match) string {
-	var winningCard model.Card
-	var winningPlayerName string
-	winningCard = match.Table[0].Card
-	winningPlayerName = match.Table[0].PlayerName
-	for i := 1; i < len(match.Table); i++ {
-		card := match.Table[i].Card
-		if card.IsHigherThan(winningCard, match.TrumpSuit) {
-			winningCard = card
-			winningPlayerName = match.Table[i].PlayerName
-		}
-	}
-	return winningPlayerName
-}
-
-func isTrumpSuitChosen(match model.Match) bool {
-	return match.TrumpSuit != 0
-}
-
-func isFirstPlayerTurn(match model.Match, playerName string) bool {
-	return match.FirstPlayer == playerName
+	return players, deck
 }
 
 func isTheCardPlayable(match model.Match, playerName string, card model.Card) bool {
@@ -171,11 +131,24 @@ func isTheCardPlayable(match model.Match, playerName string, card model.Card) bo
 	return isValid
 }
 
+func isTrumpSuitChosen(match model.Match) bool {
+	return match.TrumpSuit != 0
+}
+
 func isPlayerTurnValid(match model.Match, playerName string) bool {
 	if isTableFull(match) {
 		return false
 	}
 	return getCurrentPlayer(match) == playerName
+}
+
+func getCurrentPlayer(match model.Match) string {
+	if isTableEmpty(match) {
+		return match.FirstPlayer
+	}
+	indexOfLastPlayer := len(match.Table) - 1
+	var lastPlayerName = match.Table[indexOfLastPlayer].PlayerName
+	return lastPlayerName
 }
 
 func playerHasCardInHand(players []model.Player, playerName string, playedCard model.Card) bool {
@@ -185,6 +158,28 @@ func playerHasCardInHand(players []model.Player, playerName string, playedCard m
 	}
 	hasCardInHand = playerSatisfies(players, playerName, cardInHandPredicate)
 	return hasCardInHand
+}
+
+func playerSatisfies(players []model.Player, playerName string, predicate func(model.Card) bool) bool {
+	var isValid = false
+	for _, player := range players {
+		if player.Name == playerName {
+			for _, cardInHand := range player.Hand {
+				if predicate(cardInHand) {
+					isValid = true
+					return isValid
+				}
+			}
+			isValid = false
+			return isValid
+		}
+	}
+	isValid = false
+	return isValid
+}
+
+func isFirstPlayerTurn(match model.Match, playerName string) bool {
+	return match.FirstPlayer == playerName
 }
 
 /*
@@ -235,33 +230,6 @@ func playerHasCardOfLeadingSuit(players []model.Player, playerName string, leadi
 	return hasCardOfLeadingSuit
 }
 
-func playerSatisfies(players []model.Player, playerName string, predicate func(model.Card) bool) bool {
-	var isValid = false
-	for _, player := range players {
-		if player.Name == playerName {
-			for _, cardInHand := range player.Hand {
-				if predicate(cardInHand) {
-					isValid = true
-					return isValid
-				}
-			}
-			isValid = false
-			return isValid
-		}
-	}
-	isValid = false
-	return isValid
-}
-
-func getCurrentPlayer(match model.Match) string {
-	if isTableEmpty(match) {
-		return match.FirstPlayer
-	}
-	indexOfLastPlayer := len(match.Table) - 1
-	var lastPlayerName = match.Table[indexOfLastPlayer].PlayerName
-	return lastPlayerName
-}
-
 func isTableFull(match model.Match) bool {
 	return len(match.Table) >= len(match.Players)
 }
@@ -270,42 +238,77 @@ func isTableEmpty(match model.Match) bool {
 	return len(match.Table) == 0
 }
 
-func initializePlayers(players []model.Player) []model.Player {
-	var initializedPlayers []model.Player
-	for i := range players {
-		initializedPlayers = append(initializedPlayers, model.Player{
-			TeamId:      i % 2,
-			Name:        players[i].Name,
-			Hand:        nil,
-			MatchPoints: 0,
-			TotalPoints: 0,
-		})
+func removeCardFromPlayerHand(player []model.Player, playerName string, card model.Card) {
+	for _, player := range player {
+		if player.Name == playerName {
+			for j, cardInHand := range player.Hand {
+				if cardInHand.Equal(card) {
+					player.Hand = append(player.Hand[:j], player.Hand[j+1:]...)
+					return
+				}
+			}
+		}
 	}
-	return initializedPlayers
 }
 
-func extractFirstPlayer(player []model.Player) string {
-	randomIndex := rand.Intn(len(player))
-	return player[randomIndex].Name
+func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
+	winningPlayerName := getTrickWinner(match)
+	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
+	trickPoints := calculateTrickPoints(match)
+	match = updateMatchPoints(match, winningTeamId, trickPoints)
+	return match
 }
 
-func initializeDeck() model.Deck {
-	return deckUtils.NewShuffledDeck()
-}
-
-func distributeCards(deck model.Deck, players []model.Player) ([]model.Player, model.Deck) {
-	for i := range len(players) {
-		players[i].Hand, deck = deckUtils.DrawCards(deck, model.CardsPerPlayer)
+func getTrickWinner(match model.Match) string {
+	var winningCard model.Card
+	var winningPlayerName string
+	winningCard = match.Table[0].Card
+	winningPlayerName = match.Table[0].PlayerName
+	for i := 1; i < len(match.Table); i++ {
+		card := match.Table[i].Card
+		if card.IsHigherThan(winningCard, match.TrumpSuit) {
+			winningCard = card
+			winningPlayerName = match.Table[i].PlayerName
+		}
 	}
-	return players, deck
+	return winningPlayerName
+}
+
+func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
+	var winningTeamId int
+	for _, player := range match.Players {
+		if player.Name == winningPlayerName {
+			winningTeamId = player.TeamId
+			break
+		}
+	}
+	return winningTeamId
+}
+
+func calculateTrickPoints(match model.Match) model.Point {
+	var trickPoints model.Point
+	for _, playedCard := range match.Table {
+		trickPoints += playedCard.Card.PointValue()
+	}
+	return trickPoints
+}
+
+func updateMatchPoints(match model.Match, winningTeamId int, trickPoints model.Point) model.Match {
+	for i, player := range match.Players {
+		if player.TeamId == winningTeamId {
+			match.Players[i].MatchPoints += trickPoints
+		}
+	}
+	return match
 }
 
 func printMatch(match model.Match) {
 	for i := 0; i < len(match.Players); i++ {
 		fmt.Printf("Player %d (%s): %v\n", i+1, match.Players[i].Name, match.Players[i].Hand)
+		fmt.Printf("Match Points: %d, Total Points: %d\n\n", match.Players[i].MatchPoints, match.Players[i].TotalPoints)
 	}
 	fmt.Printf("Table: %+v\n", match.Table)
 	fmt.Printf("Trump Suit: %s\n", match.TrumpSuit)
-	fmt.Printf("First Player: %s\n", match.FirstPlayer)
+	fmt.Printf("First Player: %s\n\n\n", match.FirstPlayer)
 	//fmt.Printf("Remaining deck: %v\n", deck)
 }
