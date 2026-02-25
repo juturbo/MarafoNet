@@ -15,8 +15,8 @@ func initEnvelope(messageType MessageType) *WSEnvelope {
 
 func TestEqualsMessageType(t *testing.T) {
 	envelope := initEnvelope(FirstJoinType)
-	assert.Equal(t, FirstJoinType, envelope.getMessageType(), "Expected getMessageType() to equal FirstJoinType but got %s", envelope.getMessageType())
+	assert.Equal(t, FirstJoinType, envelope.GetMessageType(), "Expected getMessageType() to equal FirstJoinType but got %s", envelope.GetMessageType())
 
 	envelope = initEnvelope(PlayCardType)
-	assert.Equal(t, PlayCardType, envelope.getMessageType(), "Expected getMessageType() to equal PlayCardType but got %s", envelope.getMessageType())
+	assert.Equal(t, PlayCardType, envelope.GetMessageType(), "Expected getMessageType() to equal PlayCardType but got %s", envelope.GetMessageType())
 }
