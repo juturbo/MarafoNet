@@ -13,9 +13,9 @@ const (
 )
 
 type Envelope interface {
-	getMessageType() MessageType
-	getPayload() json.RawMessage
-	equalsType(otherType MessageType) bool
+	GetMessageType() MessageType
+	GetPayload() json.RawMessage
+	EqualsType(otherType MessageType) bool
 }
 
 // A WebSocket message from the client.
@@ -25,16 +25,16 @@ type WSEnvelope struct {
 }
 
 // Returns the message type of the envelope.
-func (e WSEnvelope) getMessageType() MessageType {
+func (e WSEnvelope) GetMessageType() MessageType {
 	return MessageType(e.MessageType)
 }
 
 // Returns the payload of the envelope.
-func (e WSEnvelope) getPayload() json.RawMessage {
+func (e WSEnvelope) GetPayload() json.RawMessage {
 	return e.Payload
 }
 
 // Returns true if the message type of the envelope is equal to the given type.
-func (e WSEnvelope) equalsType(otherType MessageType) bool {
-	return e.getMessageType() == otherType
+func (e WSEnvelope) EqualsType(otherType MessageType) bool {
+	return e.GetMessageType() == otherType
 }
