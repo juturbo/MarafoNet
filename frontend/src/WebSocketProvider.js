@@ -9,9 +9,12 @@ export const WebSocketProvider = ({ children }) => {
 
   useEffect(() => {
     // Connect to your K8s load balancer
-    ws.current = new WebSocket('wss://localhost:5000/ws');
+    ws.current = new WebSocket('ws://localhost:5000/ws');
 
-    ws.current.onopen = () => setIsConnected(true);
+    ws.current.onopen = () => {
+      setIsConnected(true);
+      console.log('Connected to WebSocket server');
+    };
     
     ws.current.onclose = () => {
       setIsConnected(false);
@@ -19,9 +22,9 @@ export const WebSocketProvider = ({ children }) => {
       console.log('Connection lost. Reconnecting to a healthy Pod...');
     };
 
-    return () => {
-      ws.current?.close();
-    };
+    //return () => {
+    //  ws.current?.close();TODO
+    //};
   }, []);
 
   return (
