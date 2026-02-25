@@ -7,21 +7,30 @@ import (
 )
 
 type WebSocketHub struct {
-	writeChannel chan json.RawMessage
+	WriteChannel chan json.RawMessage
 }
 
 // Calls goroutines to serve read and write channels for one WebSocket connection.
 func ServeWS(Conn *websocket.Conn) {
-	go ServeWrite()
-	go ServeRead(Conn)
+	var hub WebSocketHub
+	hub.WriteChannel = make(chan json.RawMessage)
+	go ServeWrite(Conn, hub.WriteChannel)
+	go ServeRead(Conn, hub.WriteChannel)
 
 }
 
-func ServeWrite() {
+func ServeWrite(Conn *websocket.Conn, writeChannel chan json.RawMessage) {
+	defer Conn.Close()
 
+	for message := range writeChannel {
+		err := Conn.WriteJSON(message)
+		if err != nil {
+			return
+		}
+	}
 }
 
-func ServeRead(Conn *websocket.Conn) {
+func ServeRead(Conn *websocket.Conn, writeChannel chan json.RawMessage) {
 	defer Conn.Close()
 
 	for {
@@ -36,9 +45,9 @@ func ServeRead(Conn *websocket.Conn) {
 
 func HandleWSEnvelope(envelope Envelope) {
 	switch {
-	case envelope.equalsType(FirstJoinType):
+	case envelope.EqualsType(FirstJoinType):
 		panic("unimplemented")
-	case envelope.equalsType(PlayCardType):
+	case envelope.EqualsType(PlayCardType):
 		panic("unimplemented")
 	default:
 		panic("unknown envelope type")
