@@ -7,38 +7,44 @@ import (
 )
 
 const (
-	Bastoni Suit = iota + 1
-	Coppe
-	Denari
-	Spade
+	AcePoints   = 3
+	MinorPoints = 1
+	BlankPoints = 0
 )
 
 const (
-	Asso Rank = iota + 1
-	Due
-	Tre
-	Quattro
-	Cinque
-	Sei
-	Sette
-	Fante
-	Cavallo
-	Re
+	Clubs Suit = iota + 1
+	Cups
+	Coins
+	Swords
 )
 
 const (
-	StartSuit = Bastoni
-	EndSuit   = Spade
+	Ace Rank = iota + 1
+	Two
+	Three
+	Four
+	Five
+	Six
+	Seven
+	Jack
+	Knight
+	King
 )
 
 const (
-	StartRank = Asso
-	EndRank   = Re
+	StartSuit = Clubs
+	EndSuit   = Swords
+)
+
+const (
+	StartRank = Ace
+	EndRank   = King
 )
 
 type Card struct {
-	Suit
-	Rank
+	Suit Suit
+	Rank Rank
 }
 
 type Suit uint8
@@ -89,11 +95,11 @@ func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
 
 func (card Card) PointValue() Point {
 	switch card.Rank {
-	case Asso:
-		return 3
-	case Due, Tre, Fante, Cavallo, Re:
-		return 1
+	case Ace:
+		return AcePoints
+	case Two, Three, Jack, Knight, King:
+		return MinorPoints
 	default:
-		return 0
+		return BlankPoints
 	}
 }

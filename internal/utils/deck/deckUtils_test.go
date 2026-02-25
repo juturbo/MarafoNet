@@ -9,7 +9,7 @@ import (
 )
 
 func TestPrintCard(t *testing.T) {
-	card := model.Card{Suit: model.Bastoni, Rank: model.Asso}
+	card := model.Card{Suit: model.Clubs, Rank: model.Ace}
 	expected := "Asso di Bastoni"
 	actual := card.String()
 	assert.Equal(t, expected, actual, "Expected %s, got %s", expected, actual)

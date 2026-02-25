@@ -8,10 +8,10 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[Bastoni-1]
-	_ = x[Coppe-2]
-	_ = x[Denari-3]
-	_ = x[Spade-4]
+	_ = x[Clubs-1]
+	_ = x[Cups-2]
+	_ = x[Coins-3]
+	_ = x[Swords-4]
 }
 
 const _Suit_name = "BastoniCoppeDenariSpade"
@@ -29,16 +29,16 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[Asso-1]
-	_ = x[Due-2]
-	_ = x[Tre-3]
-	_ = x[Quattro-4]
-	_ = x[Cinque-5]
-	_ = x[Sei-6]
-	_ = x[Sette-7]
-	_ = x[Fante-8]
-	_ = x[Cavallo-9]
-	_ = x[Re-10]
+	_ = x[Ace-1]
+	_ = x[Two-2]
+	_ = x[Three-3]
+	_ = x[Four-4]
+	_ = x[Five-5]
+	_ = x[Six-6]
+	_ = x[Seven-7]
+	_ = x[Jack-8]
+	_ = x[Knight-9]
+	_ = x[King-10]
 }
 
 const _Rank_name = "AssoDueTreQuattroCinqueSeiSetteFanteCavalloRe"
