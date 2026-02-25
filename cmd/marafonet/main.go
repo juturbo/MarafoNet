@@ -17,8 +17,8 @@ var upgrader = websocket.Upgrader{
 }
 
 const rootPath string = "/"
-const indexPath string = "./frontend/index.html"
-const localFilePath string = "./frontend"
+const indexPath string = "./frontend/build/index.html"
+const localFilePath string = "./frontend/build"
 
 const webSocketPath = "/ws"
 
