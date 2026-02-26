@@ -263,10 +263,8 @@ func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
 }
 
 func getTrickWinner(match model.Match) string {
-	var winningCard model.Card
-	var winningPlayerName string
-	winningCard = match.Table[0].Card
-	winningPlayerName = match.Table[0].PlayerName
+	winningCard := match.Table[0].Card
+	winningPlayerName := match.Table[0].PlayerName
 	for i := 1; i < len(match.Table); i++ {
 		card := match.Table[i].Card
 		if card.IsHigherThan(winningCard, match.TrumpSuit) {
