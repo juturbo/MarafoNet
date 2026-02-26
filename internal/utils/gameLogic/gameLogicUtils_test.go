@@ -8,63 +8,134 @@ import (
 )
 
 func TestInitializeGame(t *testing.T) {
-	expectedPlayers := []model.Player{
-		{Name: "Player 1", TeamId: 0},
-		{Name: "Player 2", TeamId: 1},
-		{Name: "Player 3", TeamId: 0},
-		{Name: "Player 4", TeamId: 1},
+	names := []string{"Alice", "Bob", "Carol", "Dave"}
+	players := mkPlayers(names...)
+	match := initializeGame(players)
+	assert.Equal(t, players, match.Players)
+}
+
+func TestStartMatchDealsCards(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	match = startMatch(match)
+	for _, player := range match.Players {
+		assert.Equal(t, model.CardsPerPlayer, len(player.Hand), "Each player should have %d cards", model.CardsPerPlayer)
 	}
-	match := initializeGame(expectedPlayers)
-	for i := range expectedPlayers {
-		assert.Equal(t, expectedPlayers[i], match.Players[i], "Expected player %v, got %v", expectedPlayers[i], match.Players[i])
-	}
 }
 
-/*
-// starts a full 41 points game
-func StartGame(match model.Match) model.Match {
-	players := initializePlayers(match.Players) // might be removed in future. Double check
-	match.Players = players
-	return StartMatch(match)
+func TestSetTrumpSuitOnlyFirstPlayer(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	var err error
+	match, err = SetTrumpSuit(match, "Alice", model.Swords)
+	assert.NoError(t, err)
+	assert.Equal(t, model.Swords, match.TrumpSuit)
+	_, err = SetTrumpSuit(match, "Bob", model.Cups)
+	assert.Error(t, err)
 }
 
-// starts a match in a game
-func StartMatch(match model.Match) model.Match {
-	deck := initializeDeck()
-	match.Players, deck = distributeCards(deck, match.Players)
-	printMatch(match, deck)
-	return match
-}
-
-func initializePlayers(players []model.Player) []model.Player {
-	for i := range len(players) {
-		players[i] = model.Player{
-			TeamId:      i % 2,
-			Name:        players[i].Name,
-			Hand:        nil,
-			MatchPoints: 0,
-			TotalPoints: 0,
+func TestPlayCardRemovesCardAndTotals(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	aliceHand := []model.Card{{Suit: model.Swords, Rank: model.Ace}}
+	bobHand := []model.Card{{Suit: model.Swords, Rank: model.King}}
+	carolHand := []model.Card{{Suit: model.Swords, Rank: model.Three}}
+	daveHand := []model.Card{{Suit: model.Swords, Rank: model.Seven}}
+	hands := [][]model.Card{aliceHand, bobHand, carolHand, daveHand}
+	setHands(&match, hands)
+	match.TrumpSuit = model.Swords
+	var err error
+	match, err = PlayCard(match, "Alice", aliceHand[0])
+	assert.NoError(t, err)
+	for _, player := range match.Players {
+		if player.Name == "Alice" {
+			assert.Equal(t, 0, len(player.Hand))
 		}
+	}
+}
+
+func TestCalculateTrickWinner(t *testing.T) {
+	players := mkPlayers("Alice", "Bob", "Carol", "Dave")
+	match := model.Match{Players: players, TrumpSuit: model.Cups}
+	match.Table = []model.PlayedCard{
+		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Seven}},
+		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.Knight}},
+		{PlayerName: "Carol", Card: model.Card{Suit: model.Swords, Rank: model.King}},
+		{PlayerName: "Dave", Card: model.Card{Suit: model.Coins, Rank: model.Ace}},
+	}
+	winner := getTrickWinner(match)
+	assert.Equal(t, "Carol", winner)
+}
+
+func TestTrickWinnerWithTrump(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	match.TrumpSuit = model.Cups
+	match.Table = []model.PlayedCard{
+		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Seven}},
+		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.King}},
+		{PlayerName: "Carol", Card: model.Card{Suit: model.Coins, Rank: model.Ace}},
+		{PlayerName: "Dave", Card: model.Card{Suit: model.Cups, Rank: model.Two}},
+	}
+	winner := getTrickWinner(match)
+	assert.Equal(t, "Dave", winner)
+}
+
+func TestCalculateTrickPoints(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	match.Table = []model.PlayedCard{
+		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Ace}},
+		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.Two}},
+		{PlayerName: "Carol", Card: model.Card{Suit: model.Swords, Rank: model.Four}},
+		{PlayerName: "Dave", Card: model.Card{Suit: model.Swords, Rank: model.King}},
+	}
+	pts := calculateTrickPoints(match)
+	assert.Equal(t, model.Point(5), pts)
+}
+
+func TestGetCurrentPlayerBehavior(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	assert.Equal(t, "Alice", getCurrentPlayer(match))
+	match.Table = []model.PlayedCard{{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Ace}}}
+	assert.Equal(t, "Bob", getCurrentPlayer(match))
+}
+
+func TestIsCardOfLeadingSuitAndPlayable(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	setHands(&match, [][]model.Card{{{Suit: model.Swords, Rank: model.Ace}, {Suit: model.Cups, Rank: model.Two}}, {{Suit: model.Swords, Rank: model.King}}})
+	match.TrumpSuit = model.Cups
+	match.Table = []model.PlayedCard{{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Four}}}
+	isLeading := isCardOfLeadingSuit(match, "Bob", model.Card{Suit: model.Cups, Rank: model.Two})
+	assert.False(t, isLeading)
+	isLeading = isCardOfLeadingSuit(match, "Bob", model.Card{Suit: model.Swords, Rank: model.King})
+	assert.True(t, isLeading)
+}
+
+func TestIsTheCardPlayableVarious(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	setHands(&match, [][]model.Card{{{Suit: model.Swords, Rank: model.Ace}}, {{Suit: model.Swords, Rank: model.King}}})
+	ok := isTheCardPlayable(match, "Alice", model.Card{Suit: model.Swords, Rank: model.Ace})
+	assert.False(t, ok)
+	match.TrumpSuit = model.Cups
+	ok = isTheCardPlayable(match, "Bob", model.Card{Suit: model.Swords, Rank: model.King})
+	assert.False(t, ok)
+	ok = isTheCardPlayable(match, "Alice", model.Card{Suit: model.Swords, Rank: model.Ace})
+	assert.True(t, ok)
+}
+
+func mkPlayers(names ...string) []model.Player {
+	players := make([]model.Player, len(names))
+	for i, n := range names {
+		players[i] = model.Player{Name: n, TeamId: i % 2}
 	}
 	return players
 }
 
-func inizializeDeck() model.Deck {
-	return deckUtils.NewShuffledDeck()
+func mkMatch(names ...string) model.Match {
+	players := mkPlayers(names...)
+	return model.Match{Players: players, FirstPlayer: names[0]}
 }
 
-func distributeCards(deck model.Deck, players []model.Player) ([]model.Player, model.Deck) {
-	for i := range len(players) {
-		players[i].Hand, deck = deckUtils.DrawCards(deck, constant.CardsPerPlayer)
+func setHands(m *model.Match, hands [][]model.Card) {
+	for i := range hands {
+		if i < len(m.Players) {
+			m.Players[i].Hand = model.Hand(hands[i])
+		}
 	}
-	return players, deck
 }
-
-func printMatch(match model.Match, deck model.Deck) {
-	for i := 0; i < len(match.Players); i++ {
-		fmt.Printf("Player %d (%s): %v\n", i+1, match.Players[i].Name, match.Players[i].Hand)
-	}
-	fmt.Printf("Table: %+v\n", match.Table)
-	fmt.Printf("Remaining deck: %v\n", deck)
-}
-*/
