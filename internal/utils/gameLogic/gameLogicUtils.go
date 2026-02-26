@@ -51,7 +51,6 @@ func initializeGame(players []model.Player) model.Match {
 	var match model.Match
 	match.Players = initializePlayers(players)
 	match.FirstPlayer = extractFirstPlayer(match.Players)
-	printMatch(match)
 	return match
 }
 
@@ -71,7 +70,6 @@ func initializePlayers(players []model.Player) []model.Player {
 func startMatch(match model.Match) model.Match {
 	deck := initializeDeck()
 	match.Players, deck = distributeCards(deck, match.Players)
-	printMatch(match)
 	return match
 }
 
@@ -364,7 +362,7 @@ func printMatch(match model.Match) {
 	for i := 0; i < len(match.Players); i++ {
 		fmt.Printf("Team %d\t%s\tHand: %v\n", match.Players[i].TeamId+1, match.Players[i].Name, match.Players[i].Hand)
 	}
-	for i := 0; i < model.NumberOfTeams; i++ {
+	for i := range model.NumberOfTeams {
 		fmt.Printf("Team %d Match Points: %d, Total Points: %d\n", i+1, match.MatchPoints[i], match.TotalPoints[i])
 	}
 	fmt.Printf("Table: %+v\n", match.Table)
