@@ -7,8 +7,8 @@ import (
 )
 
 /*
-Si potrebbe modificare per aggiornare etcd con chiamate a etcdService.
-In caso di errore deve notificare il chiamante altrimenti niente (chimante comunica a client errore)
+Return solo problemi/cose da inviare solo al client che ha fatto la chiamata (tramite backend)
+altrimenti se non dà errori chiamo metodo etcdService per aggiornare etcd con le nuove informazioni del match
 */
 func StartGame(playerInfo json.RawMessage) json.RawMessage {
 	players := decodePlayersFromJson(playerInfo)
