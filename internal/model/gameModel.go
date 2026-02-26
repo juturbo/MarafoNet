@@ -11,12 +11,6 @@ const (
 	PointsToWin    = 41
 )
 
-type GameLogic interface {
-	StartGame(players []Player) Match
-	SetTrumpSuit(match Match, playerName string, suit Suit) (Match, error)
-	PlayCard(match Match, playerName string, card Card) (Match, error)
-}
-
 type Point uint8
 
 type Player struct {

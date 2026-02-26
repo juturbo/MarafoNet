@@ -14,7 +14,7 @@ func TestInitializeGame(t *testing.T) {
 		{Name: "Player 3", TeamId: 0},
 		{Name: "Player 4", TeamId: 1},
 	}
-	match := InitializeGame(expectedPlayers)
+	match := initializeGame(expectedPlayers)
 	for i := range expectedPlayers {
 		assert.Equal(t, expectedPlayers[i], match.Players[i], "Expected player %v, got %v", expectedPlayers[i], match.Players[i])
 	}

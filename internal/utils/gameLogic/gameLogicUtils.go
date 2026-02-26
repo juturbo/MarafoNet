@@ -16,7 +16,6 @@ func StartGame(players []model.Player) model.Match {
 
 func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.Match, error) {
 	if isTrumpSuitChosen(match) {
-		//TODO: handle this case properly, maybe return an error instead of panicking
 		return match, errors.New("trump suit has already been chosen")
 	}
 	if isFirstPlayerTurn(match, playerName) {
@@ -33,7 +32,7 @@ func PlayCard(match model.Match, playerName string, card model.Card) (model.Matc
 		PlayerName: playerName,
 		Card:       card,
 	})
-	removeCardFromPlayerHand(match.Players, playerName, card)
+	match.Players = removeCardFromPlayerHand(match.Players, playerName, card)
 	if isTableFull(match) {
 		match = calculateTrickWinnerAndUpdate(match)
 	}
@@ -145,7 +144,14 @@ func getCurrentPlayer(match model.Match) string {
 	}
 	indexOfLastPlayer := len(match.Table) - 1
 	var lastPlayerName = match.Table[indexOfLastPlayer].PlayerName
-	return lastPlayerName
+	currentPlayerName := match.FirstPlayer
+	for i, player := range match.Players {
+		if player.Name == lastPlayerName {
+			currentPlayerName = match.Players[(i+1)%len(match.Players)].Name
+			break
+		}
+	}
+	return currentPlayerName
 }
 
 func playerHasCardInHand(players []model.Player, playerName string, playedCard model.Card) bool {
@@ -235,17 +241,18 @@ func isTableEmpty(match model.Match) bool {
 	return len(match.Table) == 0
 }
 
-func removeCardFromPlayerHand(player []model.Player, playerName string, card model.Card) {
-	for _, player := range player {
+func removeCardFromPlayerHand(players []model.Player, playerName string, card model.Card) []model.Player {
+	for i, player := range players {
 		if player.Name == playerName {
 			for j, cardInHand := range player.Hand {
 				if cardInHand.Equal(card) {
-					player.Hand = append(player.Hand[:j], player.Hand[j+1:]...)
-					return
+					players[i].Hand = append(player.Hand[:j], player.Hand[j+1:]...)
+					return players
 				}
 			}
 		}
 	}
+	return players
 }
 
 func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
