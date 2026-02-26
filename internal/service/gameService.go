@@ -6,16 +6,34 @@ import (
 	"encoding/json"
 )
 
-/*bastano i 4 nomi dei player*/
-func SetUpGame(playerInfo json.RawMessage) json.RawMessage {
+/*
+Si potrebbe modificare per aggiornare etcd con chiamate a etcdService.
+In caso di errore deve notificare il chiamante altrimenti niente (chimante comunica a client errore)
+*/
+func StartGame(playerInfo json.RawMessage) json.RawMessage {
 	players := decodePlayersFromJson(playerInfo)
-	match := gameLogic.InitializeGame(players)
+	match := gameLogic.StartGame(players)
 	return encodeMatchAsJSON(match)
 }
 
-func StartGame(gameInfo json.RawMessage) json.RawMessage {
+func SetTrumpSuit(gameInfo json.RawMessage, playerName string, suit model.Suit) json.RawMessage {
 	match := decodeMatchFromJson(gameInfo)
-	match = gameLogic.StartGame(match)
+	match, err := gameLogic.SetTrumpSuit(match, playerName, suit)
+	if err != nil {
+		panic(err)
+	}
+	return encodeMatchAsJSON(match)
+}
+
+func PlayCard(gameInfo json.RawMessage, playerName string, card model.Card) json.RawMessage {
+	match := decodeMatchFromJson(gameInfo)
+	match, err := gameLogic.PlayCard(match, playerName, card)
+	if err != nil {
+		panic(err)
+	}
+	if match.WinnerPlayers != nil {
+		//Showcase winner players
+	}
 	return encodeMatchAsJSON(match)
 }
 

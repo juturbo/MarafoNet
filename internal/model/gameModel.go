@@ -5,16 +5,24 @@ import (
 	"strings"
 )
 
-const CardsPerPlayer = 10
+const (
+	CardsPerPlayer = 10
+	NumberOfTeams  = 2
+	PointsToWin    = 41
+)
 
-type Point int
+type GameLogic interface {
+	StartGame(players []Player) Match
+	SetTrumpSuit(match Match, playerName string, suit Suit) (Match, error)
+	PlayCard(match Match, playerName string, card Card) (Match, error)
+}
+
+type Point uint8
 
 type Player struct {
-	TeamId      int    `json:"TeamId"`
-	Name        string `json:"Name"`
-	Hand        Hand   `json:"Hand"`
-	MatchPoints Point  `json:"MatchPoints"`
-	TotalPoints int    `json:"TotalPoints"`
+	TeamId int    `json:"TeamId"`
+	Name   string `json:"Name"`
+	Hand   Hand   `json:"Hand"`
 }
 
 type PlayedCard struct {
@@ -23,10 +31,14 @@ type PlayedCard struct {
 }
 
 type Match struct {
-	Players     []Player     `json:"players"`
-	Table       []PlayedCard `json:"table"`
-	FirstPlayer string       `json:"firstPlayer"`
-	TrumpSuit   Suit         `json:"trumpSuit"`
+	Players       []Player             `json:"Players"`
+	Table         []PlayedCard         `json:"Table"`
+	MatchPoints   [NumberOfTeams]Point `json:"MatchPoints"`
+	TotalPoints   [NumberOfTeams]int   `json:"TotalPoints"`
+	FirstPlayer   string               `json:"FirstPlayer"`
+	TrumpSuit     Suit                 `json:"TrumpSuit"`
+	WinnerTeam    *int                 `json:"WinnerTeam,omitempty"`
+	WinnerPlayers []string             `json:"WinnerPlayers,omitempty"`
 }
 
 // TODO: check

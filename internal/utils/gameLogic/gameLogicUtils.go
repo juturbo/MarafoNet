@@ -8,27 +8,10 @@ import (
 	"math/rand"
 )
 
-func InitializeGame(players []model.Player) model.Match {
-	var match model.Match
-	match.Players = initializePlayers(players)
-	match.FirstPlayer = extractFirstPlayer(match.Players)
-	printMatch(match)
-	return match
-}
-
 /*starts a full 41 points game*/
-func StartGame(match model.Match) model.Match {
-	players := initializePlayers(match.Players) // might be removed in future. Double check
-	match.Players = players
-	return StartMatch(match)
-}
-
-/*starts a match in a game*/
-func StartMatch(match model.Match) model.Match {
-	deck := initializeDeck()
-	match.Players, deck = distributeCards(deck, match.Players)
-	printMatch(match)
-	return match
+func StartGame(players []model.Player) model.Match {
+	match := initializeGame(players)
+	return startMatch(match)
 }
 
 func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.Match, error) {
@@ -42,10 +25,9 @@ func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.
 	return match, nil
 }
 
-func PlayCard(match model.Match, playerName string, card model.Card) model.Match {
+func PlayCard(match model.Match, playerName string, card model.Card) (model.Match, error) {
 	if !isTheCardPlayable(match, playerName, card) {
-		//TODO: handle this case properly, maybe return an error instead of panicking
-		panic(errors.New("the card is not playable"))
+		return match, errors.New("the card is not playable")
 	}
 	match.Table = append(match.Table, model.PlayedCard{
 		PlayerName: playerName,
@@ -55,13 +37,22 @@ func PlayCard(match model.Match, playerName string, card model.Card) model.Match
 	if isTableFull(match) {
 		match = calculateTrickWinnerAndUpdate(match)
 	}
-	/*
-		TODO: Se nessuno ha più carte in mano ho finito il match -> aggiorno i total points dei giocatori (match/3),
-		resetto i match points, resetto la mano dei giocatori, resetto il tavolo,
-		estraggo un nuovo primo giocatore e ricomincio con la scelta del seme di briscola
-		match.Table = nil
-		match.FirstPlayer = nextPlayerName(match)
-	*/
+	if isMatchOver(match) {
+		match = calculateMatchPointsAndReset(match)
+		if match.WinnerPlayers != nil {
+			return match, nil
+		}
+		match = startMatch(match)
+		return match, nil
+	}
+	return match, nil
+}
+
+func initializeGame(players []model.Player) model.Match {
+	var match model.Match
+	match.Players = initializePlayers(players)
+	match.FirstPlayer = extractFirstPlayer(match.Players)
+	printMatch(match)
 	return match
 }
 
@@ -69,14 +60,20 @@ func initializePlayers(players []model.Player) []model.Player {
 	var initializedPlayers []model.Player
 	for i := range players {
 		initializedPlayers = append(initializedPlayers, model.Player{
-			TeamId:      i % 2,
-			Name:        players[i].Name,
-			Hand:        nil,
-			MatchPoints: 0,
-			TotalPoints: 0,
+			TeamId: i % 2,
+			Name:   players[i].Name,
+			Hand:   nil,
 		})
 	}
 	return initializedPlayers
+}
+
+/*starts a match in a game*/
+func startMatch(match model.Match) model.Match {
+	deck := initializeDeck()
+	match.Players, deck = distributeCards(deck, match.Players)
+	printMatch(match)
+	return match
 }
 
 func extractFirstPlayer(player []model.Player) string {
@@ -255,7 +252,8 @@ func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
 	winningPlayerName := getTrickWinner(match)
 	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
 	trickPoints := calculateTrickPoints(match)
-	match = updateMatchPoints(match, winningTeamId, trickPoints)
+	match.MatchPoints[winningTeamId] += trickPoints
+	match.Table = nil
 	return match
 }
 
@@ -293,19 +291,74 @@ func calculateTrickPoints(match model.Match) model.Point {
 	return trickPoints
 }
 
-func updateMatchPoints(match model.Match, winningTeamId int, trickPoints model.Point) model.Match {
-	for i, player := range match.Players {
-		if player.TeamId == winningTeamId {
-			match.Players[i].MatchPoints += trickPoints
+func isMatchOver(match model.Match) bool {
+	for _, player := range match.Players {
+		if len(player.Hand) > 0 {
+			return false
 		}
 	}
+	return true
+}
+
+func calculateMatchPointsAndReset(match model.Match) model.Match {
+	for i := range model.NumberOfTeams {
+		match.TotalPoints[i] += int(match.MatchPoints[i] / model.AcePoints)
+		match.MatchPoints[i] = 0
+	}
+	match, isVictory := checkVictoryAndUpdate(match)
+	if isVictory {
+		return match
+	}
+	for i := range match.Players {
+		match.Players[i].Hand = nil
+	}
+	match.Table = nil
+	match.FirstPlayer = nextPlayerName(match)
+	match.TrumpSuit = 0
 	return match
+}
+
+func checkVictoryAndUpdate(match model.Match) (model.Match, bool) {
+	var teamsOver []int
+	for i := range match.TotalPoints {
+		if match.TotalPoints[i] >= model.PointsToWin {
+			teamsOver = append(teamsOver, i)
+		}
+	}
+	firstTeamPoints := match.TotalPoints[0]
+	secondTeamPoints := match.TotalPoints[1]
+	teamsHaveSamePoints := firstTeamPoints == secondTeamPoints
+	noTeamIsOver := len(teamsOver) == 0
+	if teamsHaveSamePoints || noTeamIsOver {
+		return match, false
+	}
+	var winner int
+	oneTeamIsOver := len(teamsOver) == 1
+	if oneTeamIsOver {
+		winner = teamsOver[0]
+	}
+	if firstTeamPoints > secondTeamPoints {
+		winner = 0
+	}
+	if secondTeamPoints > firstTeamPoints {
+		winner = 1
+	}
+	match.WinnerTeam = &winner
+	match.WinnerPlayers = nil
+	for _, p := range match.Players {
+		if p.TeamId == winner {
+			match.WinnerPlayers = append(match.WinnerPlayers, p.Name)
+		}
+	}
+	return match, true
 }
 
 func printMatch(match model.Match) {
 	for i := 0; i < len(match.Players); i++ {
-		fmt.Printf("Player %d (%s): %v\n", i+1, match.Players[i].Name, match.Players[i].Hand)
-		fmt.Printf("Match Points: %d, Total Points: %d\n\n", match.Players[i].MatchPoints, match.Players[i].TotalPoints)
+		fmt.Printf("Team %d\t%s\tHand: %v\n", match.Players[i].TeamId+1, match.Players[i].Name, match.Players[i].Hand)
+	}
+	for i := 0; i < model.NumberOfTeams; i++ {
+		fmt.Printf("Team %d Match Points: %d, Total Points: %d\n", i+1, match.MatchPoints[i], match.TotalPoints[i])
 	}
 	fmt.Printf("Table: %+v\n", match.Table)
 	fmt.Printf("Trump Suit: %s\n", match.TrumpSuit)
