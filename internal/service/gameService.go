@@ -3,62 +3,87 @@ package service
 import (
 	"MarafoNet/internal/model"
 	gameLogic "MarafoNet/internal/utils/gameLogic"
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 )
 
-/*
-Return solo problemi/cose da inviare solo al client che ha fatto la chiamata (tramite backend)
-altrimenti se non dà errori chiamo metodo etcdService per aggiornare etcd con le nuove informazioni del match
-*/
-func StartGame(playerInfo json.RawMessage) json.RawMessage {
-	players := decodePlayersFromJson(playerInfo)
-	match := gameLogic.StartGame(players)
-	return encodeMatchAsJSON(match)
+type GameService struct {
+	etcdService *EtcdService
 }
 
-func SetTrumpSuit(gameInfo json.RawMessage, playerName string, suit model.Suit) json.RawMessage {
-	match := decodeMatchFromJson(gameInfo)
-	match, err := gameLogic.SetTrumpSuit(match, playerName, suit)
-	if err != nil {
-		panic(err)
+func NewGameService(etcdService *EtcdService) *GameService {
+	return &GameService{
+		etcdService: etcdService,
 	}
-	return encodeMatchAsJSON(match)
 }
 
-func PlayCard(gameInfo json.RawMessage, playerName string, card model.Card) json.RawMessage {
-	match := decodeMatchFromJson(gameInfo)
-	match, err := gameLogic.PlayCard(match, playerName, card)
-	if err != nil {
-		panic(err)
-	}
-	if match.WinnerPlayers != nil {
-		//Showcase winner players
-	}
-	return encodeMatchAsJSON(match)
-}
-
-func decodePlayersFromJson(playerNames json.RawMessage) []model.Player {
+func (gameService *GameService) StartGame(ctx context.Context, playerNames json.RawMessage) (matchId string, err error) {
 	var players []model.Player
-	err := json.Unmarshal(playerNames, &players)
+	err = json.Unmarshal(playerNames, &players)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return players
+	matchId, err = gameService.etcdService.GetNextMatchID(ctx)
+	if err != nil {
+		return "", err
+	}
+	match := gameLogic.StartGame(players)
+	matchJson, err := json.Marshal(match)
+	if err != nil {
+		return "", err
+	}
+	success, err := gameService.etcdService.PutNewGame(ctx, matchId, matchJson)
+	if err != nil || !success {
+		return "", errors.New("failed to create new game in etcd")
+	}
+	return matchId, nil
 }
 
-func decodeMatchFromJson(gameInfo json.RawMessage) model.Match {
+func (gameService *GameService) SetTrumpSuit(ctx context.Context, matchId string, playerName string, suit model.Suit) error {
+	err := gameService.applyUpdate(ctx, matchId, func(m model.Match) (model.Match, error) {
+		return gameLogic.SetTrumpSuit(m, playerName, suit)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set trump suit: %w", err)
+	}
+	return nil
+}
+
+func (gameService *GameService) PlayCard(ctx context.Context, matchId string, playerName string, card model.Card) error {
+	err := gameService.applyUpdate(ctx, matchId, func(m model.Match) (model.Match, error) {
+		return gameLogic.PlayCard(m, playerName, card)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to play card: %w", err)
+	}
+	return nil
+}
+
+func (gameService *GameService) applyUpdate(ctx context.Context, matchId string, updater func(model.Match) (model.Match, error)) error {
+	matchJson, revision, err := gameService.etcdService.GetValueAndRevision(ctx, matchId)
+	if err != nil {
+		return err
+	}
 	var match model.Match
-	err := json.Unmarshal(gameInfo, &match)
-	if err != nil {
-		panic(err)
+	if err := json.Unmarshal(matchJson, &match); err != nil {
+		return err
 	}
-	return match
-}
-
-func encodeMatchAsJSON(match model.Match) json.RawMessage {
-	matchBytes, err := json.Marshal(match)
+	updatedMatch, err := updater(match)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("mossa non valida: %w", err)
 	}
-	return matchBytes
+	updatedMatchJson, err := json.Marshal(updatedMatch)
+	if err != nil {
+		return err
+	}
+	success, err := gameService.etcdService.PutIfUnmodified(ctx, matchId, updatedMatchJson, revision)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return fmt.Errorf("failed to update match")
+	}
+	return nil
 }
