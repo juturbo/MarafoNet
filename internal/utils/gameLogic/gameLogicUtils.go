@@ -18,15 +18,20 @@ func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.
 	if isTrumpSuitChosen(match) {
 		return match, errors.New("trump suit has already been chosen")
 	}
-	if isFirstPlayerTurn(match, playerName) {
-		match.TrumpSuit = suit
+	if !isFirstPlayerTurn(match, playerName) {
+		return match, errors.New("only the first player can choose the trump suit")
 	}
+	match.TrumpSuit = suit
 	return match, nil
 }
 
 func PlayCard(match model.Match, playerName string, card model.Card) (model.Match, error) {
 	if !isTheCardPlayable(match, playerName, card) {
 		return match, errors.New("the card is not playable")
+	}
+	if isEligibleForMarafona(match, playerName, card) {
+		teamId := getPlayerTeamId(match, playerName)
+		match.MatchPoints[teamId] += model.Point(model.MARAFONA_POINTS)
 	}
 	match.Table = append(match.Table, model.PlayedCard{
 		PlayerName: playerName,
@@ -145,7 +150,8 @@ func getCurrentPlayer(match model.Match) string {
 	currentPlayerName := match.FirstPlayer
 	for i, player := range match.Players {
 		if player.Name == lastPlayerName {
-			currentPlayerName = match.Players[(i+1)%len(match.Players)].Name
+			currentPlayerIndex := (i + 1) % len(match.Players)
+			currentPlayerName = match.Players[currentPlayerIndex].Name
 			break
 		}
 	}
@@ -183,6 +189,56 @@ func isFirstPlayerTurn(match model.Match, playerName string) bool {
 	return match.FirstPlayer == playerName
 }
 
+func getPlayerTeamId(match model.Match, playerName string) int {
+	for _, p := range match.Players {
+		if p.Name == playerName {
+			return p.TeamId
+		}
+	}
+	return 0
+}
+
+func isEligibleForMarafona(match model.Match, playerName string, card model.Card) bool {
+	if !isTrumpSuitChosen(match) {
+		return false
+	}
+	if !isFirstPlayerTurn(match, playerName) {
+		return false
+	}
+	if !isTableEmpty(match) {
+		return false
+	}
+	if card.Suit != match.TrumpSuit || card.Rank != model.Ace {
+		return false
+	}
+	for _, player := range match.Players {
+		if player.Name != playerName {
+			continue
+		}
+		if len(player.Hand) != model.CardsPerPlayer {
+			return false
+		}
+		hasAce := false
+		hasTwo := false
+		hasThree := false
+		for _, card := range player.Hand {
+			if card.Suit != match.TrumpSuit {
+				continue
+			}
+			switch card.Rank {
+			case model.Ace:
+				hasAce = true
+			case model.Two:
+				hasTwo = true
+			case model.Three:
+				hasThree = true
+			}
+		}
+		return hasAce && hasTwo && hasThree
+	}
+	return false
+}
+
 /*
 A card is of the leading suit if it has the same suit as the first card played in the trick.
 If a player has a card of the leading suit, they must play it.
@@ -202,24 +258,6 @@ func isCardOfLeadingSuit(match model.Match, playerName string, card model.Card) 
 	}
 	isValid = true
 	return isValid
-	/*
-		if isTableEmpty(match) { // if the table is empty, any card can be played, so we consider it valid
-			isValid = true
-			return isValid
-		}
-		var leadingSuit = match.Table[0].Card.Suit
-		var cardSuitIsLeadingSuit = card.Suit == leadingSuit
-		if cardSuitIsLeadingSuit {
-			isValid = true
-			return isValid
-		}
-		if !playerHasCardOfLeadingSuit(match.Players, playerName, leadingSuit) {
-			isValid = true
-			return isValid
-		}
-		isValid = false
-		return isValid
-	*/
 }
 
 func playerHasCardOfLeadingSuit(players []model.Player, playerName string, leadingSuit model.Suit) bool {
@@ -280,7 +318,7 @@ func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
 	for _, player := range match.Players {
 		if player.Name == winningPlayerName {
 			winningTeamId = player.TeamId
-			break
+			return winningTeamId
 		}
 	}
 	return winningTeamId
@@ -305,7 +343,7 @@ func isMatchOver(match model.Match) bool {
 
 func calculateMatchPointsAndReset(match model.Match) model.Match {
 	for i := range model.NumberOfTeams {
-		match.TotalPoints[i] += int(match.MatchPoints[i] / model.AcePoints)
+		match.TotalPoints[i] += int(match.MatchPoints[i] / model.ACE_POINTS)
 		match.MatchPoints[i] = 0
 	}
 	match, isVictory := checkVictoryAndUpdate(match)

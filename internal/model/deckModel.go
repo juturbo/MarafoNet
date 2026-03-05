@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	AcePoints   = 3
-	MinorPoints = 1
-	BlankPoints = 0
+	ACE_POINTS      = 3
+	MINOR_POINTS    = 1
+	BLANK_POINTS    = 0
+	MARAFONA_POINTS = 3 * ACE_POINTS
 )
 
 const (
@@ -96,10 +97,10 @@ func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
 func (card Card) PointValue() Point {
 	switch card.Rank {
 	case Ace:
-		return AcePoints
+		return ACE_POINTS
 	case Two, Three, Jack, Knight, King:
-		return MinorPoints
+		return MINOR_POINTS
 	default:
-		return BlankPoints
+		return BLANK_POINTS
 	}
 }
