@@ -119,6 +119,70 @@ func TestIsTheCardPlayableVarious(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestMarafonaBonusAwarded(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	hand := make([]model.Card, model.CardsPerPlayer)
+	hand[0] = model.Card{Suit: model.Cups, Rank: model.Ace}
+	hand[1] = model.Card{Suit: model.Cups, Rank: model.Two}
+	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
+	for i := 3; i < model.CardsPerPlayer; i++ {
+		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
+	}
+	setHands(&match, [][]model.Card{hand})
+	match.TrumpSuit = model.Cups
+
+	updated, err := PlayCard(match, "Alice", hand[0])
+	assert.NoError(t, err)
+	teamId := getPlayerTeamId(match, "Alice")
+	assert.Equal(t, model.Point(model.MARAFONA_POINTS), updated.MatchPoints[teamId])
+}
+
+func TestMarafonaNotAwardedIfNotAllCards(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	hand := []model.Card{{Suit: model.Cups, Rank: model.Ace}, {Suit: model.Cups, Rank: model.Two}, {Suit: model.Cups, Rank: model.Three}}
+	setHands(&match, [][]model.Card{hand})
+	match.TrumpSuit = model.Cups
+	updated, err := PlayCard(match, "Alice", hand[0])
+	assert.NoError(t, err)
+	teamId := getPlayerTeamId(match, "Alice")
+	assert.Equal(t, model.Point(0), updated.MatchPoints[teamId])
+}
+
+func TestMarafonaNotAwardedIfNotFirstPlayer(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	hand := make([]model.Card, model.CardsPerPlayer)
+	hand[0] = model.Card{Suit: model.Cups, Rank: model.Ace}
+	hand[1] = model.Card{Suit: model.Cups, Rank: model.Two}
+	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
+	for i := 3; i < model.CardsPerPlayer; i++ {
+		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
+	}
+	setHands(&match, [][]model.Card{{}, hand})
+	match.TrumpSuit = model.Cups
+	match.Table = []model.PlayedCard{{PlayerName: "Alice", Card: model.Card{Suit: model.Cups, Rank: model.Four}}}
+	updated, err := PlayCard(match, "Bob", hand[0])
+	assert.NoError(t, err)
+	teamId := getPlayerTeamId(match, "Bob")
+	assert.Equal(t, model.Point(0), updated.MatchPoints[teamId])
+}
+
+func TestMarafonaNotAwardedIfFirstCardNotAce(t *testing.T) {
+	match := mkMatch("Alice", "Bob", "Carol", "Dave")
+	hand := make([]model.Card, model.CardsPerPlayer)
+	hand[0] = model.Card{Suit: model.Cups, Rank: model.Two}
+	hand[1] = model.Card{Suit: model.Cups, Rank: model.Ace}
+	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
+	for i := 3; i < model.CardsPerPlayer; i++ {
+		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
+	}
+	setHands(&match, [][]model.Card{hand})
+	match.TrumpSuit = model.Cups
+	updated, err := PlayCard(match, "Alice", hand[0])
+	assert.NoError(t, err)
+	teamId := getPlayerTeamId(match, "Alice")
+	assert.Equal(t, model.Point(0), updated.MatchPoints[teamId])
+}
+
 func mkPlayers(names ...string) []model.Player {
 	players := make([]model.Player, len(names))
 	for i, n := range names {
