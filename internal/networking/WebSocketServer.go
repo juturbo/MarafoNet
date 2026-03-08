@@ -39,15 +39,20 @@ func ServeRead(Conn *websocket.Conn, writeChannel chan json.RawMessage) {
 		if err != nil {
 			break
 		}
-		HandleWSEnvelope(envelope)
+		var response, payload = HandleWSEnvelope(envelope)
+		if response {
+			writeChannel <- payload
+		}
 	}
 }
 
-func HandleWSEnvelope(envelope Envelope) {
+func HandleWSEnvelope(envelope Envelope) (bool, json.RawMessage) {
 	switch {
-	case envelope.EqualsType(FirstJoinType):
+	case envelope.EqualsType(JoinType):
 		panic("unimplemented")
 	case envelope.EqualsType(PlayCardType):
+		panic("unimplemented")
+	case envelope.EqualsType(SetTrumpType):
 		panic("unimplemented")
 	default:
 		panic("unknown envelope type")
