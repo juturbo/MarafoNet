@@ -6,10 +6,12 @@ import "encoding/json"
 type MessageType string
 
 const (
-	// A message sent by the client when they first connect to the server.
-	FirstJoinType MessageType = "first_join"
+	// A message sent by the client when they connect to the server.
+	JoinType MessageType = "first_join"
 	// A message send by the client to play a card.
 	PlayCardType MessageType = "play_card"
+	// A message sent by the client to set the trump suit.
+	SetTrumpType MessageType = "set_trump"
 )
 
 type Envelope interface {
