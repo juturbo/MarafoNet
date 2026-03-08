@@ -29,7 +29,10 @@ func (gameService *GameService) StartGame(ctx context.Context, playerNames json.
 	if err != nil {
 		return "", err
 	}
-	match := gameLogic.StartGame(players)
+	match, err := gameLogic.StartGame(players)
+	if err != nil {
+		return "", err
+	}
 	matchJson, err := json.Marshal(match)
 	if err != nil {
 		return "", err
@@ -78,7 +81,7 @@ func (gameService *GameService) applyUpdate(ctx context.Context, matchId string,
 	if err != nil {
 		return err
 	}
-	success, err := gameService.etcdService.PutIfUnmodified(ctx, matchId, updatedMatchJson, revision)
+	success, err := gameService.etcdService.PutUpdatedGameIfRevisionMatch(ctx, matchId, updatedMatchJson, revision)
 	if err != nil {
 		return err
 	}

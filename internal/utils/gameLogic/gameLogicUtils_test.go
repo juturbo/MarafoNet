@@ -10,7 +10,8 @@ import (
 func TestInitializeGame(t *testing.T) {
 	names := []string{"Alice", "Bob", "Carol", "Dave"}
 	players := mkPlayers(names...)
-	match := initializeGame(players)
+	match, err := initializeGame(players)
+	assert.NoError(t, err)
 	assert.Equal(t, players, match.Players)
 }
 

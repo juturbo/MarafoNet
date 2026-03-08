@@ -9,9 +9,12 @@ import (
 )
 
 /*starts a full 41 points game*/
-func StartGame(players []model.Player) model.Match {
-	match := initializeGame(players)
-	return startMatch(match)
+func StartGame(players []model.Player) (model.Match, error) {
+	match, err := initializeGame(players)
+	if err != nil {
+		return match, err
+	}
+	return startMatch(match), nil
 }
 
 func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.Match, error) {
@@ -52,14 +55,24 @@ func PlayCard(match model.Match, playerName string, card model.Card) (model.Matc
 	return match, nil
 }
 
-func initializeGame(players []model.Player) model.Match {
+func initializeGame(players []model.Player) (model.Match, error) {
 	var match model.Match
-	match.Players = initializePlayers(players)
-	match.FirstPlayer = extractFirstPlayer(match.Players)
-	return match
+	var err error
+	match.Players, err = initializePlayers(players)
+	if err != nil {
+		return match, err
+	}
+	match.FirstPlayer, err = extractFirstPlayer(match.Players)
+	if err != nil {
+		return match, err
+	}
+	return match, nil
 }
 
-func initializePlayers(players []model.Player) []model.Player {
+func initializePlayers(players []model.Player) ([]model.Player, error) {
+	if len(players) == 0 {
+		return nil, errors.New("at least one player is required to start the game")
+	}
 	var initializedPlayers []model.Player
 	for i := range players {
 		initializedPlayers = append(initializedPlayers, model.Player{
@@ -68,7 +81,7 @@ func initializePlayers(players []model.Player) []model.Player {
 			Hand:   nil,
 		})
 	}
-	return initializedPlayers
+	return initializedPlayers, nil
 }
 
 /*starts a match in a game*/
@@ -78,9 +91,12 @@ func startMatch(match model.Match) model.Match {
 	return match
 }
 
-func extractFirstPlayer(player []model.Player) string {
+func extractFirstPlayer(player []model.Player) (string, error) {
+	if len(player) == 0 {
+		return "", errors.New("there must be at least one player to extract the first player")
+	}
 	randomIndex := rand.Intn(len(player))
-	return player[randomIndex].Name
+	return player[randomIndex].Name, nil
 }
 
 func nextPlayerName(match model.Match) string {
