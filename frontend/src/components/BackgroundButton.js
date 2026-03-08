@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Form from 'react-bootstrap/Form';
+import './BackgroundButton.css';
 
 function BackgroundButton() {
   const [theme, setTheme] = useState('table-wood');
@@ -13,11 +14,12 @@ function BackgroundButton() {
   }, [theme]);
 
   return (
+    <div className="background-button">
     <Form>
       <Form.Check // prettier-ignore
         type="switch"
         id="custom-switch"
-        label="Check this switch"
+        label="Toggle Background"
         checked={theme === 'table-wood'}
         onChange={() => setTheme(theme === 'table-wood' ? 'table-green' : 'table-wood')}
       />
@@ -28,6 +30,7 @@ function BackgroundButton() {
         id="disabled-custom-switch"
       />
     </Form>
+    </div>
   );
 }
 
