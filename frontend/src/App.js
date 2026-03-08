@@ -14,6 +14,7 @@ function App() {
   // Define your state here
   const [phase, setPhase] = useState('NAME_ENTRY'); // 'NAME_ENTRY' | 'LOBBY' | 'PLAYING'
   const [gameState, setGameState] = useState(null);
+  const [lobbyInfo, setLobbyInfo] = useState(null);
 
   useEffect(() => {
     if (!ws) return;
@@ -26,6 +27,7 @@ function App() {
       switch (payload.type) {
         case 'LOBBY_JOINED':
           setPhase('LOBBY');
+          setLobbyInfo(payload.data);
           break;
         case 'GAME_STARTED':
           setPhase('PLAYING');
@@ -56,7 +58,7 @@ function App() {
       case 'NAME_ENTRY':
         return <NameEntryScreen ws={ws} />;
       case 'LOBBY':
-        return <LobbyScreen ws={ws} />;
+        return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
       case 'PLAYING':
         return <TableScreen ws={ws} gameState={gameState} />;
       default:
