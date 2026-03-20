@@ -37,6 +37,11 @@ type PlayCardPayLoad struct {
 	Suit    model.Suit `json:"suit"`
 }
 
+type SetTrumpPayLoad struct {
+	MatchID string     `json:"matchId"`
+	Suit    model.Suit `json:"suit"`
+}
+
 // Returns the message type of the envelope.
 func (e WSEnvelope) GetMessageType() MessageType {
 	return MessageType(e.MessageType)
