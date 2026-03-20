@@ -2,7 +2,10 @@ package main
 
 import (
 	"MarafoNet/internal/networking"
+	"MarafoNet/internal/service"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
@@ -23,7 +26,22 @@ const localFilePath string = "./frontend"
 
 const webSocketPath = "/ws"
 
+var etcdEndpoint = []string{"localhost:2379"}
+
 func main() {
+	etcdService, err := service.NewEtcdService(etcdEndpoint, time.Second)
+	if err != nil {
+		log.Fatalf("failed to connect to etcd: %v", err)
+	}
+	defer func() {
+		closeErr := etcdService.Close()
+		if closeErr != nil {
+			log.Printf("failed to close etcd client: %v", closeErr)
+		}
+	}()
+
+	gameService := service.NewGameService(etcdService)
+
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
@@ -45,8 +63,10 @@ func main() {
 			c.String(400, "websocket upgrade failed")
 			return
 		}
-		networking.ServeWS(conn)
+		networking.ServeWS(conn, gameService, etcdService)
 	})
 	// Start and run the server
-	router.Run(":5000")
+	if err := router.Run(":5000"); err != nil {
+		log.Fatalf("server failed: %v", err)
+	}
 }
