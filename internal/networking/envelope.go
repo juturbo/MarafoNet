@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"MarafoNet/internal/model"
 	"encoding/json"
 )
 
@@ -30,6 +31,12 @@ type WSEnvelope struct {
 	Payload     json.RawMessage `json:"payload"`
 }
 
+type PlayCardPayLoad struct {
+	MatchID string     `json:"matchId"`
+	Rank    model.Rank `json:"rank"`
+	Suit    model.Suit `json:"suit"`
+}
+
 // Returns the message type of the envelope.
 func (e WSEnvelope) GetMessageType() MessageType {
 	return MessageType(e.MessageType)
@@ -47,4 +54,13 @@ func (e WSEnvelope) GetPlayerName() string {
 // Returns true if the message type of the envelope is equal to the given type.
 func (e WSEnvelope) EqualsType(otherType MessageType) bool {
 	return e.GetMessageType() == otherType
+}
+
+func BuildJSONErrorResponse(errorMessage string) json.RawMessage {
+	errorResponse := map[string]string{
+		"type":    "error",
+		"message": errorMessage,
+	}
+	errorResponseJson, _ := json.Marshal(errorResponse)
+	return errorResponseJson
 }
