@@ -64,9 +64,9 @@ func HandleWSEnvelope(envelope Envelope, hub WebSocketHub) (bool, json.RawMessag
 	switch {
 	case envelope.EqualsType(JoinType):
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
-		if err != nil {
+		if err == nil {
 			// TODO: handle case where user has no active game (go to matchmaking)
-			panic("unimplemented")
+			return true, BuildJSONErrorResponse(err.Error())
 		}
 		// TODO: send back JSON game state to user
 	case envelope.EqualsType(PlayCardType):
@@ -78,11 +78,17 @@ func HandleWSEnvelope(envelope Envelope, hub WebSocketHub) (bool, json.RawMessag
 		}
 		err := hub.GameService.PlayCard(context.Background(), payload.MatchID, envelope.GetPlayerName(), card)
 		if err == nil {
-			hub.WriteChannel <- BuildJSONErrorResponse(err.Error())
+			return true, BuildJSONErrorResponse(err.Error())
 		}
 	case envelope.EqualsType(SetTrumpType):
-		panic("unimplemented")
+		var payload SetTrumpPayLoad
+		json.Unmarshal(envelope.GetPayload(), &payload)
+		err := hub.GameService.SetTrumpSuit(context.Background(), payload.MatchID, envelope.GetPlayerName(), payload.Suit)
+		if err == nil {
+			return true, BuildJSONErrorResponse(err.Error())
+		}
 	default:
-		panic("unknown envelope type")
+		return true, BuildJSONErrorResponse("invalid message type")
 	}
+	return false, nil
 }
