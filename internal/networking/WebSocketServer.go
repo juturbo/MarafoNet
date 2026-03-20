@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"MarafoNet/internal/model"
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
@@ -69,7 +70,16 @@ func HandleWSEnvelope(envelope Envelope, hub WebSocketHub) (bool, json.RawMessag
 		}
 		// TODO: send back JSON game state to user
 	case envelope.EqualsType(PlayCardType):
-		hub.GameService.PlayCard(context.Background())
+		var payload PlayCardPayLoad
+		json.Unmarshal(envelope.GetPayload(), &payload)
+		card := model.Card{
+			Rank: payload.Rank,
+			Suit: payload.Suit,
+		}
+		err := hub.GameService.PlayCard(context.Background(), payload.MatchID, envelope.GetPlayerName(), card)
+		if err == nil {
+			hub.WriteChannel <- BuildJSONErrorResponse(err.Error())
+		}
 	case envelope.EqualsType(SetTrumpType):
 		panic("unimplemented")
 	default:
