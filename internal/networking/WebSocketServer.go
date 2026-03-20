@@ -1,51 +1,23 @@
 package networking
 
 import (
+	"MarafoNet/internal/networking/websockethub"
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-type WebSocketHub struct {
-	Connection     *websocket.Conn
-	WriteChannel   chan json.RawMessage
-	StorageService *service.EtcdService
-	GameService    *service.GameService
-	playerName     string
-	once           sync.Once
-}
-
-func CreateWebSocketHub(Conn *websocket.Conn, GameService *service.GameService, StorageService *service.EtcdService) *WebSocketHub {
-	var hub WebSocketHub
-	hub.Connection = Conn
-	hub.WriteChannel = make(chan json.RawMessage)
-	hub.GameService = GameService
-	hub.StorageService = StorageService
-	return &hub
-}
-
-func (hub *WebSocketHub) GetPlayerName() string {
-	return hub.playerName
-}
-
-func (hub *WebSocketHub) setPlayerID(playerName string) {
-	hub.once.Do(func() {
-		hub.playerName = playerName
-	})
-}
-
 // Calls goroutines to serve read and write channels for one WebSocket connection.
 func ServeWS(Conn *websocket.Conn, GameService *service.GameService, StorageService *service.EtcdService) {
-	hub := CreateWebSocketHub(Conn, GameService, StorageService)
+	hub := websockethub.CreateWebSocketHub(Conn, GameService, StorageService)
 	go ServeWrite(hub)
 	go ServeRead(hub)
 
 }
 
-func ServeWrite(hub *WebSocketHub) {
+func ServeWrite(hub *websockethub.WebSocketHub) {
 	defer hub.Connection.Close()
 
 	for message := range hub.WriteChannel {
@@ -56,7 +28,7 @@ func ServeWrite(hub *WebSocketHub) {
 	}
 }
 
-func ServeRead(hub *WebSocketHub) {
+func ServeRead(hub *websockethub.WebSocketHub) {
 	defer hub.Connection.Close()
 
 	for {
@@ -72,7 +44,7 @@ func ServeRead(hub *WebSocketHub) {
 	}
 }
 
-func HandleWSEnvelope(envelope Envelope, hub *WebSocketHub) (bool, json.RawMessage) {
+func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, json.RawMessage) {
 	switch {
 	case envelope.EqualsType(JoinType):
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
