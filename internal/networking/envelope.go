@@ -26,6 +26,10 @@ type WSEnvelope struct {
 	Payload     json.RawMessage `json:"payload"`
 }
 
+type JoinPayload struct {
+	PlayerName string `json:"playerName"`
+}
+
 // Returns the message type of the envelope.
 func (e WSEnvelope) GetMessageType() MessageType {
 	return MessageType(e.MessageType)
