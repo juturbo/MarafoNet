@@ -47,6 +47,11 @@ func ServeRead(hub *websockethub.WebSocketHub) {
 func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, json.RawMessage) {
 	switch {
 	case envelope.EqualsType(JoinType):
+		if hub.GetPlayerName() != envelope.GetPlayerName() {
+			return true, BuildJSONErrorResponse("player name does not match existing player name for this connection")
+		} else if hub.GetPlayerName() == "" {
+			hub.SetPlayerID(envelope.GetPlayerName())
+		}
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
 		if err == nil {
 			// TODO: handle case where user has no active game (go to matchmaking)
