@@ -62,16 +62,14 @@ func ServeRead(hub WebSocketHub) {
 func HandleWSEnvelope(envelope Envelope, hub WebSocketHub) (bool, json.RawMessage) {
 	switch {
 	case envelope.EqualsType(JoinType):
-		var joinPayload JoinPayload
-		json.Unmarshal(envelope.GetPayload(), &joinPayload)
-		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), joinPayload.PlayerName)
+		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
 		if err != nil {
 			// TODO: handle case where user has no active game (go to matchmaking)
 			panic("unimplemented")
-
 		}
 		// TODO: send back JSON game state to user
 	case envelope.EqualsType(PlayCardType):
+		hub.GameService.PlayCard(context.Background())
 	case envelope.EqualsType(SetTrumpType):
 		panic("unimplemented")
 	default:

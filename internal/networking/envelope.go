@@ -1,6 +1,8 @@
 package networking
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // A type of message sent from the client.
 type MessageType string
@@ -17,17 +19,15 @@ const (
 type Envelope interface {
 	GetMessageType() MessageType
 	GetPayload() json.RawMessage
+	GetPlayerName() string
 	EqualsType(otherType MessageType) bool
 }
 
 // A WebSocket message from the client.
 type WSEnvelope struct {
 	MessageType string          `json:"type"`
+	PlayerName  string          `json:"playerName"`
 	Payload     json.RawMessage `json:"payload"`
-}
-
-type JoinPayload struct {
-	PlayerName string `json:"playerName"`
 }
 
 // Returns the message type of the envelope.
@@ -38,6 +38,10 @@ func (e WSEnvelope) GetMessageType() MessageType {
 // Returns the payload of the envelope.
 func (e WSEnvelope) GetPayload() json.RawMessage {
 	return e.Payload
+}
+
+func (e WSEnvelope) GetPlayerName() string {
+	return e.PlayerName
 }
 
 // Returns true if the message type of the envelope is equal to the given type.
