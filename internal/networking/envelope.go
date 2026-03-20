@@ -31,7 +31,7 @@ type WSEnvelope struct {
 	Payload     json.RawMessage `json:"payload"`
 }
 
-type PlayCardPayLoad struct {
+type playCardPayLoad struct {
 	MatchID string     `json:"matchId"`
 	Rank    model.Rank `json:"rank"`
 	Suit    model.Suit `json:"suit"`
@@ -59,6 +59,16 @@ func (e WSEnvelope) GetPlayerName() string {
 // Returns true if the message type of the envelope is equal to the given type.
 func (e WSEnvelope) EqualsType(otherType MessageType) bool {
 	return e.GetMessageType() == otherType
+}
+
+func PayloadFromJSON(data json.RawMessage) (string, model.Card, error) {
+	var p playCardPayLoad
+	err := json.Unmarshal(data, &p)
+	return p.MatchID,
+		model.Card{
+			Rank: p.Rank,
+			Suit: p.Suit,
+		}, err
 }
 
 func BuildJSONErrorResponse(errorMessage string) json.RawMessage {
