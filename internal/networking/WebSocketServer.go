@@ -58,21 +58,20 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			// TODO: handle case where user has no active game (go to matchmaking)
 			return true, BuildJSONErrorResponse(err.Error())
 		}
-		// TODO: send back JSON game state to user
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
-		if marshalingError == nil {
+		if marshalingError != nil {
 			return true, BuildJSONErrorResponse(marshalingError.Error())
 		}
 		err := hub.GameService.PlayCard(context.Background(), matchID, envelope.GetPlayerName(), card)
-		if err == nil {
+		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 	case envelope.EqualsType(SetTrumpType):
 		var payload SetTrumpPayLoad
 		json.Unmarshal(envelope.GetPayload(), &payload)
 		err := hub.GameService.SetTrumpSuit(context.Background(), payload.MatchID, envelope.GetPlayerName(), payload.Suit)
-		if err == nil {
+		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 	default:
