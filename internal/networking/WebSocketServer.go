@@ -6,6 +6,7 @@ import (
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -46,11 +47,8 @@ func ServeRead(hub *websockethub.WebSocketHub) {
 }
 
 func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, json.RawMessage) {
-	// TODO: check if the username is already in the server and if the user is connected from another connection (stored in etcd?)
-	if hub.GetPlayerName() != envelope.GetPlayerName() {
-		return true, BuildJSONErrorResponse("player name does not match existing player name for this connection")
-	} else if hub.GetPlayerName() == "" {
-		hub.SetPlayerID(envelope.GetPlayerName())
+	if bool, err := checkPlayerIdentity(hub, envelope); bool {
+		return true, BuildJSONErrorResponse(err.Error())
 	}
 	switch {
 	case envelope.EqualsType(JoinType):
@@ -80,6 +78,21 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		}
 	default:
 		return true, BuildJSONErrorResponse("invalid message type")
+	}
+	return false, nil
+}
+
+// Checks the player's identity against the name associated with the connection in WebSocketHub.
+// If there's no name associated with the connection, then the one sent is set and a new UUIDv4 is generated
+// and associated with the player's name.
+func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
+	// 1. Check if the name in the message is the same as the one in the WebSocketHub.
+	// Check also if the UUIDv4 passed is the same as the one in etcd.
+	if hub.GetPlayerName() != envelope.GetPlayerName() {
+		return true, fmt.Errorf("player identity does not match the existing one for this connection")
+	} else if hub.GetPlayerName() == "" {
+		// 2. If no name is associated with the connection, set it and generate a new UUIDv4 for the player.
+		hub.SetPlayerID(envelope.GetPlayerName())
 	}
 	return false, nil
 }
