@@ -36,6 +36,12 @@ func SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.
 	return nil
 }
 
+// Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
+// a watcher for the game.
+func JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) error {
+	return nil
+}
+
 func matchmake() {
 
 }
