@@ -56,7 +56,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	case envelope.EqualsType(JoinType):
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
 		if err != nil {
-			// TODO: handle case where user has no active game (go to matchmaking)
+			matchmaking.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel)
 			return true, BuildJSONErrorResponse(err.Error())
 		} else {
 			matchmaking.SetGameWatcher(context.Background(), gameID, hub.WriteChannel)
@@ -66,14 +66,14 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		if marshalingError != nil {
 			return true, BuildJSONErrorResponse(marshalingError.Error())
 		}
-		err := hub.GameService.PlayCard(context.Background(), matchID, envelope.GetPlayerName(), card)
+		err := hub.GameService.PlayCard(context.Background(), matchID, hub.GetPlayerName(), card)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 	case envelope.EqualsType(SetTrumpType):
 		var payload SetTrumpPayLoad
 		json.Unmarshal(envelope.GetPayload(), &payload)
-		err := hub.GameService.SetTrumpSuit(context.Background(), payload.MatchID, envelope.GetPlayerName(), payload.Suit)
+		err := hub.GameService.SetTrumpSuit(context.Background(), payload.MatchID, hub.GetPlayerName(), payload.Suit)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
