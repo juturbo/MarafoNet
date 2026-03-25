@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/networking/websockethub"
 	"MarafoNet/internal/service"
 	"context"
@@ -54,9 +55,11 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	switch {
 	case envelope.EqualsType(JoinType):
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
-		if err == nil {
+		if err != nil {
 			// TODO: handle case where user has no active game (go to matchmaking)
 			return true, BuildJSONErrorResponse(err.Error())
+		} else {
+			matchmaking.SetGameWatcher(context.Background(), gameID, hub.WriteChannel)
 		}
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
