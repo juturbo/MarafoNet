@@ -1,6 +1,7 @@
 package websockethub
 
 import (
+	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/service"
 	"encoding/json"
 	"sync"
@@ -9,20 +10,27 @@ import (
 )
 
 type WebSocketHub struct {
-	Connection     *websocket.Conn
-	WriteChannel   chan json.RawMessage
-	StorageService *service.EtcdService
-	GameService    *service.GameService
-	playerName     string
-	once           sync.Once
+	Connection         *websocket.Conn
+	WriteChannel       chan json.RawMessage
+	StorageService     *service.EtcdService
+	GameService        *service.GameService
+	MatchmakingService *matchmaking.MatchmakingHub
+	playerName         string
+	once               sync.Once
 }
 
-func CreateWebSocketHub(Conn *websocket.Conn, GameService *service.GameService, StorageService *service.EtcdService) *WebSocketHub {
+func CreateWebSocketHub(
+	Conn *websocket.Conn,
+	GameService *service.GameService,
+	StorageService *service.EtcdService,
+	MatchmakingService *matchmaking.MatchmakingHub,
+) *WebSocketHub {
 	var hub WebSocketHub
 	hub.Connection = Conn
 	hub.WriteChannel = make(chan json.RawMessage)
 	hub.GameService = GameService
 	hub.StorageService = StorageService
+	hub.MatchmakingService = MatchmakingService
 	return &hub
 }
 
