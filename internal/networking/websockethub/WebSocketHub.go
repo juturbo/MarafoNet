@@ -19,6 +19,7 @@ type WebSocketHub struct {
 	playerName         string
 	playerNameOnce     sync.Once
 	cancelFunc         context.CancelFunc
+	closeOnce          sync.Once
 }
 
 func CreateWebSocketHub(
@@ -33,6 +34,7 @@ func CreateWebSocketHub(
 	hub.GameService = GameService
 	hub.StorageService = StorageService
 	hub.MatchmakingService = MatchmakingService
+	hub.closeOnce = sync.Once{}
 	return &hub
 }
 
@@ -57,4 +59,16 @@ func (hub *WebSocketHub) CancelWatcher() {
 		hub.cancelFunc()
 		hub.cancelFunc = nil
 	}
+}
+
+func (hub *WebSocketHub) Cleanup() {
+	hub.closeOnce.Do(func() {
+		closeConnection(hub)
+	})
+}
+
+// Closes the connection and everything related to it: watchers, channels, etc...
+func closeConnection(hub *WebSocketHub) {
+	hub.Connection.Close()
+	hub.CancelWatcher()
 }

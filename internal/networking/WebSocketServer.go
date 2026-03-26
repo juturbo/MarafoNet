@@ -28,9 +28,7 @@ func ServeWS(
 }
 
 func ServeWrite(hub *websockethub.WebSocketHub) {
-	defer once.Do(func() {
-		closeConnection(hub)
-	})
+	defer hub.Cleanup()
 
 	for message := range hub.WriteChannel {
 		err := hub.Connection.WriteJSON(message)
@@ -41,9 +39,7 @@ func ServeWrite(hub *websockethub.WebSocketHub) {
 }
 
 func ServeRead(hub *websockethub.WebSocketHub) {
-	defer once.Do(func() {
-		closeConnection(hub)
-	})
+	defer hub.Cleanup()
 
 	for {
 		var envelope WSEnvelope
@@ -109,10 +105,4 @@ func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (boo
 		hub.SetPlayerID(envelope.GetPlayerName())
 	}
 	return false, nil
-}
-
-// Closes the connection and everything related to it: watchers, channels, etc...
-func closeConnection(hub *websockethub.WebSocketHub) {
-	hub.Connection.Close()
-	hub.CancelWatcher()
 }
