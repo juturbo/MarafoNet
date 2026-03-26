@@ -42,8 +42,7 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 
 // Sets a watcher on the requested game, sending the information down the write channel.
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) context.CancelFunc {
-	cancelFunc := startWatcher(ctx, hub.GetStorageService().WatchMatch, matchId, writeChannel)
-	return cancelFunc
+	return startWatcher(ctx, hub.GetStorageService().WatchMatch, matchId, writeChannel)
 }
 
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
