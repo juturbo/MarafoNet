@@ -66,7 +66,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	case envelope.EqualsType(JoinType):
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
 		if err != nil {
-			hub.MatchmakingService.SetGameWatcher(
+			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel),
 			)
 		} else {
