@@ -17,7 +17,7 @@ type WebSocketHub struct {
 	GameService        *service.GameService
 	MatchmakingService *matchmaking.MatchmakingHub
 	playerName         string
-	once               sync.Once
+	playerNameOnce     sync.Once
 	cancelFunc         context.CancelFunc
 }
 
@@ -41,7 +41,7 @@ func (hub *WebSocketHub) GetPlayerName() string {
 }
 
 func (hub *WebSocketHub) SetPlayerID(playerName string) {
-	hub.once.Do(func() {
+	hub.playerNameOnce.Do(func() {
 		hub.playerName = playerName
 	})
 }
