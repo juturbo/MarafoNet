@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/networking"
 	"MarafoNet/internal/service"
 	"log"
@@ -41,6 +42,7 @@ func main() {
 	}()
 
 	gameService := service.NewGameService(etcdService)
+	matchMakingService := matchmaking.NewMatchmakingHub(etcdService)
 
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
@@ -63,7 +65,7 @@ func main() {
 			c.String(400, "websocket upgrade failed")
 			return
 		}
-		networking.ServeWS(conn, gameService, etcdService)
+		networking.ServeWS(conn, gameService, etcdService, matchMakingService)
 	})
 	// Start and run the server
 	if err := router.Run(":5000"); err != nil {
