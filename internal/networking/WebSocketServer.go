@@ -7,9 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
+
+var once sync.Once
 
 // Calls goroutines to serve read and write channels for one WebSocket connection.
 func ServeWS(
@@ -25,7 +28,9 @@ func ServeWS(
 }
 
 func ServeWrite(hub *websockethub.WebSocketHub) {
-	defer hub.Connection.Close()
+	defer once.Do(func() {
+		closeConnection(hub)
+	})
 
 	for message := range hub.WriteChannel {
 		err := hub.Connection.WriteJSON(message)
@@ -36,7 +41,9 @@ func ServeWrite(hub *websockethub.WebSocketHub) {
 }
 
 func ServeRead(hub *websockethub.WebSocketHub) {
-	defer hub.Connection.Close()
+	defer once.Do(func() {
+		closeConnection(hub)
+	})
 
 	for {
 		var envelope WSEnvelope
@@ -63,7 +70,12 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel)
 			return true, BuildJSONErrorResponse(err.Error())
 		} else {
-			hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel)
+			_, err := hub.SetWatcherCancelFunc(
+				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
+			)
+			if err != nil {
+				return true, BuildJSONErrorResponse(err.Error())
+			}
 		}
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
@@ -100,4 +112,10 @@ func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (boo
 		hub.SetPlayerID(envelope.GetPlayerName())
 	}
 	return false, nil
+}
+
+// Closes the connection and everything related to it: watchers, channels, etc...
+func closeConnection(hub *websockethub.WebSocketHub) {
+	hub.Connection.Close()
+	hub.CancelWatcher()
 }
