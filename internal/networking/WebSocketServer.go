@@ -73,9 +73,6 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
 			)
-			if err != nil {
-				return true, BuildJSONErrorResponse(err.Error())
-			}
 		}
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
