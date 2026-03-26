@@ -47,7 +47,7 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
 // a watcher for the game.
-func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) error {
+func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) context.CancelFunc {
 	//startWatcher(ctx, hub.GetStorageService().method, playerName, writeChannel)
 	return nil
 }
