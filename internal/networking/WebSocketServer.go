@@ -12,8 +12,13 @@ import (
 )
 
 // Calls goroutines to serve read and write channels for one WebSocket connection.
-func ServeWS(Conn *websocket.Conn, GameService *service.GameService, StorageService *service.EtcdService) {
-	hub := websockethub.CreateWebSocketHub(Conn, GameService, StorageService)
+func ServeWS(
+	Conn *websocket.Conn,
+	GameService *service.GameService,
+	StorageService *service.EtcdService,
+	MatchmakingService *matchmaking.MatchmakingHub,
+) {
+	hub := websockethub.CreateWebSocketHub(Conn, GameService, StorageService, MatchmakingService)
 	go ServeWrite(hub)
 	go ServeRead(hub)
 
@@ -55,10 +60,10 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
 		if err != nil {
 			// TODO: manage errors from matchmaking calls
-			matchmaking.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel)
+			hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel)
 			return true, BuildJSONErrorResponse(err.Error())
 		} else {
-			matchmaking.SetGameWatcher(context.Background(), gameID, hub.WriteChannel)
+			hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel)
 		}
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
