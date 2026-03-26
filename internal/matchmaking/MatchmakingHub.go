@@ -1,22 +1,31 @@
 package matchmaking
 
 import (
+	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
 )
 
 type MatchmakingHub struct {
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx         context.Context
+	cancel      context.CancelFunc
+	etcdService *service.EtcdService
 }
 
+type handler func(ctx context.Context, id string) (<-chan []byte, context.CancelFunc)
+
 // Returns a new Matchmaking hub
-func NewMatchmakingHub() *MatchmakingHub {
+func NewMatchmakingHub(etcdService *service.EtcdService) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &MatchmakingHub{
-		cancel: cancel,
-		ctx:    ctx,
+		cancel:      cancel,
+		ctx:         ctx,
+		etcdService: etcdService,
 	}
+}
+
+func (hub *MatchmakingHub) GetStorageService() *service.EtcdService {
+	return hub.etcdService
 }
 
 // Starts the matchmaking service as a Go Routine.
@@ -32,7 +41,8 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 }
 
 // Sets a watcher on the requested game, sending the information down the write channel.
-func SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) error {
+func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) error {
+	startWatcher(ctx, hub.GetStorageService().WatchMatch, matchId, writeChannel)
 	return nil
 }
 
@@ -40,6 +50,15 @@ func SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.
 // a watcher for the game.
 func JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) error {
 	return nil
+}
+
+func startWatcher(ctx context.Context, fun handler, arg string, writeChannel chan json.RawMessage) {
+	watchChannel, _ := fun(ctx, arg)
+	go func() {
+		for json := range watchChannel {
+			writeChannel <- json
+		}
+	}()
 }
 
 func matchmake() {
