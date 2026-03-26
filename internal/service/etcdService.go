@@ -92,7 +92,7 @@ func (etcdService *EtcdService) PutUpdatedGameIfRevisionMatch(ctx context.Contex
 		return err
 	}
 	if !succeeded {
-		return fmt.Errorf("failed to update match: revision mismatch (concurrent update)")
+		return fmt.Errorf("failed to update match: revision mismatch")
 	}
 	return nil
 }
@@ -121,12 +121,10 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, playerName str
 func (etcdService *EtcdService) VerifyUser(ctx context.Context, playerName string, uuid string) error {
 	uuidKey := fmt.Sprintf("user/%s/uuid", playerName)
 	value, err := etcdService.getValue(ctx, uuidKey)
-	if err != nil {
+	if err != nil || value != uuid {
 		return fmt.Errorf("authentication failed for user: %s", playerName)
 	}
-	if value != uuid {
-		return fmt.Errorf("authentication failed for user: %s", playerName)
-	}
+
 	return nil
 }
 
