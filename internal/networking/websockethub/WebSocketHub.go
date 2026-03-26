@@ -47,13 +47,10 @@ func (hub *WebSocketHub) SetPlayerID(playerName string) {
 	})
 }
 
-func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) (bool, error) {
-	if hub.cancelFunc != nil {
-		hub.cancelFunc = cancelFunc
-		return false, nil
-	} else {
-		return true, fmt.Errorf("Watcher cancel func already set")
-	}
+// Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).
+// Overwrites the previous cancel function if it exists.
+func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) {
+	hub.cancelFunc = cancelFunc
 }
 
 func (hub *WebSocketHub) CancelWatcher() (bool, error) {
