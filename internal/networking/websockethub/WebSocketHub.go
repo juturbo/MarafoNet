@@ -5,7 +5,6 @@ import (
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -53,12 +52,9 @@ func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) {
 	hub.cancelFunc = cancelFunc
 }
 
-func (hub *WebSocketHub) CancelWatcher() (bool, error) {
+func (hub *WebSocketHub) CancelWatcher() {
 	if hub.cancelFunc != nil {
 		hub.cancelFunc()
 		hub.cancelFunc = nil
-		return false, nil
-	} else {
-		return true, fmt.Errorf("No active watcher to cancel")
 	}
 }
