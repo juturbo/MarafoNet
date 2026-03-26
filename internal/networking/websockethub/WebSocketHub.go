@@ -3,7 +3,9 @@ package websockethub
 import (
 	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/service"
+	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -17,6 +19,7 @@ type WebSocketHub struct {
 	MatchmakingService *matchmaking.MatchmakingHub
 	playerName         string
 	once               sync.Once
+	cancelFunc         context.CancelFunc
 }
 
 func CreateWebSocketHub(
@@ -42,4 +45,23 @@ func (hub *WebSocketHub) SetPlayerID(playerName string) {
 	hub.once.Do(func() {
 		hub.playerName = playerName
 	})
+}
+
+func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) (bool, error) {
+	if hub.cancelFunc != nil {
+		hub.cancelFunc = cancelFunc
+		return false, nil
+	} else {
+		return true, fmt.Errorf("Watcher cancel func already set")
+	}
+}
+
+func (hub *WebSocketHub) CancelWatcher() (bool, error) {
+	if hub.cancelFunc != nil {
+		hub.cancelFunc()
+		hub.cancelFunc = nil
+		return false, nil
+	} else {
+		return true, fmt.Errorf("No active watcher to cancel")
+	}
 }
