@@ -42,7 +42,7 @@ func (hub *WebSocketHub) GetPlayerName() string {
 	return hub.playerName
 }
 
-func (hub *WebSocketHub) SetPlayerID(playerName string) {
+func (hub *WebSocketHub) SetPlayerName(playerName string) {
 	hub.playerNameOnce.Do(func() {
 		hub.playerName = playerName
 	})
