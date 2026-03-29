@@ -22,6 +22,7 @@ type Envelope interface {
 	GetPayload() json.RawMessage
 	GetPlayerName() string
 	EqualsType(otherType MessageType) bool
+	GetUUID() string
 }
 
 // A WebSocket message from the client.
@@ -29,6 +30,7 @@ type WSEnvelope struct {
 	MessageType string          `json:"type"`
 	PlayerName  string          `json:"playerName"`
 	Payload     json.RawMessage `json:"payload"`
+	UUID        string          `json:"uuid"`
 }
 
 type playCardPayLoad struct {
@@ -54,6 +56,10 @@ func (e WSEnvelope) GetPayload() json.RawMessage {
 
 func (e WSEnvelope) GetPlayerName() string {
 	return e.PlayerName
+}
+
+func (e WSEnvelope) GetUUID() string {
+	return e.UUID
 }
 
 // Returns true if the message type of the envelope is equal to the given type.
