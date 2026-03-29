@@ -5,6 +5,9 @@ marafonet: dockerize run
 react:
 	cd frontend && npm run build
 
+straight:
+	cd cmd/marafonet && go run main.go
+
 run:
 	docker run -p 5000:5000 marafonet:latest
 
