@@ -59,7 +59,7 @@ func (gameService *GameService) PlayCard(ctx context.Context, matchId string, pl
 }
 
 func (gameService *GameService) applyUpdate(ctx context.Context, matchId string, updater func(model.Match) (model.Match, error)) error {
-	matchJson, revision, err := gameService.etcdService.GetValueAndRevision(ctx, matchId)
+	matchJson, revision, err := gameService.etcdService.GetMatchJsonAndRevision(ctx, matchId)
 	if err != nil {
 		return err
 	}
@@ -79,5 +79,5 @@ func (gameService *GameService) applyUpdate(ctx context.Context, matchId string,
 		return err
 	}
 
-	return gameService.etcdService.PutUpdatedGameIfRevisionMatch(ctx, matchId, updatedMatchJson, revision)
+	return gameService.etcdService.PutUpdatedGameJsonIfRevisionMatch(ctx, matchId, updatedMatchJson, revision)
 }
