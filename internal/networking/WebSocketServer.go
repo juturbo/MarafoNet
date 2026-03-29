@@ -45,6 +45,7 @@ func ServeRead(hub *websockethub.WebSocketHub) {
 		var envelope WSEnvelope
 		err := hub.Connection.ReadJSON(&envelope)
 		if err != nil {
+			close(hub.WriteChannel)
 			break
 		}
 		var response, payload = HandleWSEnvelope(envelope, hub)
