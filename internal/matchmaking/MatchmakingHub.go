@@ -60,3 +60,13 @@ func startWatcher(ctx context.Context, fun handler, arg string, writeChannel cha
 	}()
 	return cancelFunc
 }
+
+func newPlayerList(players []string) json.RawMessage {
+	var playerList []map[string]string
+	for _, player := range players {
+		playerMap := map[string]string{"Name": player}
+		playerList = append(playerList, playerMap)
+	}
+	result, _ := json.Marshal(playerList)
+	return result
+}
