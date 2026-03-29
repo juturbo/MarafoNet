@@ -24,8 +24,7 @@ func (gameService *GameService) StartGame(ctx context.Context, playerNames json.
 		return "", err
 	}
 
-	matchId, err = gameService.etcdService.GetNextMatchID(ctx)
-	if err != nil {
+	if matchId, err = gameService.etcdService.GetNextMatchID(ctx); err != nil {
 		return "", err
 	}
 

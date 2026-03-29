@@ -56,7 +56,7 @@ func (etcdService *EtcdService) GetNextMatchID(ctx context.Context) (matchId str
 	}
 }
 
-func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matchJson []byte) error {
+func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matchJson json.RawMessage) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
 		key,
@@ -81,7 +81,7 @@ func (etcdService *EtcdService) GetValueAndRevision(ctx context.Context, key str
 	return json.RawMessage(value), rev, nil
 }
 
-func (etcdService *EtcdService) PutUpdatedGameIfRevisionMatch(ctx context.Context, key string, matchJson []byte, lastRevision int64) error {
+func (etcdService *EtcdService) PutUpdatedGameIfRevisionMatch(ctx context.Context, key string, matchJson json.RawMessage, lastRevision int64) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
 		key,
@@ -155,17 +155,17 @@ func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, playerName 
 	return etcdService.putValue(ctx, uuidKey, uuid)
 }
 
-func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {
+func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan json.RawMessage, context.CancelFunc) {
 	return etcdService.watchKey(ctx, matchId)
 }
 
-func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, playerName string) (<-chan []byte, context.CancelFunc) {
+func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, playerName string) (<-chan json.RawMessage, context.CancelFunc) {
 	key := fmt.Sprintf("user/%s/current_match", playerName)
 	return etcdService.watchKey(ctx, key)
 }
 
-func (etcdService *EtcdService) watchKey(ctx context.Context, key string) (<-chan []byte, context.CancelFunc) {
-	channel := make(chan []byte)
+func (etcdService *EtcdService) watchKey(ctx context.Context, key string) (<-chan json.RawMessage, context.CancelFunc) {
+	channel := make(chan json.RawMessage)
 	watchCtx, cancel := context.WithCancel(ctx)
 	watchChannel := etcdService.client.Watch(watchCtx, key)
 	go func() {
