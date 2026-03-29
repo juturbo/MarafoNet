@@ -44,6 +44,12 @@ type SetTrumpPayLoad struct {
 	Suit    model.Suit `json:"suit"`
 }
 
+type ReplyMessageBuilder struct {
+	Type    string `json:"type"`
+	UUID    string `json:"uuid,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
 // Returns the message type of the envelope.
 func (e WSEnvelope) GetMessageType() MessageType {
 	return MessageType(e.MessageType)
@@ -77,11 +83,30 @@ func PayloadFromJSON(data json.RawMessage) (string, model.Card, error) {
 		}, err
 }
 
+func NewReplyMessageBuilder() *ReplyMessageBuilder {
+	return &ReplyMessageBuilder{}
+}
+
+func (b *ReplyMessageBuilder) SetUUID(uuid string) {
+	b.UUID = uuid
+}
+
+func (b *ReplyMessageBuilder) SetMessage(message string) {
+	b.Message = message
+}
+
+func (b *ReplyMessageBuilder) SetType(messageType string) {
+	b.Type = messageType
+}
+
+func (b *ReplyMessageBuilder) Build() json.RawMessage {
+	messageJson, _ := json.Marshal(b)
+	return messageJson
+}
+
 func BuildJSONErrorResponse(errorMessage string) json.RawMessage {
-	errorResponse := map[string]string{
-		"type":    "error",
-		"message": errorMessage,
-	}
-	errorResponseJson, _ := json.Marshal(errorResponse)
-	return errorResponseJson
+	errorResponse := NewReplyMessageBuilder()
+	errorResponse.SetType("error")
+	errorResponse.SetMessage(errorMessage)
+	return errorResponse.Build()
 }
