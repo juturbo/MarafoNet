@@ -60,7 +60,3 @@ func startWatcher(ctx context.Context, fun handler, arg string, writeChannel cha
 	}()
 	return cancelFunc
 }
-
-func matchmake() {
-
-}
