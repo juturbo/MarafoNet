@@ -44,6 +44,7 @@ function App() {
           break;
         default:
           console.warn('Unknown message type:', payload.type);
+          console.log('Payload:', payload);
       }
     };
   }, [ws]);
