@@ -57,8 +57,10 @@ function App() {
 // Helper function to keep the return statement clean
   const renderScreen = () => {
     switch (phase) {
-      case 'NAME_ENTRY':
+      case 'LOG_IN':
         return <NameEntryScreen ws={ws} onAuthSuccess={onAuthSuccess} />;
+      case 'REGISTER':
+        return <RegisterScreen ws={ws} onRegisterSuccess={onRegisterSuccess} />;
       case 'LOBBY':
         return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
       case 'PLAYING':
@@ -70,6 +72,10 @@ function App() {
 
   const onAuthSuccess = () => {
     setPhase('LOBBY');
+  };
+
+  const onRegisterSuccess = () => {
+    setPhase('LOG_IN');
   };
 
   return (
