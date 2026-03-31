@@ -48,6 +48,9 @@ export default function NameEntryScreen({ ws }) {
                 />
                 <button type="submit">Log in and Join Game</button>
             </form>
+            <button onClick={onSwitchToRegister} type="button">
+                Don't have an account? Register here
+            </button>
         </div>
     );
 }
