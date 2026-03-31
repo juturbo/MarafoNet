@@ -12,7 +12,8 @@ function App() {
   const { ws, isConnected } = useContext(WebSocketContext);
   
   // Define your state here
-  const [phase, setPhase] = useState('NAME_ENTRY'); // 'NAME_ENTRY' | 'LOBBY' | 'PLAYING'
+  // PHASES: 'LOG_IN' | 'REGISTER' | 'LOBBY' | 'PLAYING'
+  const [phase, setPhase] = useState('NAME_ENTRY');
   const [gameState, setGameState] = useState(null);
   const [lobbyInfo, setLobbyInfo] = useState(null);
 
@@ -57,7 +58,7 @@ function App() {
   const renderScreen = () => {
     switch (phase) {
       case 'NAME_ENTRY':
-        return <NameEntryScreen ws={ws} />;
+        return <NameEntryScreen ws={ws} onAuthSuccess={onAuthSuccess} />;
       case 'LOBBY':
         return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
       case 'PLAYING':
@@ -65,6 +66,10 @@ function App() {
       default:
         return <div>Unknown Phase</div>;
     }
+  };
+
+  const onAuthSuccess = () => {
+    setPhase('LOBBY');
   };
 
   return (
