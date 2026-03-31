@@ -33,7 +33,7 @@ export default function RegisterScreen({ ws }) {
             setError(response.message);
             setLoading(false);
         } else if (response.type === 'register_success') {
-            onAuthSuccess?.();
+            onRegisterSuccess?.();
         }
     };
 
