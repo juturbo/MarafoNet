@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { WebSocketContext } from './WebSocketProvider';
 
 // Import your views
-import NameEntryScreen from './components/NameEntryScreen';
+import NameEntryScreen from './components/LogInScreen';
 import LobbyScreen from './components/LobbyScreen';
 import TableScreen from './components/TableScreen';
 import BackgroundButton from './components/BackgroundButton';
