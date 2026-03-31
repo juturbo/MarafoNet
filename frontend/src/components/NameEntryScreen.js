@@ -4,19 +4,19 @@ import './NameEntryScreen.css';
 
 export default function NameEntryScreen({ ws }) {
     const [name, setName] = useState('');
+    const[password, setPassword] = useState('');
 
     const handleSubmit = (event) => {
         event.preventDefault();
 
-        if (ws && name.trim()) {
+        if (ws && name.trim() && password.trim()) {
             const payload = {
                 type: 'first_join',
                 playerName: name,
+                password: password,
                 payload: null,
-                uuid: ""
             };
             ws.send(JSON.stringify(payload));
-            console.log('Sent:', payload);
         }
     };
 
@@ -30,7 +30,13 @@ export default function NameEntryScreen({ ws }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
-                <button type="submit">Join Game</button>
+                <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+                <button type="submit">Log in and Join Game</button>
             </form>
         </div>
     );
