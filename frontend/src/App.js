@@ -58,7 +58,7 @@ function App() {
   const renderScreen = () => {
     switch (phase) {
       case 'LOG_IN':
-        return <NameEntryScreen ws={ws} onAuthSuccess={onAuthSuccess} />;
+        return <NameEntryScreen ws={ws} onAuthSuccess={onAuthSuccess} onSwitchToRegister={onSwitchToRegister} />;
       case 'REGISTER':
         return <RegisterScreen ws={ws} onRegisterSuccess={onRegisterSuccess} />;
       case 'LOBBY':
@@ -76,6 +76,10 @@ function App() {
 
   const onRegisterSuccess = () => {
     setPhase('LOG_IN');
+  };
+
+  const onSwitchToRegister = () => {
+    setPhase('REGISTER');
   };
 
   return (
