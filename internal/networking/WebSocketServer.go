@@ -61,7 +61,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	}
 	switch {
 	case envelope.EqualsType(JoinType):
-		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), envelope.GetPlayerName())
+		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), hub.GetPlayerName())
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
