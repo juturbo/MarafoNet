@@ -96,6 +96,8 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	return false, nil
 }
 
+// Checks the authentication message sent by the client and performs register or log-in operations accordingly.
+// Registers the user both in the storaga service and in the connection's context.
 func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelope) (bool, json.RawMessage) {
 	replyMessageBuilder := NewReplyMessageBuilder()
 	switch {
@@ -112,7 +114,7 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 		}
 		return true, BuildJSONErrorResponse(err.Error())
 	case envelope.EqualsType(LoginType):
-		authenticated, err := authenticatePlayer(hub, envelope)
+		authenticated, err := checkPlayerIdentity(hub, envelope)
 		if err == nil && authenticated {
 			hub.SetAuthenticated()
 			replyMessageBuilder.SetType("login_success")
@@ -128,8 +130,6 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 }
 
 // Checks the player's identity against the name associated with the connection in WebSocketHub.
-// If there's no name associated with the connection, then the one sent is set and a new UUIDv4 is generated
-// and associated with the player's name.
 func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
 	verified, err := hub.StorageService.VerifyUser(context.Background(), envelope.GetUser())
 	if err == nil && verified && hub.GetPlayerName() == envelope.GetPlayerName() {
@@ -139,24 +139,7 @@ func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (boo
 	}
 }
 
+// Check if the player can register in the connection with the provided username.
 func isPlayerNew(hub *websockethub.WebSocketHub, envelope Envelope) bool {
 	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() == ""
-}
-
-func authenticatePlayer(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
-	isAvailable, err := hub.StorageService.IsUsernameAvailable(context.Background(), envelope.GetPlayerName())
-	if err != nil {
-		return false, err
-	}
-	if isPlayerNew(hub, envelope) && isAvailable {
-		err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
-		if err != nil {
-			return false, err
-		}
-		hub.SetPlayerName(envelope.GetPlayerName())
-		return true, nil
-	} else {
-		check, err := checkPlayerIdentity(hub, envelope)
-		return check, err
-	}
 }
