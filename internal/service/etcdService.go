@@ -232,8 +232,8 @@ func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (
 	return etcdService.watchKey(ctx, matchId)
 }
 
-func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, user model.User) (<-chan []byte, context.CancelFunc) {
-	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, user.Name)
+func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username string) (<-chan []byte, context.CancelFunc) {
+	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, username)
 	return etcdService.watchKey(ctx, key)
 }
 
