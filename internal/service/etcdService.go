@@ -178,7 +178,7 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	err = etcdService.putValue(ctx, passwordKey, string(hashedPassword))
+	err = etcdService.putValue(ctx, passwordKey, hashedPassword)
 	if err != nil {
 		return fmt.Errorf("failed to register user: %w", err)
 	}
@@ -230,7 +230,7 @@ func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	return etcdService.putValue(ctx, passwordKey, string(hashedPassword))
+	return etcdService.putValue(ctx, passwordKey, hashedPassword)
 }
 
 func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {

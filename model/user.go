@@ -11,8 +11,9 @@ func NewUser(name string, password string) (*User, error) {
 	return &User{Name: name, Password: password}, nil
 }
 
-func (u *User) GeneratePasswordHash() (passwordHash []byte, err error) {
-	return bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+func (u *User) GeneratePasswordHash() (passwordHash string, err error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	return string(hash), err
 }
 
 func (u *User) CheckPassword(hashedPassword string) bool {
