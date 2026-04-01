@@ -56,14 +56,8 @@ func ServeRead(hub *websockethub.WebSocketHub) {
 }
 
 func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, json.RawMessage) {
-	replyMessageBuilder := NewReplyMessageBuilder()
-	authenticated, err := authenticatePlayer(hub, envelope)
-	if authenticated {
-		replyMessageBuilder.SetType("authentication_success")
-	} else {
-		replyMessageBuilder.SetType("authentication_failure")
-		replyMessageBuilder.SetMessage(err.Error())
-		return true, replyMessageBuilder.Build()
+	if !hub.IsAuthenticated() {
+		return checkAuthenticationMessage(hub, envelope)
 	}
 	switch {
 	case envelope.EqualsType(JoinType):
@@ -80,7 +74,6 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
 			)
 		}
-		return true, replyMessageBuilder.Build()
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
 		if marshalingError != nil {
@@ -103,15 +96,46 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	return false, nil
 }
 
+func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelope) (bool, json.RawMessage) {
+	replyMessageBuilder := NewReplyMessageBuilder()
+	switch {
+	case envelope.EqualsType(RegisterType) && isPlayerNew(hub, envelope):
+		isAvailable, err := hub.StorageService.IsUsernameAvailable(context.Background(), envelope.GetUser().Name)
+		if err == nil && isAvailable {
+			err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
+			if err != nil {
+				return true, BuildJSONErrorResponse(err.Error())
+			}
+			hub.SetPlayerName(envelope.GetPlayerName())
+			replyMessageBuilder.SetType("register_success")
+			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
+		}
+		return true, BuildJSONErrorResponse(err.Error())
+	case envelope.EqualsType(LoginType):
+		authenticated, err := authenticatePlayer(hub, envelope)
+		if err == nil && authenticated {
+			hub.SetAuthenticated()
+			replyMessageBuilder.SetType("login_success")
+			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully authenticated", envelope.GetPlayerName()))
+		}
+		replyMessageBuilder.SetMessage(fmt.Sprintf("authentication failed for username %s", envelope.GetPlayerName()))
+		replyMessageBuilder.SetType("login_failed")
+	default:
+		replyMessageBuilder.SetType("invalid_request")
+		replyMessageBuilder.SetMessage("An authentication error occoured")
+	}
+	return true, replyMessageBuilder.Build()
+}
+
 // Checks the player's identity against the name associated with the connection in WebSocketHub.
 // If there's no name associated with the connection, then the one sent is set and a new UUIDv4 is generated
 // and associated with the player's name.
 func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
-	verified, _ := hub.StorageService.VerifyUser(context.Background(), envelope.GetUser())
-	if verified && hub.GetPlayerName() == envelope.GetPlayerName() {
+	verified, err := hub.StorageService.VerifyUser(context.Background(), envelope.GetUser())
+	if err == nil && verified && hub.GetPlayerName() == envelope.GetPlayerName() {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("invalid player identity")
+		return false, fmt.Errorf("invalid player identity - %s", err.Error())
 	}
 }
 
