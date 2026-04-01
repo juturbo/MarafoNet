@@ -10,6 +10,10 @@ import (
 type MessageType string
 
 const (
+	// A message sent by the client when they register.
+	RegisterType MessageType = "register_user"
+	// A message sent by the client when they log in.
+	LoginType MessageType = "login_user"
 	// A message sent by the client when they connect to the server.
 	JoinType MessageType = "first_join"
 	// A message send by the client to play a card.
