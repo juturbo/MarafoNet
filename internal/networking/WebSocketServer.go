@@ -57,12 +57,9 @@ func ServeRead(hub *websockethub.WebSocketHub) {
 
 func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, json.RawMessage) {
 	replyMessageBuilder := NewReplyMessageBuilder()
-	authenticated, err, uuid := authenticatePlayer(hub, envelope)
+	authenticated, err := authenticatePlayer(hub, envelope)
 	if authenticated {
-		if uuid != "" {
-			replyMessageBuilder.SetUUID(uuid)
-			replyMessageBuilder.SetType("authentication_success")
-		}
+		replyMessageBuilder.SetType("authentication_success")
 	} else {
 		replyMessageBuilder.SetType("authentication_failure")
 		replyMessageBuilder.SetMessage(err.Error())
@@ -110,7 +107,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 // If there's no name associated with the connection, then the one sent is set and a new UUIDv4 is generated
 // and associated with the player's name.
 func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
-	verified, _ := hub.StorageService.VerifyUser(context.Background(), envelope.GetPlayerName(), envelope.GetUUID())
+	verified, _ := hub.StorageService.VerifyUser(context.Background(), envelope.GetUser())
 	if verified && hub.GetPlayerName() == envelope.GetPlayerName() {
 		return true, nil
 	} else {
@@ -119,23 +116,23 @@ func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (boo
 }
 
 func isPlayerNew(hub *websockethub.WebSocketHub, envelope Envelope) bool {
-	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetUUID() == ""
+	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() == ""
 }
 
-func authenticatePlayer(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error, string) {
+func authenticatePlayer(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
 	isAvailable, err := hub.StorageService.IsUsernameAvailable(context.Background(), envelope.GetPlayerName())
 	if err != nil {
-		return false, err, ""
+		return false, err
 	}
 	if isPlayerNew(hub, envelope) && isAvailable {
-		uuid, err := hub.StorageService.RegisterUser(context.Background(), envelope.GetPlayerName())
+		err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
 		if err != nil {
-			return false, err, ""
+			return false, err
 		}
 		hub.SetPlayerName(envelope.GetPlayerName())
-		return true, nil, uuid
+		return true, nil
 	} else {
 		check, err := checkPlayerIdentity(hub, envelope)
-		return check, err, ""
+		return check, err
 	}
 }
