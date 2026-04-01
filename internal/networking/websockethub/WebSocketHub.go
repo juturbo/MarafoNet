@@ -20,6 +20,7 @@ type WebSocketHub struct {
 	playerNameOnce     sync.Once
 	cancelFunc         context.CancelFunc
 	closeOnce          sync.Once
+	isAuthenticated    bool
 }
 
 func CreateWebSocketHub(
@@ -35,6 +36,7 @@ func CreateWebSocketHub(
 	hub.StorageService = StorageService
 	hub.MatchmakingService = MatchmakingService
 	hub.closeOnce = sync.Once{}
+	hub.isAuthenticated = false
 	return &hub
 }
 
@@ -46,6 +48,14 @@ func (hub *WebSocketHub) SetPlayerName(playerName string) {
 	hub.playerNameOnce.Do(func() {
 		hub.playerName = playerName
 	})
+}
+
+func (hub *WebSocketHub) SetAuthenticated() {
+	hub.isAuthenticated = true
+}
+
+func (hub *WebSocketHub) IsAuthenticated() bool {
+	return hub.isAuthenticated
 }
 
 // Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).
