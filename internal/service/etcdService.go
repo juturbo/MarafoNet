@@ -14,7 +14,7 @@ import (
 
 const MATCH_COUNTER_PATH = "global/match_counter"
 const MATCH_PREFIX = "match/%d"
-const USER_QUEUE_PATH = "user_queue"
+const USER_QUEUE_PATH = "user_queue/"
 const USERS_NAME_PATH = "users/%s"
 const USERS_PASSWORD_PATH = "users/%s/password"
 const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
@@ -108,7 +108,7 @@ func (etcdService *EtcdService) PutUpdatedGameJsonIfRevisionMatch(ctx context.Co
 }
 
 func (etcdService *EtcdService) PutUserIntoQueue(ctx context.Context, playerName string) (err error) {
-	key := USER_QUEUE_PATH + "/" + playerName
+	key := USER_QUEUE_PATH + playerName
 
 	if err = etcdService.putValue(ctx, key, playerName); err != nil {
 		return err
@@ -120,7 +120,7 @@ func (etcdService *EtcdService) PutUserIntoQueue(ctx context.Context, playerName
 func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []string, err error) {
 	key := USER_QUEUE_PATH
 
-	response, err := etcdService.client.Get(ctx, key)
+	response, err := etcdService.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []s
 }
 
 func (etcdService *EtcdService) RemoveUserFromQueue(ctx context.Context, playerName string) error {
-	key := USER_QUEUE_PATH + "/" + playerName
+	key := USER_QUEUE_PATH + playerName
 	return etcdService.deleteKey(ctx, key)
 }
 
@@ -173,12 +173,12 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 	}
 
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
-	passwordHash, err := user.GeneratePasswordHash()
+	hashedPassword, err := user.GeneratePasswordHash()
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	err = etcdService.putValue(ctx, passwordKey, string(passwordHash))
+	err = etcdService.putValue(ctx, passwordKey, string(hashedPassword))
 	if err != nil {
 		return fmt.Errorf("failed to register user: %w", err)
 	}
@@ -225,7 +225,12 @@ func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.
 		return fmt.Errorf("reconnection failed for user: %s", user.Name)
 	}
 
-	return etcdService.putValue(ctx, passwordKey, user.Password)
+	hashedPassword, err := user.GeneratePasswordHash()
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	return etcdService.putValue(ctx, passwordKey, string(hashedPassword))
 }
 
 func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {
