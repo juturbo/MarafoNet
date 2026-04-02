@@ -2,6 +2,7 @@ package networking
 
 import (
 	"MarafoNet/internal/model"
+	userModel "MarafoNet/model"
 	"encoding/json"
 )
 
@@ -9,6 +10,10 @@ import (
 type MessageType string
 
 const (
+	// A message sent by the client when they register.
+	RegisterType MessageType = "register_user"
+	// A message sent by the client when they log in.
+	LoginType MessageType = "login_user"
 	// A message sent by the client when they connect to the server.
 	JoinType MessageType = "first_join"
 	// A message send by the client to play a card.
@@ -20,17 +25,17 @@ const (
 type Envelope interface {
 	GetMessageType() MessageType
 	GetPayload() json.RawMessage
+	GetUser() userModel.User
 	GetPlayerName() string
+	GetPassword() string
 	EqualsType(otherType MessageType) bool
-	GetUUID() string
 }
 
 // A WebSocket message from the client.
 type WSEnvelope struct {
 	MessageType string          `json:"type"`
-	PlayerName  string          `json:"playerName"`
 	Payload     json.RawMessage `json:"payload"`
-	UUID        string          `json:"uuid"`
+	User        userModel.User  `json:"user"`
 }
 
 type playCardPayLoad struct {
@@ -60,12 +65,16 @@ func (e WSEnvelope) GetPayload() json.RawMessage {
 	return e.Payload
 }
 
-func (e WSEnvelope) GetPlayerName() string {
-	return e.PlayerName
+func (e WSEnvelope) GetUser() userModel.User {
+	return e.User
 }
 
-func (e WSEnvelope) GetUUID() string {
-	return e.UUID
+func (e WSEnvelope) GetPlayerName() string {
+	return e.User.Name
+}
+
+func (e WSEnvelope) GetPassword() string {
+	return e.User.Password
 }
 
 // Returns true if the message type of the envelope is equal to the given type.
