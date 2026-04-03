@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import './NameEntryScreen.css';
 
-export default function NameEntryScreen({ ws }) {
+export default function NameEntryScreen({ ws, onAuthSuccess, onSwitchToRegister }) {
     const [name, setName] = useState('');
     const[password, setPassword] = useState('');
 
@@ -23,10 +23,10 @@ export default function NameEntryScreen({ ws }) {
     ws.onmessage = (event) => {
         const response = JSON.parse(event.data);
         if (response.type === 'login_failed') {
-            setError(response.message);
-            setLoading(false);
+            //setError(response.message);
+            //setLoading(false);
         } else if (response.type === 'login_success') {
-            onAuthSuccess?.();
+            onAuthSuccess();
         }
     };
 
