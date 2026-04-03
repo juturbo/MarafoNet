@@ -102,20 +102,15 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 	replyMessageBuilder := NewReplyMessageBuilder()
 	switch {
 	case envelope.EqualsType(RegisterType) && isPlayerNew(hub, envelope):
-		isAvailable, err := hub.StorageService.IsUsernameAvailable(context.Background(), envelope.GetUser().Name)
-		if err == nil && isAvailable {
-			err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
-			if err != nil {
-				replyMessageBuilder.SetType("register_failed")
-				replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s", envelope.GetPlayerName()))
-				return true, replyMessageBuilder.Build()
-			}
-			hub.SetPlayerName(envelope.GetPlayerName())
-			replyMessageBuilder.SetType("register_success")
-			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
+		err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
+		if err != nil {
+			replyMessageBuilder.SetType("register_failed")
+			replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s. Error: %s", envelope.GetPlayerName(), err.Error()))
+			return true, replyMessageBuilder.Build()
 		}
-		replyMessageBuilder.SetType("register_failed")
-		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s is not available", envelope.GetPlayerName()))
+		hub.SetPlayerName(envelope.GetPlayerName())
+		replyMessageBuilder.SetType("register_success")
+		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 	case envelope.EqualsType(LoginType):
 		authenticated, err := checkPlayerIdentity(hub, envelope)
 		if err == nil && authenticated {
