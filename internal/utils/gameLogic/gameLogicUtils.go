@@ -9,7 +9,11 @@ import (
 )
 
 /*starts a full 41 points game*/
-func StartGame(players []model.Player) (model.Game, error) {
+func StartGame(playerNames []string) (model.Game, error) {
+	players := make([]model.Player, len(playerNames))
+	for i, name := range playerNames {
+		players[i] = model.Player{Name: name}
+	}
 	match, err := initializeGame(players)
 	if err != nil {
 		return match, err
