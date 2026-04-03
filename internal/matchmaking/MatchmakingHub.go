@@ -12,6 +12,11 @@ type MatchmakingHub struct {
 	etcdService *service.EtcdService
 }
 
+type MatchUpdateMessage struct {
+	Type  string          `json:"type"`
+	Match json.RawMessage `json:"match"`
+}
+
 type handler func(ctx context.Context, id string) (<-chan []byte, context.CancelFunc)
 
 // Returns a new Matchmaking hub
@@ -54,8 +59,13 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 func startWatcher(ctx context.Context, fun handler, arg string, writeChannel chan json.RawMessage) context.CancelFunc {
 	watchChannel, cancelFunc := fun(ctx, arg)
 	go func() {
-		for json := range watchChannel {
-			writeChannel <- json
+		for update := range watchChannel {
+			message := MatchUpdateMessage{
+				Type:  "match_update",
+				Match: update,
+			}
+			payload, _ := json.Marshal(message)
+			writeChannel <- payload
 		}
 	}()
 	return cancelFunc
