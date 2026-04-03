@@ -42,7 +42,7 @@ func main() {
 	}()
 
 	gameService := service.NewGameService(etcdService)
-	matchMakingService := matchmaking.NewMatchmakingHub(etcdService)
+	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
 	matchMakingService.StartMatchmaking()
 
 	// Set the router as the default one shipped with Gin
