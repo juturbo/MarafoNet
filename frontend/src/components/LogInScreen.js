@@ -12,8 +12,10 @@ export default function NameEntryScreen({ ws, onAuthSuccess, onSwitchToRegister 
         if (ws && name.trim() && password.trim()) {
             const payload = {
                 type: 'login_user',
-                playerName: name,
-                password: password,
+                user: {
+                    name: name,
+                    password: password,
+                },
                 payload: null,
             };
             ws.send(JSON.stringify(payload));
@@ -23,8 +25,7 @@ export default function NameEntryScreen({ ws, onAuthSuccess, onSwitchToRegister 
     ws.onmessage = (event) => {
         const response = JSON.parse(event.data);
         if (response.type === 'login_failed') {
-            //setError(response.message);
-            //setLoading(false);
+            console.error('Login failed:', response.message);
         } else if (response.type === 'login_success') {
             onAuthSuccess();
         }
