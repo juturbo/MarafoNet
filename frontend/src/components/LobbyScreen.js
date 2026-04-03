@@ -12,7 +12,8 @@ export default function LobbyScreen({ ws }) {
     console.log('Sent:', payload);
 
     ws.onmessage = (event) => {
-        console.log(event.data)
+        const response = JSON.parse(event.data);
+        console.log(response)
     };
 
     return (
