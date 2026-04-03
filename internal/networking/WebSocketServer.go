@@ -140,7 +140,7 @@ func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (boo
 	if err != nil {
 		return false, fmt.Errorf("error verifying user identity for username %s: %s", envelope.GetPlayerName(), err.Error())
 	}
-	if verified && hub.GetPlayerName() == envelope.GetPlayerName() {
+	if verified {
 		return true, nil
 	} else {
 		return false, fmt.Errorf("invalid player identity")
