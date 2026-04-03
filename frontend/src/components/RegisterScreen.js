@@ -17,7 +17,7 @@ export default function RegisterScreen({ ws }) {
 
         if (ws && name.trim() && password.trim()) {
             const payload = {
-                type: 'register',
+                type: 'register_user',
                 playerName: name,
                 password: password,
                 payload: null,
