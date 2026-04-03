@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import './NameEntryScreen.css';
 
-export default function RegisterScreen({ ws }) {
+export default function RegisterScreen({ ws, onRegisterSuccess }) {
     const [name, setName] = useState('');
     const[password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,8 +18,10 @@ export default function RegisterScreen({ ws }) {
         if (ws && name.trim() && password.trim()) {
             const payload = {
                 type: 'register_user',
-                playerName: name,
-                password: password,
+                user: {
+                    Name: name,
+                    Password: password,
+                },
                 payload: null,
             };
             ws.send(JSON.stringify(payload));
@@ -29,11 +31,12 @@ export default function RegisterScreen({ ws }) {
 
     ws.onmessage = (event) => {
         const response = JSON.parse(event.data);
+        console.log('Received:', response);
         if (response.type === 'register_failed') {
-            setError(response.message);
-            setLoading(false);
+            //setError(response.message);
+            //setLoading(false);
         } else if (response.type === 'register_success') {
-            onRegisterSuccess?.();
+            onRegisterSuccess();
         }
     };
 
