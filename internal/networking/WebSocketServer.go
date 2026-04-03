@@ -108,7 +108,6 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 			replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s. Error: %s", envelope.GetPlayerName(), err.Error()))
 			return true, replyMessageBuilder.Build()
 		}
-		hub.SetPlayerName(envelope.GetPlayerName())
 		replyMessageBuilder.SetType("register_success")
 		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 	case envelope.EqualsType(LoginType):
@@ -124,6 +123,7 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 			return true, replyMessageBuilder.Build()
 		}
 		hub.SetAuthenticated()
+		hub.SetPlayerName(envelope.GetPlayerName())
 		replyMessageBuilder.SetType("login_success")
 		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully authenticated", envelope.GetPlayerName()))
 		return true, replyMessageBuilder.Build()
