@@ -18,18 +18,13 @@ func NewGameService(etcdService *EtcdService) *GameService {
 	}
 }
 
-func (gameService *GameService) StartGame(ctx context.Context, playerNames json.RawMessage) (matchId string, err error) {
-	var players []model.Player
-	if err := json.Unmarshal(playerNames, &players); err != nil {
-		return "", err
-	}
-
+func (gameService *GameService) StartGame(ctx context.Context, playerNames []string) (matchId string, err error) {
 	matchId, err = gameService.etcdService.GetNextMatchID(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	match, err := gameLogic.StartGame(players)
+	match, err := gameLogic.StartGame(playerNames)
 	if err != nil {
 		return "", err
 	}

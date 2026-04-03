@@ -7,9 +7,11 @@ import (
 )
 
 type MatchmakingHub struct {
-	ctx         context.Context
-	cancel      context.CancelFunc
-	etcdService *service.EtcdService
+	ctx          context.Context
+	cancel       context.CancelFunc
+	etcdService  *service.EtcdService
+	gameService  *service.GameService
+	queueWatcher context.CancelFunc
 }
 
 type MatchUpdateMessage struct {
@@ -20,12 +22,13 @@ type MatchUpdateMessage struct {
 type handler func(ctx context.Context, id string) (<-chan []byte, context.CancelFunc)
 
 // Returns a new Matchmaking hub
-func NewMatchmakingHub(etcdService *service.EtcdService) *MatchmakingHub {
+func NewMatchmakingHub(etcdService *service.EtcdService, gameService *service.GameService) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &MatchmakingHub{
 		cancel:      cancel,
 		ctx:         ctx,
 		etcdService: etcdService,
+		gameService: gameService,
 	}
 }
 
@@ -33,11 +36,29 @@ func (hub *MatchmakingHub) GetStorageService() *service.EtcdService {
 	return hub.etcdService
 }
 
+func (hub *MatchmakingHub) GetGameService() *service.GameService {
+	return hub.gameService
+}
+
 // Starts the matchmaking service as a Go Routine.
 // It will start to check for players in queue and create games.
 // Can be stopped by calling StopMatchmaking().
 func (hub *MatchmakingHub) StartMatchmaking() {
-
+	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
+	for users := range queueChannel {
+		select {
+		case <-hub.ctx.Done():
+			cancelQueueWatcher()
+			return
+		default:
+			if len(users) >= 4 {
+				hub.GetGameService().StartGame(context.Background(), users[:4])
+				for _, user := range users[:4] {
+					hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
+				}
+			}
+		}
+	}
 }
 
 // Stops the matchmaking service.

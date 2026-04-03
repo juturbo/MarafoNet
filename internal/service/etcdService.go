@@ -250,6 +250,50 @@ func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username str
 	return etcdService.watchKey(ctx, key)
 }
 
+func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []string, context.CancelFunc) {
+	key := USER_QUEUE_PATH
+
+	channel := make(chan []string)
+	watchCtx, cancel := context.WithCancel(ctx)
+	watchChannel := etcdService.client.Watch(watchCtx, key, clientv3.WithPrefix())
+	go func() {
+		defer close(channel)
+		for watchResponse := range watchChannel {
+			if watchResponse.Err() != nil {
+				return
+			}
+			for _, event := range watchResponse.Events {
+				if event.Type == clientv3.EventTypePut {
+					var userQueue, _ = etcdService.GetUserQueue(ctx)
+					channel <- userQueue
+				}
+			}
+		}
+	}()
+
+	return channel, cancel
+}
+
+func (etcdService *EtcdService) watchKey(ctx context.Context, key string, opts ...clientv3.OpOption) (<-chan []byte, context.CancelFunc) {
+	channel := make(chan []byte)
+	watchCtx, cancel := context.WithCancel(ctx)
+	watchChannel := etcdService.client.Watch(watchCtx, key, opts...)
+	go func() {
+		defer close(channel)
+		for watchResponse := range watchChannel {
+			if watchResponse.Err() != nil {
+				return
+			}
+			for _, event := range watchResponse.Events {
+				if event.Type == clientv3.EventTypePut {
+					channel <- event.Kv.Value
+				}
+			}
+		}
+	}()
+	return channel, cancel
+}
+
 func (etcdService *EtcdService) Close() error {
 	return etcdService.client.Close()
 }
@@ -331,24 +375,4 @@ func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string,
 	}
 
 	return transactionResponse.Succeeded, nil
-}
-
-func (etcdService *EtcdService) watchKey(ctx context.Context, key string) (<-chan []byte, context.CancelFunc) {
-	channel := make(chan []byte)
-	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, key)
-	go func() {
-		defer close(channel)
-		for watchResponse := range watchChannel {
-			if watchResponse.Err() != nil {
-				return
-			}
-			for _, event := range watchResponse.Events {
-				if event.Type == clientv3.EventTypePut {
-					channel <- event.Kv.Value
-				}
-			}
-		}
-	}()
-	return channel, cancel
 }
