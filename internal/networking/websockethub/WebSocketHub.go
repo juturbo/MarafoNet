@@ -81,4 +81,5 @@ func (hub *WebSocketHub) Cleanup() {
 func closeConnection(hub *WebSocketHub) {
 	hub.Connection.Close()
 	hub.CancelWatcher()
+	hub.StorageService.RemoveUserFromQueue(context.Background(), hub.playerName)
 }
