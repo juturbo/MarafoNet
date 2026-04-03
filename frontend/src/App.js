@@ -6,6 +6,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import NameEntryScreen from './components/LogInScreen';
 import LobbyScreen from './components/LobbyScreen';
 import TableScreen from './components/TableScreen';
+import RegisterScreen from './components/RegisterScreen';
 import BackgroundButton from './components/BackgroundButton';
 
 function App() {
