@@ -5,11 +5,15 @@ import './LobbyScreen.css';
 export default function LobbyScreen({ ws }) {
 
     const payload = {
-        type: 'fist_join'
+        type: 'first_join'
     }
 
     ws.send(JSON.stringify(payload));
     console.log('Sent:', payload);
+
+    ws.onmessage = (event) => {
+        console.log(event.data)
+    };
 
     return (
         <div className="lobby-screen">
