@@ -113,14 +113,20 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 	case envelope.EqualsType(LoginType):
 		authenticated, err := checkPlayerIdentity(hub, envelope)
-		if err == nil && authenticated {
-			hub.SetAuthenticated()
-			replyMessageBuilder.SetType("login_success")
-			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully authenticated", envelope.GetPlayerName()))
+		if err != nil {
+			replyMessageBuilder.SetType("login_failed")
+			replyMessageBuilder.SetMessage(fmt.Sprintf("authentication failed for username %s. Error: %s", envelope.GetPlayerName(), err.Error()))
 			return true, replyMessageBuilder.Build()
 		}
-		replyMessageBuilder.SetMessage(fmt.Sprintf("authentication failed for username %s", envelope.GetPlayerName()))
-		replyMessageBuilder.SetType("login_failed")
+		if !authenticated {
+			replyMessageBuilder.SetMessage(fmt.Sprintf("invalid player identity for %s", envelope.GetPlayerName()))
+			replyMessageBuilder.SetType("login_failed")
+			return true, replyMessageBuilder.Build()
+		}
+		hub.SetAuthenticated()
+		replyMessageBuilder.SetType("login_success")
+		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully authenticated", envelope.GetPlayerName()))
+		return true, replyMessageBuilder.Build()
 	default:
 		replyMessageBuilder.SetType("invalid_request")
 		replyMessageBuilder.SetMessage(fmt.Sprintf("invalid authentication message type %s", envelope.GetMessageType()))
