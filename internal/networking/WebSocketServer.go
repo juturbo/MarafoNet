@@ -106,13 +106,17 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 		if err == nil && isAvailable {
 			err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
 			if err != nil {
-				return true, BuildJSONErrorResponse(err.Error())
+				replyMessageBuilder.SetType("register_failed")
+				replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s", envelope.GetPlayerName()))
+				return true, replyMessageBuilder.Build()
 			}
 			hub.SetPlayerName(envelope.GetPlayerName())
 			replyMessageBuilder.SetType("register_success")
 			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 		}
-		return true, BuildJSONErrorResponse(err.Error())
+		replyMessageBuilder.SetType("register_failed")
+		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s is not available", envelope.GetPlayerName()))
+		return true, replyMessageBuilder.Build()
 	case envelope.EqualsType(LoginType):
 		authenticated, err := checkPlayerIdentity(hub, envelope)
 		if err == nil && authenticated {
