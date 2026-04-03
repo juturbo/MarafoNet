@@ -4,7 +4,7 @@ import "golang.org/x/crypto/bcrypt"
 
 type User struct {
 	Name     string `json:"name"`
-	Password string `json:"-"`
+	Password string `json:"password"`
 }
 
 func NewUser(name string, password string) (*User, error) {
