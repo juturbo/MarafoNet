@@ -11,7 +11,7 @@ export default function NameEntryScreen({ ws }) {
 
         if (ws && name.trim() && password.trim()) {
             const payload = {
-                type: 'first_join',
+                type: 'login_user',
                 playerName: name,
                 password: password,
                 payload: null,
