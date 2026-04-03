@@ -54,7 +54,7 @@ func TestPlayCardRemovesCardAndTotals(t *testing.T) {
 
 func TestCalculateTrickWinner(t *testing.T) {
 	players := mkPlayers("Alice", "Bob", "Carol", "Dave")
-	match := model.Match{Players: players, TrumpSuit: model.Cups}
+	match := model.Game{Players: players, TrumpSuit: model.Cups}
 	match.Table = []model.PlayedCard{
 		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Seven}},
 		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.Knight}},
@@ -192,12 +192,12 @@ func mkPlayers(names ...string) []model.Player {
 	return players
 }
 
-func mkMatch(names ...string) model.Match {
+func mkMatch(names ...string) model.Game {
 	players := mkPlayers(names...)
-	return model.Match{Players: players, FirstPlayer: names[0]}
+	return model.Game{Players: players, FirstPlayer: names[0]}
 }
 
-func setHands(m *model.Match, hands [][]model.Card) {
+func setHands(m *model.Game, hands [][]model.Card) {
 	for i := range hands {
 		if i < len(m.Players) {
 			m.Players[i].Hand = model.Hand(hands[i])

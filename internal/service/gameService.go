@@ -47,24 +47,24 @@ func (gameService *GameService) StartGame(ctx context.Context, playerNames json.
 }
 
 func (gameService *GameService) SetTrumpSuit(ctx context.Context, matchId string, playerName string, suit model.Suit) error {
-	return gameService.applyUpdate(ctx, matchId, func(m model.Match) (model.Match, error) {
+	return gameService.applyUpdate(ctx, matchId, func(m model.Game) (model.Game, error) {
 		return gameLogic.SetTrumpSuit(m, playerName, suit)
 	})
 }
 
 func (gameService *GameService) PlayCard(ctx context.Context, matchId string, playerName string, card model.Card) error {
-	return gameService.applyUpdate(ctx, matchId, func(m model.Match) (model.Match, error) {
+	return gameService.applyUpdate(ctx, matchId, func(m model.Game) (model.Game, error) {
 		return gameLogic.PlayCard(m, playerName, card)
 	})
 }
 
-func (gameService *GameService) applyUpdate(ctx context.Context, matchId string, updater func(model.Match) (model.Match, error)) error {
+func (gameService *GameService) applyUpdate(ctx context.Context, matchId string, updater func(model.Game) (model.Game, error)) error {
 	matchJson, revision, err := gameService.etcdService.GetMatchJsonAndRevision(ctx, matchId)
 	if err != nil {
 		return err
 	}
 
-	var match model.Match
+	var match model.Game
 	if err := json.Unmarshal(matchJson, &match); err != nil {
 		return err
 	}

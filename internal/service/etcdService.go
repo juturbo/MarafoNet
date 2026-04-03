@@ -157,30 +157,38 @@ func (etcdService *EtcdService) RemoveUserCurrentMatchId(ctx context.Context, pl
 
 func (etcdService *EtcdService) IsUsernameAvailable(ctx context.Context, playerName string) (bool, error) {
 	key := fmt.Sprintf(USERS_NAME_PATH, playerName)
-
-	value, err := etcdService.getValue(ctx, key)
-
+	exists, err := etcdService.keyExists(ctx, key)
 	if err != nil {
 		return false, err
 	}
 
-	return value == "", nil
+	return !exists, nil
 }
 
 func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.User) error {
-	if bool, err := etcdService.IsUsernameAvailable(ctx, user.Name); err != nil || !bool {
-		return fmt.Errorf("username not available: %s", user.Name)
-	}
-
+	userKey := fmt.Sprintf(USERS_NAME_PATH, user.Name)
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
 	hashedPassword, err := user.GeneratePasswordHash()
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	err = etcdService.putValue(ctx, passwordKey, hashedPassword)
+	transaction := etcdService.client.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.CreateRevision(userKey), "=", 0),
+			clientv3.Compare(clientv3.CreateRevision(passwordKey), "=", 0),
+		).
+		Then(
+			clientv3.OpPut(userKey, user.Name),
+			clientv3.OpPut(passwordKey, hashedPassword),
+		)
+
+	transactionResponse, err := transaction.Commit()
 	if err != nil {
 		return fmt.Errorf("failed to register user: %w", err)
+	}
+	if !transactionResponse.Succeeded {
+		return fmt.Errorf("username not available: %s", user.Name)
 	}
 
 	return nil
@@ -301,6 +309,15 @@ func (etcdService *EtcdService) getKeyValue(ctx context.Context, key string) (va
 	value = string(response.Kvs[0].Value)
 	revision = response.Kvs[0].ModRevision
 	return value, revision, nil
+}
+
+func (etcdService *EtcdService) keyExists(ctx context.Context, key string) (bool, error) {
+	response, err := etcdService.client.Get(ctx, key)
+	if err != nil {
+		return false, err
+	}
+
+	return len(response.Kvs) > 0, nil
 }
 
 func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string, value string, compare clientv3.Cmp) (bool, error) {
