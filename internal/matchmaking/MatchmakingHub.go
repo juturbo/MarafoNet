@@ -4,6 +4,7 @@ import (
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
+	"log"
 )
 
 type MatchmakingHub struct {
@@ -45,20 +46,24 @@ func (hub *MatchmakingHub) GetGameService() *service.GameService {
 // Can be stopped by calling StopMatchmaking().
 func (hub *MatchmakingHub) StartMatchmaking() {
 	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
-	for users := range queueChannel {
-		select {
-		case <-hub.ctx.Done():
-			cancelQueueWatcher()
-			return
-		default:
-			if len(users) >= 4 {
-				hub.GetGameService().StartGame(context.Background(), users[:4])
-				for _, user := range users[:4] {
-					hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
+	go func() {
+		for users := range queueChannel {
+			log.Printf("Current users in queue: %v", users)
+			select {
+			case <-hub.ctx.Done():
+				cancelQueueWatcher()
+				return
+			default:
+				if len(users) >= 4 {
+					matchID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
+					for _, user := range users[:4] {
+						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
+						hub.GetStorageService().SetUserCurrentMatchId(context.Background(), user, matchID)
+					}
 				}
 			}
 		}
-	}
+	}()
 }
 
 // Stops the matchmaking service.
@@ -68,25 +73,37 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 
 // Sets a watcher on the requested game, sending the information down the write channel.
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) context.CancelFunc {
-	return startWatcher(ctx, hub.GetStorageService().WatchGame, matchId, writeChannel)
+	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
+	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
+	sendMatchUpdate(matchJSON, writeChannel)
+	println("Setting game watcher for match ID:", matchId)
+	go func() {
+		for update := range watchChannel {
+			sendMatchUpdate(update, writeChannel)
+		}
+	}()
+	return cancelFunc
+}
+
+func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
+	println("New update: ", string(update))
+	message := MatchUpdateMessage{
+		Type:  "match_update",
+		Match: update,
+	}
+	payload, _ := json.Marshal(message)
+	writeChannel <- payload
 }
 
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
 // a watcher for the game.
 func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) context.CancelFunc {
-	return startWatcher(ctx, hub.GetStorageService().WatchUserLobby, playerName, writeChannel)
-}
-
-func startWatcher(ctx context.Context, fun handler, arg string, writeChannel chan json.RawMessage) context.CancelFunc {
-	watchChannel, cancelFunc := fun(ctx, arg)
+	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
+	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
 	go func() {
-		for update := range watchChannel {
-			message := MatchUpdateMessage{
-				Type:  "match_update",
-				Match: update,
-			}
-			payload, _ := json.Marshal(message)
-			writeChannel <- payload
+		for lobbyUpdate := range lobbyChannel {
+			println("New lobby update for player", playerName, ":", string(lobbyUpdate))
+			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), writeChannel)
 		}
 	}()
 	return cancelFunc
