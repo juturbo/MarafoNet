@@ -13,7 +13,7 @@ function App() {
   
   // Define your state here
   // PHASES: 'LOG_IN' | 'REGISTER' | 'LOBBY' | 'PLAYING'
-  const [phase, setPhase] = useState('NAME_ENTRY');
+  const [phase, setPhase] = useState('LOG_IN');
   const [gameState, setGameState] = useState(null);
   const [lobbyInfo, setLobbyInfo] = useState(null);
 
