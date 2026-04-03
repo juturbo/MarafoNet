@@ -250,6 +250,11 @@ func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username str
 	return etcdService.watchKey(ctx, key)
 }
 
+func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []byte, context.CancelFunc) {
+	key := USER_QUEUE_PATH
+	return etcdService.watchKey(ctx, key, clientv3.WithPrefix())
+}
+
 func (etcdService *EtcdService) Close() error {
 	return etcdService.client.Close()
 }
@@ -333,10 +338,10 @@ func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string,
 	return transactionResponse.Succeeded, nil
 }
 
-func (etcdService *EtcdService) watchKey(ctx context.Context, key string) (<-chan []byte, context.CancelFunc) {
+func (etcdService *EtcdService) watchKey(ctx context.Context, key string, opts ...clientv3.OpOption) (<-chan []byte, context.CancelFunc) {
 	channel := make(chan []byte)
 	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, key)
+	watchChannel := etcdService.client.Watch(watchCtx, key, opts...)
 	go func() {
 		defer close(channel)
 		for watchResponse := range watchChannel {
