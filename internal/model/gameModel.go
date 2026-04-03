@@ -24,7 +24,7 @@ type PlayedCard struct {
 	Card       Card   `json:"Card"`
 }
 
-type Match struct {
+type Game struct {
 	Players       []Player             `json:"Players"`
 	Table         []PlayedCard         `json:"Table"`
 	MatchPoints   [NumberOfTeams]Point `json:"MatchPoints"`
@@ -36,7 +36,7 @@ type Match struct {
 }
 
 // TODO: check
-func (match Match) String() string {
+func (match Game) String() string {
 	var sb strings.Builder
 	for i, player := range match.Players {
 		sb.WriteString("Player " + string(rune(i+1)) + ": " + player.String() + "\n")

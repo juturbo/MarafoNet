@@ -9,7 +9,7 @@ import (
 )
 
 /*starts a full 41 points game*/
-func StartGame(players []model.Player) (model.Match, error) {
+func StartGame(players []model.Player) (model.Game, error) {
 	match, err := initializeGame(players)
 	if err != nil {
 		return match, err
@@ -17,7 +17,7 @@ func StartGame(players []model.Player) (model.Match, error) {
 	return startMatch(match), nil
 }
 
-func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.Match, error) {
+func SetTrumpSuit(match model.Game, playerName string, suit model.Suit) (model.Game, error) {
 	if isTrumpSuitChosen(match) {
 		return match, errors.New("trump suit has already been chosen")
 	}
@@ -28,7 +28,7 @@ func SetTrumpSuit(match model.Match, playerName string, suit model.Suit) (model.
 	return match, nil
 }
 
-func PlayCard(match model.Match, playerName string, card model.Card) (model.Match, error) {
+func PlayCard(match model.Game, playerName string, card model.Card) (model.Game, error) {
 	if !isTheCardPlayable(match, playerName, card) {
 		return match, errors.New("the card is not playable")
 	}
@@ -55,8 +55,8 @@ func PlayCard(match model.Match, playerName string, card model.Card) (model.Matc
 	return match, nil
 }
 
-func initializeGame(players []model.Player) (model.Match, error) {
-	var match model.Match
+func initializeGame(players []model.Player) (model.Game, error) {
+	var match model.Game
 	var err error
 	match.Players, err = initializePlayers(players)
 	if err != nil {
@@ -85,7 +85,7 @@ func initializePlayers(players []model.Player) ([]model.Player, error) {
 }
 
 /*starts a match in a game*/
-func startMatch(match model.Match) model.Match {
+func startMatch(match model.Game) model.Game {
 	deck := initializeDeck()
 	match.Players, deck = distributeCards(deck, match.Players)
 	return match
@@ -99,7 +99,7 @@ func extractFirstPlayer(player []model.Player) (string, error) {
 	return player[randomIndex].Name, nil
 }
 
-func nextPlayerName(match model.Match) string {
+func nextPlayerName(match model.Game) string {
 	var currentFirstPlayerIndex int
 	for i, player := range match.Players {
 		if player.Name == match.FirstPlayer {
@@ -122,7 +122,7 @@ func distributeCards(deck model.Deck, players []model.Player) ([]model.Player, m
 	return players, deck
 }
 
-func isTheCardPlayable(match model.Match, playerName string, card model.Card) bool {
+func isTheCardPlayable(match model.Game, playerName string, card model.Card) bool {
 	var isValid = false
 	if !isTrumpSuitChosen(match) {
 		isValid = false
@@ -146,18 +146,18 @@ func isTheCardPlayable(match model.Match, playerName string, card model.Card) bo
 	return isValid
 }
 
-func isTrumpSuitChosen(match model.Match) bool {
+func isTrumpSuitChosen(match model.Game) bool {
 	return match.TrumpSuit != 0
 }
 
-func isPlayerTurnValid(match model.Match, playerName string) bool {
+func isPlayerTurnValid(match model.Game, playerName string) bool {
 	if isTableFull(match) {
 		return false
 	}
 	return getCurrentPlayer(match) == playerName
 }
 
-func getCurrentPlayer(match model.Match) string {
+func getCurrentPlayer(match model.Game) string {
 	if isTableEmpty(match) {
 		return match.FirstPlayer
 	}
@@ -201,11 +201,11 @@ func playerSatisfies(players []model.Player, playerName string, predicate func(m
 	return isValid
 }
 
-func isFirstPlayerTurn(match model.Match, playerName string) bool {
+func isFirstPlayerTurn(match model.Game, playerName string) bool {
 	return match.FirstPlayer == playerName
 }
 
-func getPlayerTeamId(match model.Match, playerName string) int {
+func getPlayerTeamId(match model.Game, playerName string) int {
 	for _, p := range match.Players {
 		if p.Name == playerName {
 			return p.TeamId
@@ -214,7 +214,7 @@ func getPlayerTeamId(match model.Match, playerName string) int {
 	return 0
 }
 
-func isEligibleForMarafona(match model.Match, playerName string, card model.Card) bool {
+func isEligibleForMarafona(match model.Game, playerName string, card model.Card) bool {
 	if !isTrumpSuitChosen(match) {
 		return false
 	}
@@ -260,7 +260,7 @@ A card is of the leading suit if it has the same suit as the first card played i
 If a player has a card of the leading suit, they must play it.
 If they don't have a card of the leading suit, they can play any card.
 */
-func isCardOfLeadingSuit(match model.Match, playerName string, card model.Card) bool {
+func isCardOfLeadingSuit(match model.Game, playerName string, card model.Card) bool {
 	var isValid = false
 	if !isTableEmpty(match) {
 		var leadingSuit = match.Table[0].Card.Suit
@@ -285,11 +285,11 @@ func playerHasCardOfLeadingSuit(players []model.Player, playerName string, leadi
 	return hasCardOfLeadingSuit
 }
 
-func isTableFull(match model.Match) bool {
+func isTableFull(match model.Game) bool {
 	return len(match.Table) >= len(match.Players)
 }
 
-func isTableEmpty(match model.Match) bool {
+func isTableEmpty(match model.Game) bool {
 	return len(match.Table) == 0
 }
 
@@ -307,7 +307,7 @@ func removeCardFromPlayerHand(players []model.Player, playerName string, card mo
 	return players
 }
 
-func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
+func calculateTrickWinnerAndUpdate(match model.Game) model.Game {
 	winningPlayerName := getTrickWinner(match)
 	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
 	trickPoints := calculateTrickPoints(match)
@@ -316,7 +316,7 @@ func calculateTrickWinnerAndUpdate(match model.Match) model.Match {
 	return match
 }
 
-func getTrickWinner(match model.Match) string {
+func getTrickWinner(match model.Game) string {
 	winningCard := match.Table[0].Card
 	winningPlayerName := match.Table[0].PlayerName
 	for i := 1; i < len(match.Table); i++ {
@@ -329,7 +329,7 @@ func getTrickWinner(match model.Match) string {
 	return winningPlayerName
 }
 
-func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
+func getTrickWinningTeamId(match model.Game, winningPlayerName string) int {
 	var winningTeamId int
 	for _, player := range match.Players {
 		if player.Name == winningPlayerName {
@@ -340,7 +340,7 @@ func getTrickWinningTeamId(match model.Match, winningPlayerName string) int {
 	return winningTeamId
 }
 
-func calculateTrickPoints(match model.Match) model.Point {
+func calculateTrickPoints(match model.Game) model.Point {
 	var trickPoints model.Point
 	for _, playedCard := range match.Table {
 		trickPoints += playedCard.Card.PointValue()
@@ -348,7 +348,7 @@ func calculateTrickPoints(match model.Match) model.Point {
 	return trickPoints
 }
 
-func isMatchOver(match model.Match) bool {
+func isMatchOver(match model.Game) bool {
 	for _, player := range match.Players {
 		if len(player.Hand) > 0 {
 			return false
@@ -357,7 +357,7 @@ func isMatchOver(match model.Match) bool {
 	return true
 }
 
-func calculateMatchPointsAndReset(match model.Match) model.Match {
+func calculateMatchPointsAndReset(match model.Game) model.Game {
 	for i := range model.NumberOfTeams {
 		match.TotalPoints[i] += int(match.MatchPoints[i] / model.ACE_POINTS)
 		match.MatchPoints[i] = 0
@@ -375,7 +375,7 @@ func calculateMatchPointsAndReset(match model.Match) model.Match {
 	return match
 }
 
-func checkVictoryAndUpdate(match model.Match) (model.Match, bool) {
+func checkVictoryAndUpdate(match model.Game) (model.Game, bool) {
 	var teamsOver []int
 	for i := range match.TotalPoints {
 		if match.TotalPoints[i] >= model.PointsToWin {
@@ -410,7 +410,7 @@ func checkVictoryAndUpdate(match model.Match) (model.Match, bool) {
 	return match, true
 }
 
-func printMatch(match model.Match) {
+func printMatch(match model.Game) {
 	for i := 0; i < len(match.Players); i++ {
 		fmt.Printf("Team %d\t%s\tHand: %v\n", match.Players[i].TeamId+1, match.Players[i].Name, match.Players[i].Hand)
 	}
