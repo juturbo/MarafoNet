@@ -106,25 +106,29 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 		if err == nil && isAvailable {
 			err := hub.StorageService.RegisterUser(context.Background(), envelope.GetUser())
 			if err != nil {
-				return true, BuildJSONErrorResponse(err.Error())
+				replyMessageBuilder.SetType("register_failed")
+				replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s", envelope.GetPlayerName()))
+				return true, replyMessageBuilder.Build()
 			}
 			hub.SetPlayerName(envelope.GetPlayerName())
 			replyMessageBuilder.SetType("register_success")
 			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 		}
-		return true, BuildJSONErrorResponse(err.Error())
+		replyMessageBuilder.SetType("register_failed")
+		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s is not available", envelope.GetPlayerName()))
 	case envelope.EqualsType(LoginType):
 		authenticated, err := checkPlayerIdentity(hub, envelope)
 		if err == nil && authenticated {
 			hub.SetAuthenticated()
 			replyMessageBuilder.SetType("login_success")
 			replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully authenticated", envelope.GetPlayerName()))
+			return true, replyMessageBuilder.Build()
 		}
 		replyMessageBuilder.SetMessage(fmt.Sprintf("authentication failed for username %s", envelope.GetPlayerName()))
 		replyMessageBuilder.SetType("login_failed")
 	default:
 		replyMessageBuilder.SetType("invalid_request")
-		replyMessageBuilder.SetMessage("An authentication error occoured")
+		replyMessageBuilder.SetMessage(fmt.Sprintf("invalid authentication message type %s", envelope.GetMessageType()))
 	}
 	return true, replyMessageBuilder.Build()
 }
@@ -132,14 +136,17 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 // Checks the player's identity against the name associated with the connection in WebSocketHub.
 func checkPlayerIdentity(hub *websockethub.WebSocketHub, envelope Envelope) (bool, error) {
 	verified, err := hub.StorageService.VerifyUser(context.Background(), envelope.GetUser())
-	if err == nil && verified && hub.GetPlayerName() == envelope.GetPlayerName() {
+	if err != nil {
+		return false, fmt.Errorf("error verifying user identity for username %s: %s", envelope.GetPlayerName(), err.Error())
+	}
+	if verified && hub.GetPlayerName() == envelope.GetPlayerName() {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("invalid player identity - %s", err.Error())
+		return false, fmt.Errorf("invalid player identity")
 	}
 }
 
 // Check if the player can register in the connection with the provided username.
 func isPlayerNew(hub *websockethub.WebSocketHub, envelope Envelope) bool {
-	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() == ""
+	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() != ""
 }
