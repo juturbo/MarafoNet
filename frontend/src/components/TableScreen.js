@@ -104,6 +104,9 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
     
     return (
         <div className="table-screen">
+            {/* Row 1: Empty, Top Player, Empty */}
+            <div className="position-empty"></div>
+            
             {/* Top Player - Teammate */}
             <div className="position top">
                 {top ? (
@@ -113,6 +116,9 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                 )}
             </div>
             
+            <div className="position-empty"></div>
+            
+            {/* Row 2: Left Player, Table Center, Right Player */}
             {/* Left Player - Opponent */}
             <div className="position left">
                 {left ? (
@@ -186,6 +192,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             {/* Trump Selector - shows for First player */}
             <TrumpSelector 
                 isFirstPlayer={gameState.FirstPlayer === bottom.Name && (!gameState.TrumpSuit || gameState.TrumpSuit === 'None')}
+                matchID={gameState.MatchID}
                 onTrumpSelected={() => setTrumpSelected(true)}
             />
         </div>
