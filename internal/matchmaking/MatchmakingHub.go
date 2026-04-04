@@ -20,6 +20,9 @@ type MatchUpdateMessage struct {
 	Match json.RawMessage `json:"match"`
 }
 
+// Callback function type for when game ID is assigned
+type OnGameIDCallback func(gameID string)
+
 type handler func(ctx context.Context, id string) (<-chan []byte, context.CancelFunc)
 
 // Returns a new Matchmaking hub
@@ -71,7 +74,7 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 	hub.cancel()
 }
 
-// Sets a watcher on the requested game, sending the information down the write channel.
+// Sets a watcher on the requested game, sending the information down the write channel..
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
@@ -96,15 +99,17 @@ func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
 }
 
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
-// a watcher for the game.
-func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage) context.CancelFunc {
+// a watcher for the game. The onGameID callback will be called with the gameID once assigned.
+func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage, onGameID OnGameIDCallback) context.CancelFunc {
 	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
 	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
 	go func() {
 		for lobbyUpdate := range lobbyChannel {
 			println("New lobby update for player", playerName, ":", string(lobbyUpdate))
 			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), writeChannel)
-			break
+			if onGameID != nil {
+				onGameID(string(lobbyUpdate))
+			}
 		}
 	}()
 	return cancelFunc

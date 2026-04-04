@@ -21,6 +21,7 @@ type WebSocketHub struct {
 	cancelFunc         context.CancelFunc
 	closeOnce          sync.Once
 	isAuthenticated    bool
+	matchID            string
 }
 
 func CreateWebSocketHub(
@@ -37,6 +38,7 @@ func CreateWebSocketHub(
 	hub.MatchmakingService = MatchmakingService
 	hub.closeOnce = sync.Once{}
 	hub.isAuthenticated = false
+	hub.matchID = ""
 	return &hub
 }
 
@@ -56,6 +58,14 @@ func (hub *WebSocketHub) SetAuthenticated() {
 
 func (hub *WebSocketHub) IsAuthenticated() bool {
 	return hub.isAuthenticated
+}
+
+func (hub *WebSocketHub) SetMatchID(matchID string) {
+	hub.matchID = matchID
+}
+
+func (hub *WebSocketHub) GetMatchID() string {
+	return hub.matchID
 }
 
 // Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).

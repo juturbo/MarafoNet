@@ -67,12 +67,15 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		}
 		if gameID == "" {
 			hub.SetWatcherCancelFunc(
-				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel),
+				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func(gameID string) {
+					hub.SetMatchID(gameID)
+				}),
 			)
 		} else {
 			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
 			)
+			hub.SetMatchID(gameID)
 		}
 	case envelope.EqualsType(PlayCardType):
 		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
@@ -86,7 +89,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	case envelope.EqualsType(SetTrumpType):
 		var payload SetTrumpPayLoad
 		json.Unmarshal(envelope.GetPayload(), &payload)
-		err := hub.GameService.SetTrumpSuit(context.Background(), payload.MatchID, hub.GetPlayerName(), payload.Suit)
+		err := hub.GameService.SetTrumpSuit(context.Background(), hub.GetMatchID(), hub.GetPlayerName(), payload.Suit)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
