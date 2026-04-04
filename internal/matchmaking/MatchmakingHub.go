@@ -75,13 +75,13 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
-	sendMatchUpdate(matchJSON, writeChannel)
 	println("Setting game watcher for match ID:", matchId)
 	go func() {
 		for update := range watchChannel {
 			sendMatchUpdate(update, writeChannel)
 		}
 	}()
+	sendMatchUpdate(matchJSON, writeChannel)
 	return cancelFunc
 }
 
