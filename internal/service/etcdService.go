@@ -1,6 +1,7 @@
 package service
 
 import (
+	"MarafoNet/model"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,11 @@ import (
 )
 
 const MATCH_COUNTER_PATH = "global/match_counter"
+const MATCH_PREFIX = "match/%d"
+const USER_QUEUE_PATH = "user_queue/"
+const USERS_NAME_PATH = "users/%s"
+const USERS_PASSWORD_PATH = "users/%s/password"
+const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
 const KEEP_ALIVE_TTL = 300
 
 type EtcdService struct {
@@ -51,7 +57,7 @@ func (etcdService *EtcdService) GetNextMatchID(ctx context.Context) (matchId str
 			return "", err
 		}
 		if succeeded {
-			return fmt.Sprintf("match/%d", next), nil
+			return fmt.Sprintf(MATCH_PREFIX, next), nil
 		}
 	}
 }
@@ -72,21 +78,25 @@ func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matc
 	return nil
 }
 
-func (etcdService *EtcdService) GetValueAndRevision(ctx context.Context, key string) (matchJson json.RawMessage, revision int64, err error) {
-	value, rev, err := etcdService.getKeyValue(ctx, key)
+func (etcdService *EtcdService) GetMatchJsonAndRevision(ctx context.Context, key string) (matchJson json.RawMessage, revision int64, err error) {
+	value, revision, err := etcdService.getKeyValue(ctx, key)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return json.RawMessage(value), rev, nil
+	if value == "" {
+		return nil, 0, fmt.Errorf("key not found: %s", key)
+	}
+
+	return json.RawMessage(value), revision, nil
 }
 
-func (etcdService *EtcdService) PutUpdatedGameIfRevisionMatch(ctx context.Context, key string, matchJson json.RawMessage, lastRevision int64) error {
+func (etcdService *EtcdService) PutUpdatedGameJsonIfRevisionMatch(ctx context.Context, matchId string, matchJson json.RawMessage, lastRevision int64) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
-		key,
+		matchId,
 		string(matchJson),
-		clientv3.Compare(clientv3.ModRevision(key), "=", lastRevision),
+		clientv3.Compare(clientv3.ModRevision(matchId), "=", lastRevision),
 	)
 	if err != nil {
 		return err
@@ -97,43 +107,114 @@ func (etcdService *EtcdService) PutUpdatedGameIfRevisionMatch(ctx context.Contex
 	return nil
 }
 
-func (etcdService *EtcdService) SetUserCurrentMatchId(ctx context.Context, playerName string, matchId string) error {
-	key := fmt.Sprintf("user/%s/current_match", playerName)
-	return etcdService.putValue(ctx, key, matchId)
-}
+func (etcdService *EtcdService) PutUserIntoQueue(ctx context.Context, playerName string) (err error) {
+	key := USER_QUEUE_PATH + playerName
 
-func (etcdService *EtcdService) GetUserCurrentMatchId(ctx context.Context, playerName string) (string, error) {
-	key := fmt.Sprintf("user/%s/current_match", playerName)
-	return etcdService.getValue(ctx, key)
-}
-
-func (etcdService *EtcdService) RegisterUser(ctx context.Context, playerName string) (string, error) {
-	uuidKey := fmt.Sprintf("user/%s/uuid", playerName)
-	uuidValue := etcdService.uuid.String()
-
-	err := etcdService.putValue(ctx, uuidKey, uuidValue)
-	if err != nil {
-		return "", err
-	}
-	return uuidValue, nil
-}
-
-func (etcdService *EtcdService) VerifyUser(ctx context.Context, playerName string, uuid string) error {
-	uuidKey := fmt.Sprintf("user/%s/uuid", playerName)
-	value, err := etcdService.getValue(ctx, uuidKey)
-	if err != nil || value != uuid {
-		return fmt.Errorf("authentication failed for user: %s", playerName)
+	if err = etcdService.putValue(ctx, key, playerName); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, playerName string) error {
-	uuidKey := fmt.Sprintf("user/%s/uuid", playerName)
+func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []string, err error) {
+	key := USER_QUEUE_PATH
 
-	value, err := etcdService.getValue(ctx, uuidKey)
+	response, err := etcdService.client.Get(ctx, key, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(response.Kvs) == 0 {
+		return nil, fmt.Errorf("key not found: %s", key)
+	}
+
+	for _, kv := range response.Kvs {
+		userQueue = append(userQueue, string(kv.Value))
+	}
+
+	return userQueue, nil
+}
+
+func (etcdService *EtcdService) RemoveUserFromQueue(ctx context.Context, playerName string) error {
+	key := USER_QUEUE_PATH + playerName
+	return etcdService.deleteKey(ctx, key)
+}
+
+func (etcdService *EtcdService) SetUserCurrentMatchId(ctx context.Context, playerName string, matchId string) error {
+	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
+	return etcdService.putValue(ctx, key, matchId)
+}
+
+func (etcdService *EtcdService) GetUserCurrentMatchId(ctx context.Context, playerName string) (string, error) {
+	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
+	return etcdService.getValue(ctx, key)
+}
+
+func (etcdService *EtcdService) RemoveUserCurrentMatchId(ctx context.Context, playerName string) error {
+	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
+	return etcdService.deleteKey(ctx, key)
+}
+
+func (etcdService *EtcdService) IsUsernameAvailable(ctx context.Context, playerName string) (bool, error) {
+	key := fmt.Sprintf(USERS_NAME_PATH, playerName)
+	exists, err := etcdService.keyExists(ctx, key)
+	if err != nil {
+		return false, err
+	}
+
+	return !exists, nil
+}
+
+func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.User) error {
+	userKey := fmt.Sprintf(USERS_NAME_PATH, user.Name)
+	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+	hashedPassword, err := user.GeneratePasswordHash()
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	transaction := etcdService.client.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.CreateRevision(userKey), "=", 0),
+			clientv3.Compare(clientv3.CreateRevision(passwordKey), "=", 0),
+		).
+		Then(
+			clientv3.OpPut(userKey, user.Name),
+			clientv3.OpPut(passwordKey, hashedPassword),
+		)
+
+	transactionResponse, err := transaction.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to register user: %w", err)
+	}
+	if !transactionResponse.Succeeded {
+		return fmt.Errorf("username not available: %s", user.Name)
+	}
+
+	return nil
+}
+
+func (etcdService *EtcdService) VerifyUser(ctx context.Context, user model.User) (bool, error) {
+	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+
+	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
+	if err != nil {
+		return false, err
+	}
+
+	return user.CheckPassword(hashedPassword), nil
+}
+
+func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, user model.User) error {
+	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+
+	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
 	if err != nil {
 		return err
+	}
+
+	if hashedPassword == "" {
+		return fmt.Errorf("user not found: %s", user.Name)
 	}
 
 	lease, err := etcdService.client.Grant(ctx, KEEP_ALIVE_TTL)
@@ -141,33 +222,62 @@ func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, playerName
 		return err
 	}
 
-	_, err = etcdService.client.Put(ctx, uuidKey, value, clientv3.WithLease(lease.ID))
+	_, err = etcdService.client.Put(ctx, passwordKey, hashedPassword, clientv3.WithLease(lease.ID))
 	return err
 }
 
-func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, playerName string, uuid string) error {
-	uuidKey := fmt.Sprintf("user/%s/uuid", playerName)
+func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.User) error {
+	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
 
-	if err := etcdService.VerifyUser(ctx, playerName, uuid); err != nil {
-		return err
+	if isValid, err := etcdService.VerifyUser(ctx, user); err != nil || !isValid {
+		return fmt.Errorf("reconnection failed for user: %s", user.Name)
 	}
 
-	return etcdService.putValue(ctx, uuidKey, uuid)
+	hashedPassword, err := user.GeneratePasswordHash()
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	return etcdService.putValue(ctx, passwordKey, hashedPassword)
 }
 
 func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan json.RawMessage, context.CancelFunc) {
 	return etcdService.watchKey(ctx, matchId)
 }
 
-func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, playerName string) (<-chan json.RawMessage, context.CancelFunc) {
-	key := fmt.Sprintf("user/%s/current_match", playerName)
+func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username string) (<-chan []byte, context.CancelFunc) {
+	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, username)
 	return etcdService.watchKey(ctx, key)
 }
 
-func (etcdService *EtcdService) watchKey(ctx context.Context, key string) (<-chan json.RawMessage, context.CancelFunc) {
-	channel := make(chan json.RawMessage)
+func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []string, context.CancelFunc) {
+	key := USER_QUEUE_PATH
+
+	channel := make(chan []string)
 	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, key)
+	watchChannel := etcdService.client.Watch(watchCtx, key, clientv3.WithPrefix())
+	go func() {
+		defer close(channel)
+		for watchResponse := range watchChannel {
+			if watchResponse.Err() != nil {
+				return
+			}
+			for _, event := range watchResponse.Events {
+				if event.Type == clientv3.EventTypePut {
+					var userQueue, _ = etcdService.GetUserQueue(ctx)
+					channel <- userQueue
+				}
+			}
+		}
+	}()
+
+	return channel, cancel
+}
+
+func (etcdService *EtcdService) watchKey(ctx context.Context, key string, opts ...clientv3.OpOption) (<-chan []byte, context.CancelFunc) {
+	channel := make(chan []byte)
+	watchCtx, cancel := context.WithCancel(ctx)
+	watchChannel := etcdService.client.Watch(watchCtx, key, opts...)
 	go func() {
 		defer close(channel)
 		for watchResponse := range watchChannel {
@@ -226,18 +336,32 @@ func (etcdService *EtcdService) putValue(ctx context.Context, key string, value 
 	return err
 }
 
+func (etcdService *EtcdService) deleteKey(ctx context.Context, key string) error {
+	_, err := etcdService.client.Delete(ctx, key)
+	return err
+}
+
 func (etcdService *EtcdService) getKeyValue(ctx context.Context, key string) (value string, revision int64, err error) {
 	response, err := etcdService.client.Get(ctx, key)
 	if err != nil {
 		return "", 0, err
 	}
 	if len(response.Kvs) == 0 {
-		return "", 0, fmt.Errorf("key not found: %s", key)
+		return "", 0, nil
 	}
 
 	value = string(response.Kvs[0].Value)
 	revision = response.Kvs[0].ModRevision
 	return value, revision, nil
+}
+
+func (etcdService *EtcdService) keyExists(ctx context.Context, key string) (bool, error) {
+	response, err := etcdService.client.Get(ctx, key)
+	if err != nil {
+		return false, err
+	}
+
+	return len(response.Kvs) > 0, nil
 }
 
 func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string, value string, compare clientv3.Cmp) (bool, error) {
