@@ -17,37 +17,54 @@ function App() {
   const [phase, setPhase] = useState('LOG_IN');
   const [gameState, setGameState] = useState(null);
   const [lobbyInfo, setLobbyInfo] = useState(null);
+  const [currentPlayerName, setCurrentPlayerName] = useState(null);
 
   useEffect(() => {
-    if (!ws) return;
+    if (!ws) {
+      console.log('WebSocket is not connected yet');
+      return;
+    }
 
-    // Listen for messages from the Go/Etcd backend
-    ws.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    console.log('App.js: Setting up WebSocket message handler');
 
-      // CHANGE OF STATE LOGIC
-      switch (payload.type) {
-        case 'LOBBY_JOINED':
-          setPhase('LOBBY');
-          setLobbyInfo(payload.data);
-          break;
-        case 'GAME_STARTED':
+    // Listen for game update messages
+    const handleGameMessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        console.log('📨 App.js received:', payload);
+
+        if(payload.type === "match_update") {
+          console.log('🎮 Phase changing to PLAYING');
           setPhase('PLAYING');
-          setGameState(payload.data);
-          break;
-        case 'STATE_UPDATE':
-          // Update cards on the table, scores, whose turn it is
-          setGameState(payload.data);
-          break;
-        case 'SESSION_RECOVERED':
-          // Triggered after a K8s pod failure and successful reconnect
-          setPhase(payload.data.currentPhase);
-          setGameState(payload.data.gameState);
-          break;
-        default:
-          console.warn('Unknown message type:', payload.type);
-          console.log('Payload:', payload);
+          setGameState(payload.match);
+        }
+      } catch (err) {
+        console.error('Error parsing message in App.js:', err);
       }
+    };
+
+    const handleError = (error) => {
+      console.error('❌ WebSocket error:', error);
+    };
+
+    const handleOpen = () => {
+      console.log('✅ WebSocket opened');
+    };
+
+    const handleClose = () => {
+      console.log('❌ WebSocket closed');
+    };
+
+    ws.addEventListener('message', handleGameMessage);
+    ws.addEventListener('error', handleError);
+    ws.addEventListener('open', handleOpen);
+    ws.addEventListener('close', handleClose);
+
+    return () => {
+      ws.removeEventListener('message', handleGameMessage);
+      ws.removeEventListener('error', handleError);
+      ws.removeEventListener('open', handleOpen);
+      ws.removeEventListener('close', handleClose);
     };
   }, [ws]);
 
@@ -65,13 +82,14 @@ function App() {
       case 'LOBBY':
         return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
       case 'PLAYING':
-        return <TableScreen ws={ws} gameState={gameState} />;
+        return <TableScreen matchUpdate={gameState} currentPlayerName={currentPlayerName} />;
       default:
         return <div>Unknown Phase</div>;
     }
   };
 
-  const onAuthSuccess = () => {
+  const onAuthSuccess = (playerName) => {
+    setCurrentPlayerName(playerName);
     setPhase('LOBBY');
   };
 

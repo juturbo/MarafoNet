@@ -1,20 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ListGroup from 'react-bootstrap/ListGroup';
 import './LobbyScreen.css';
 
 export default function LobbyScreen({ ws }) {
+    useEffect(() => {
+        if (!ws) {
+            console.log('⚠️ LobbyScreen: WebSocket not connected');
+            return;
+        }
+        
+        console.log('📤 LobbyScreen: Sending first_join...');
+        const payload = {
+            type: 'first_join'
+        }
 
-    const payload = {
-        type: 'first_join'
-    }
-
-    ws.send(JSON.stringify(payload));
-    console.log('Sent:', payload);
-
-    ws.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        console.log(response)
-    };
+        try {
+            ws.send(JSON.stringify(payload));
+            console.log('✅ LobbyScreen: Sent payload:', payload);
+            console.log('🔗 WebSocket state:', ws.readyState, '(0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)');
+        } catch (error) {
+            console.error('❌ LobbyScreen: Error sending message:', error);
+        }
+    }, [ws]);
 
     return (
         <div className="lobby-screen">
