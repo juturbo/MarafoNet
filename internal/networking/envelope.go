@@ -82,14 +82,13 @@ func (e WSEnvelope) EqualsType(otherType MessageType) bool {
 	return e.GetMessageType() == otherType
 }
 
-func PayloadFromJSON(data json.RawMessage) (string, model.Card, error) {
+func PayloadFromJSON(data json.RawMessage) (model.Card, error) {
 	var p playCardPayLoad
 	err := json.Unmarshal(data, &p)
-	return p.MatchID,
-		model.Card{
-			Rank: p.Rank,
-			Suit: p.Suit,
-		}, err
+	return model.Card{
+		Rank: p.Rank,
+		Suit: p.Suit,
+	}, err
 }
 
 func NewReplyMessageBuilder() *ReplyMessageBuilder {
