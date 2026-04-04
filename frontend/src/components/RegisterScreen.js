@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import './NameEntryScreen.css';
 
@@ -29,16 +29,26 @@ export default function RegisterScreen({ ws, onRegisterSuccess }) {
         }
     };
 
-    ws.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        console.log('Received:', response);
-        if (response.type === 'register_failed') {
-            //setError(response.message);
-            //setLoading(false);
-        } else if (response.type === 'register_success') {
-            onRegisterSuccess();
-        }
-    };
+    useEffect(() => {
+        if (!ws) return;
+
+        const handleMessage = (event) => {
+            const response = JSON.parse(event.data);
+            console.log('Received:', response);
+            if (response.type === 'register_failed') {
+                //setError(response.message);
+                //setLoading(false);
+            } else if (response.type === 'register_success') {
+                onRegisterSuccess();
+            }
+        };
+
+        ws.addEventListener('message', handleMessage);
+        
+        return () => {
+            ws.removeEventListener('message', handleMessage);
+        };
+    }, [ws, onRegisterSuccess]);
 
     return (
         <div className="name-entry-screen">
