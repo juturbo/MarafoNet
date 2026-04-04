@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 
 import './TableScreen.css';
 import TrumpSelector from './TrumpSelector';
+import { WebSocketContext } from '../WebSocketProvider';
 
 // Card component to display individual cards
-function Card({ card }) {
+function Card({ card, onClick }) {
     if (!card) return null;
     
     // Map numeric suit values to folder names
@@ -36,7 +37,7 @@ function Card({ card }) {
     const imagePath = `/assets/cards/${suitFolder}/${rankValue}.png`;
     
     return (
-        <div className="card">
+        <div className="card" onClick={() => onClick && onClick(card.Rank, card.Suit)}>
             <img 
                 src={imagePath} 
                 alt={`Card ${card.Rank} of ${card.Suit}`}
@@ -68,6 +69,7 @@ function PlayerPosition({ playerName, position }) {
 export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
+    const { ws } = useContext(WebSocketContext);
     
     // Map suit numbers to suit names
     const getSuitName = (suitNumber) => {
@@ -78,6 +80,25 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             4: 'Spade',
         };
         return suitNames[suitNumber] || 'None';
+    };
+    
+    // Handle card click - send play_card message
+    const handleCardClick = (rank, suit) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not connected');
+            return;
+        }
+        
+        const message = {
+            type: 'play_card',
+            payload: {
+                rank: rank,
+                suit: suit
+            }
+        };
+        
+        ws.send(JSON.stringify(message));
+        console.log('Sent play_card message:', message);
     };
     
     useEffect(() => {
@@ -181,7 +202,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                     <div className="player-hand">
                         {bottom.Hand && bottom.Hand.length > 0 ? (
                             bottom.Hand.map((card, index) => (
-                                <Card key={index} card={card} />
+                                <Card key={index} card={card} onClick={handleCardClick} />
                             ))
                         ) : (
                             <div className="empty-hand">No cards</div>
