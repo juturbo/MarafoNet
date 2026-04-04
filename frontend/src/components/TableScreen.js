@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import './TableScreen.css';
+import TrumpSelector from './TrumpSelector';
 
 // Card component to display individual cards
 function Card({ card }) {
@@ -66,6 +67,7 @@ function PlayerPosition({ playerName, position }) {
 // Main TableScreen component
 export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
+    const [trumpSelected, setTrumpSelected] = useState(false);
     
     useEffect(() => {
         if (matchUpdate) {
@@ -180,6 +182,12 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                     </div>
                 </div>
             )}
+
+            {/* Trump Selector - shows for First player */}
+            <TrumpSelector 
+                isFirstPlayer={gameState.FirstPlayer === bottom.Name && (!gameState.TrumpSuit || gameState.TrumpSuit === 'None')}
+                onTrumpSelected={() => setTrumpSelected(true)}
+            />
         </div>
     );
 }

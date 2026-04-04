@@ -3,9 +3,9 @@
     height: 100vh;
     display: grid;
     grid-template-columns: 1fr 4fr 1fr;
-    grid-template-rows: 1fr 4fr 1fr;
-    gap: 20px;
-    padding: 20px;
+    grid-template-rows: 1fr 1.5fr 1fr;
+    gap: 5px;
+    padding: 5px;
     color: white;
     font-family: 'Arial', sans-serif;
     box-sizing: border-box;
@@ -51,38 +51,39 @@
     background: rgba(0, 0, 0, 0.4);
     border-radius: 15px;
     border: 2px solid rgba(255, 255, 255, 0.2);
-    padding: 20px;
-    gap: 20px;
+    padding: 5px;
+    gap: 5px;
 }
 
 /* Trump Info */
 .trump-info {
-    font-size: 18px;
+    font-size: 13px;
     font-weight: bold;
     text-align: center;
 }
 
 .trump-suit {
     color: #f39c12;
-    font-size: 24px;
-    margin-left: 10px;
+    font-size: 16px;
+    margin-left: 5px;
 }
 
 /* Table Cards */
 .table-cards {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 6px;
     justify-content: center;
     align-items: center;
-    min-height: 120px;
+    max-width: 400px;
+    max-height: 200px;
 }
 
 .table-card-slot {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 3px;
 }
 
 .table-card-player {
@@ -100,21 +101,21 @@
 /* Match Info */
 .match-info {
     display: flex;
-    gap: 30px;
-    font-size: 16px;
+    gap: 15px;
+    font-size: 12px;
     font-weight: bold;
 }
 
 .match-info div {
-    padding: 8px 15px;
+    padding: 3px 10px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
 }
 
 /* Card Styling */
 .card {
-    width: 70px;
-    height: 100px;
+    width: 60px;
+    height: 90px;
     background: white;
     border: none;
     border-radius: 6px;
@@ -126,6 +127,7 @@
     transition: transform 0.2s, box-shadow 0.2s;
     overflow: hidden;
     padding: 0;
+    flex-shrink: 0;
 }
 
 .card:hover {
@@ -146,16 +148,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 5px;
 }
 
 .player-name {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: bold;
     text-align: center;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .first-badge {
@@ -169,10 +171,12 @@
 
 .player-hand {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 3px;
+    flex-wrap: nowrap;
     justify-content: center;
     max-width: 100%;
+    overflow-x: auto;
+    padding: 5px 0;
 }
 
 .empty-hand {
@@ -186,8 +190,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 15px;
+    gap: 6px;
+    padding: 8px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -195,19 +199,19 @@
 }
 
 .player-position .player-name {
-    font-size: 16px;
+    font-size: 13px;
     margin: 0;
 }
 
 .player-cards-back {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     justify-content: center;
 }
 
 .back-card {
-    width: 50px;
-    height: 75px;
+    width: 55px;
+    height: 80px;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     object-fit: cover;
