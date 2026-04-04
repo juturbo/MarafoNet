@@ -78,11 +78,11 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			hub.SetMatchID(gameID)
 		}
 	case envelope.EqualsType(PlayCardType):
-		matchID, card, marshalingError := PayloadFromJSON(envelope.GetPayload())
+		card, marshalingError := PayloadFromJSON(envelope.GetPayload())
 		if marshalingError != nil {
 			return true, BuildJSONErrorResponse(marshalingError.Error())
 		}
-		err := hub.GameService.PlayCard(context.Background(), matchID, hub.GetPlayerName(), card)
+		err := hub.GameService.PlayCard(context.Background(), hub.GetMatchID(), hub.GetPlayerName(), card)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
