@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 
 import './TableScreen.css';
 import TrumpSelector from './TrumpSelector';
+import DangerAlert from './DangerAlert';
 import { WebSocketContext } from '../WebSocketProvider';
 
 // Card component to display individual cards
@@ -69,7 +70,8 @@ function PlayerPosition({ playerName, position }) {
 export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
-    const { ws } = useContext(WebSocketContext);
+    const { ws, error, clearError } = useContext(WebSocketContext);
+    console.log('TableScreen received error from context:', error);
     
     // Map suit numbers to suit names
     const getSuitName = (suitNumber) => {
@@ -136,6 +138,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
     
     return (
         <div className="table-screen">
+            <DangerAlert message={error} onClose={clearError} />
             {/* Row 1: Empty, Top Player, Empty */}
             <div className="position-empty"></div>
             
