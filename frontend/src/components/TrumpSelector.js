@@ -19,10 +19,13 @@ export default function TrumpSelector({ isFirstPlayer, matchID, onTrumpSelected 
     const handleSuitSelect = (suitNumber) => {
         if (ws && ws.readyState === WebSocket.OPEN) {
             const message = {
-                Type: 'set_trump',
-                matchId: matchID,
-                Suit: suitNumber
+                type: 'set_trump',
+                payload: {
+                    matchId: matchID,
+                    suit: Number(suitNumber)
+                }
             };
+            console.log('Sending trump selection message:', message);
             ws.send(JSON.stringify(message));
             console.log('Trump selected:', suitNumber, 'MatchID:', matchID);
             if (onTrumpSelected) {
