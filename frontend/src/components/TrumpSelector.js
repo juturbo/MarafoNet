@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { WebSocketContext } from '../WebSocketProvider';
 import './TrumpSelector.css';
 
-export default function TrumpSelector({ isFirstPlayer, onTrumpSelected }) {
+export default function TrumpSelector({ isFirstPlayer, matchID, onTrumpSelected }) {
     const { ws } = useContext(WebSocketContext);
 
     React.useEffect(() => {
@@ -20,10 +20,11 @@ export default function TrumpSelector({ isFirstPlayer, onTrumpSelected }) {
         if (ws && ws.readyState === WebSocket.OPEN) {
             const message = {
                 Type: 'set_trump',
+                matchId: matchID,
                 Suit: suitNumber
             };
             ws.send(JSON.stringify(message));
-            console.log('Trump selected:', suitNumber);
+            console.log('Trump selected:', suitNumber, 'MatchID:', matchID);
             if (onTrumpSelected) {
                 onTrumpSelected(suitNumber);
             }
