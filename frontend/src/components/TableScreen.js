@@ -69,6 +69,17 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
     
+    // Map suit numbers to suit names
+    const getSuitName = (suitNumber) => {
+        const suitNames = {
+            1: 'Bastoni',
+            2: 'Coppe',
+            3: 'Denare',
+            4: 'Spade',
+        };
+        return suitNames[suitNumber] || 'None';
+    };
+    
     useEffect(() => {
         if (matchUpdate) {
             setGameState(matchUpdate);
@@ -131,7 +142,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             {/* Center - Table Cards */}
             <div className="table-center">
                 <div className="trump-info">
-                    Trump: <span className="trump-suit">{gameState.TrumpSuit || 'None'}</span>
+                    Briscola: <span className="trump-suit">{getSuitName(gameState.TrumpSuit)}</span>
                 </div>
                 <div className="table-cards">
                     {tableCards.length > 0 ? (
