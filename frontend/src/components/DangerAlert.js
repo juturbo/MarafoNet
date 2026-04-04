@@ -1,28 +1,24 @@
-import { useState } from 'react';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
+import './TableScreen.css';
 
-function AlertDismissible() {
-  const [show, setShow] = useState(true);
+function DangerAlert({ message, onClose }) {
+  console.log('DangerAlert received message:', message);
+  if (!message) return null;
 
   return (
-    <>
-      <Alert show={show} variant="success">
-        <Alert.Heading>My Alert</Alert.Heading>
-        <p>
-            This is a dismissible alert. Click the "Close me" button to hide
-        </p>
-        <hr />
+    <div className="danger-alert-overlay">
+      <Alert variant="danger" dismissible onClose={onClose}>
+        <Alert.Heading>Error</Alert.Heading>
+        <p>{message}</p>
         <div className="d-flex justify-content-end">
-          <Button onClick={() => setShow(false)} variant="outline-success">
-            Close me
+          <Button onClick={onClose} variant="outline-danger" size="sm">
+            Dismiss
           </Button>
         </div>
       </Alert>
-
-      {!show && <Button onClick={() => setShow(true)}>Show Alert</Button>}
-    </>
+    </div>
   );
 }
 
-export default AlertDismissible;
+export default DangerAlert;
