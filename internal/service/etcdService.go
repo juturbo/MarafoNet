@@ -62,7 +62,7 @@ func (etcdService *EtcdService) GetNextMatchID(ctx context.Context) (matchId str
 	}
 }
 
-func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matchJson json.RawMessage) error {
+func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matchJson []byte) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
 		key,
@@ -241,7 +241,7 @@ func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.
 	return etcdService.putValue(ctx, passwordKey, hashedPassword)
 }
 
-func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan json.RawMessage, context.CancelFunc) {
+func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {
 	return etcdService.watchKey(ctx, matchId)
 }
 
