@@ -53,10 +53,13 @@ function Card({ card, onClick }) {
 }
 
 // Player position indicator (for other players)
-function PlayerPosition({ playerName, position }) {
+function PlayerPosition({ playerName, position, isFirstPlayer }) {
     return (
         <div className={`player-position player-${position}`}>
-            <div className="player-name">{playerName}</div>
+            <div className="player-name">
+                {playerName}
+                {isFirstPlayer && <span className="first-badge">Di mano</span>}
+            </div>
             <div className="player-cards-back">
                 <img src="/assets/cards/back.png" alt="Card back" className="back-card" />
                 <img src="/assets/cards/back.png" alt="Card back" className="back-card" />
@@ -152,7 +155,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             {/* Top Player - Teammate */}
             <div className="position top">
                 {top ? (
-                    <PlayerPosition playerName={top.Name} position="top" />
+                    <PlayerPosition playerName={top.Name} position="top" isFirstPlayer={gameState.FirstPlayer === top.Name} />
                 ) : (
                     <div className="player-position">No teammate</div>
                 )}
@@ -164,7 +167,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             {/* Left Player - Opponent */}
             <div className="position left">
                 {left ? (
-                    <PlayerPosition playerName={left.Name} position="left" />
+                    <PlayerPosition playerName={left.Name} position="left" isFirstPlayer={gameState.FirstPlayer === left.Name} />
                 ) : (
                     <div className="player-position">No opponent</div>
                 )}
@@ -196,7 +199,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
             {/* Right Player - Opponent */}
             <div className="position right">
                 {right ? (
-                    <PlayerPosition playerName={right.Name} position="right" />
+                    <PlayerPosition playerName={right.Name} position="right" isFirstPlayer={gameState.FirstPlayer === right.Name} />
                 ) : (
                     <div className="player-position">No opponent</div>
                 )}
