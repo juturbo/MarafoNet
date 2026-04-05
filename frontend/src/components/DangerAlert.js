@@ -3,7 +3,6 @@ import Button from 'react-bootstrap/Button';
 import './TableScreen.css';
 
 function DangerAlert({ message, onClose }) {
-  console.log('DangerAlert received message:', message);
   if (!message) return null;
 
   return (
