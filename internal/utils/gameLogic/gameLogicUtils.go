@@ -11,13 +11,16 @@ import (
 /*starts a full 41 points game*/
 func StartGame(playerNames []string) (model.Game, error) {
 	players := make([]model.Player, len(playerNames))
+
 	for i, name := range playerNames {
 		players[i] = model.Player{Name: name}
 	}
+
 	match, err := initializeGame(players)
 	if err != nil {
 		return match, err
 	}
+
 	return startMatch(match), nil
 }
 
@@ -45,6 +48,7 @@ func PlayCard(match model.Game, playerName string, card model.Card) (model.Game,
 		Card:       card,
 	})
 	match.Players = removeCardFromPlayerHand(match.Players, playerName, card)
+	match.CurrentPlayer = getNextCurrentPlayerName(match)
 	if isTableFull(match) {
 		match = calculateTrickWinnerAndUpdate(match)
 	}
@@ -70,6 +74,7 @@ func initializeGame(players []model.Player) (model.Game, error) {
 	if err != nil {
 		return match, err
 	}
+	match.CurrentPlayer = match.FirstPlayer
 	return match, nil
 }
 
@@ -92,6 +97,7 @@ func initializePlayers(players []model.Player) ([]model.Player, error) {
 func startMatch(match model.Game) model.Game {
 	deck := initializeDeck()
 	match.Players, deck = distributeCards(deck, match.Players)
+	match.CurrentPlayer = match.FirstPlayer
 	return match
 }
 
@@ -103,15 +109,23 @@ func extractFirstPlayer(player []model.Player) (string, error) {
 	return player[randomIndex].Name, nil
 }
 
-func nextPlayerName(match model.Game) string {
-	var currentFirstPlayerIndex int
+func getNextFirstPlayerName(match model.Game) string {
+	return getNextPlayer(match, match.FirstPlayer)
+}
+
+func getNextCurrentPlayerName(match model.Game) string {
+	return getNextPlayer(match, match.CurrentPlayer)
+}
+
+func getNextPlayer(match model.Game, playerName string) string {
+	var currentPlayerIndex int
 	for i, player := range match.Players {
-		if player.Name == match.FirstPlayer {
-			currentFirstPlayerIndex = i
+		if player.Name == playerName {
+			currentPlayerIndex = i
 			break
 		}
 	}
-	var nextPlayerIndex = (currentFirstPlayerIndex + 1) % len(match.Players)
+	var nextPlayerIndex = (currentPlayerIndex + 1) % len(match.Players)
 	return match.Players[nextPlayerIndex].Name
 }
 
@@ -158,24 +172,7 @@ func isPlayerTurnValid(match model.Game, playerName string) bool {
 	if isTableFull(match) {
 		return false
 	}
-	return getCurrentPlayer(match) == playerName
-}
-
-func getCurrentPlayer(match model.Game) string {
-	if isTableEmpty(match) {
-		return match.FirstPlayer
-	}
-	indexOfLastPlayer := len(match.Table) - 1
-	var lastPlayerName = match.Table[indexOfLastPlayer].PlayerName
-	currentPlayerName := match.FirstPlayer
-	for i, player := range match.Players {
-		if player.Name == lastPlayerName {
-			currentPlayerIndex := (i + 1) % len(match.Players)
-			currentPlayerName = match.Players[currentPlayerIndex].Name
-			break
-		}
-	}
-	return currentPlayerName
+	return match.CurrentPlayer == playerName
 }
 
 func playerHasCardInHand(players []model.Player, playerName string, playedCard model.Card) bool {
@@ -317,6 +314,8 @@ func calculateTrickWinnerAndUpdate(match model.Game) model.Game {
 	trickPoints := calculateTrickPoints(match)
 	match.MatchPoints[winningTeamId] += trickPoints
 	match.Table = nil
+	// The winner of the trick becomes the player who starts the next trick
+	match.CurrentPlayer = winningPlayerName
 	return match
 }
 
@@ -374,7 +373,8 @@ func calculateMatchPointsAndReset(match model.Game) model.Game {
 		match.Players[i].Hand = nil
 	}
 	match.Table = nil
-	match.FirstPlayer = nextPlayerName(match)
+	match.FirstPlayer = getNextFirstPlayerName(match)
+	match.CurrentPlayer = match.FirstPlayer
 	match.TrumpSuit = 0
 	return match
 }
