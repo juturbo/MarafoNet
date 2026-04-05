@@ -92,9 +92,20 @@ func TestCalculateTrickPoints(t *testing.T) {
 
 func TestGetCurrentPlayerBehavior(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
-	assert.Equal(t, "Alice", getCurrentPlayer(match))
-	match.Table = []model.PlayedCard{{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Ace}}}
-	assert.Equal(t, "Bob", getCurrentPlayer(match))
+	assert.Equal(t, "Alice", match.CurrentPlayer)
+	hand := make([]model.Card, model.CardsPerPlayer)
+	hand[0] = model.Card{Suit: model.Swords, Rank: model.Two}
+	hand[1] = model.Card{Suit: model.Swords, Rank: model.Ace}
+	hand[2] = model.Card{Suit: model.Swords, Rank: model.Three}
+	for i := 3; i < model.CardsPerPlayer; i++ {
+		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
+	}
+	setHands(&match, [][]model.Card{hand})
+	match, err := SetTrumpSuit(match, "Alice", model.Clubs)
+	assert.NoError(t, err)
+	match, err = PlayCard(match, "Alice", model.Card{Suit: model.Swords, Rank: model.Ace})
+	assert.NoError(t, err)
+	assert.Equal(t, "Bob", match.CurrentPlayer)
 }
 
 func TestIsCardOfLeadingSuitAndPlayable(t *testing.T) {
@@ -161,8 +172,7 @@ func TestMarafonaNotAwardedIfNotFirstPlayer(t *testing.T) {
 	setHands(&match, [][]model.Card{{}, hand})
 	match.TrumpSuit = model.Cups
 	match.Table = []model.PlayedCard{{PlayerName: "Alice", Card: model.Card{Suit: model.Cups, Rank: model.Four}}}
-	updated, err := PlayCard(match, "Bob", hand[0])
-	assert.NoError(t, err)
+	updated, _ := PlayCard(match, "Bob", hand[0])
 	teamId := getPlayerTeamId(match, "Bob")
 	assert.Equal(t, model.Point(0), updated.MatchPoints[teamId])
 }
@@ -194,7 +204,7 @@ func mkPlayers(names ...string) []model.Player {
 
 func mkMatch(names ...string) model.Game {
 	players := mkPlayers(names...)
-	return model.Game{Players: players, FirstPlayer: names[0]}
+	return model.Game{Players: players, FirstPlayer: names[0], CurrentPlayer: names[0]}
 }
 
 func setHands(m *model.Game, hands [][]model.Card) {

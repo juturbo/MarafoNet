@@ -30,6 +30,7 @@ type Game struct {
 	MatchPoints   [NumberOfTeams]Point `json:"MatchPoints"`
 	TotalPoints   [NumberOfTeams]int   `json:"TotalPoints"`
 	FirstPlayer   string               `json:"FirstPlayer"`
+	CurrentPlayer string               `json:"CurrentPlayer"`
 	TrumpSuit     Suit                 `json:"TrumpSuit"`
 	WinnerTeam    *int                 `json:"WinnerTeam,omitempty"`
 	WinnerPlayers []string             `json:"WinnerPlayers,omitempty"`
