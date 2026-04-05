@@ -207,7 +207,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                 <div className="current-player">
                     <div className="player-name">
                         {bottom.Name} (Team {bottom.TeamId})
-                        {gameState.FirstPlayer === bottom.Name && <span className="first-badge">FIRST</span>}
+                        {gameState.FirstPlayer === bottom.Name && <span className="first-badge">Di mano</span>}
                     </div>
                     <div className="player-hand">
                         {bottom.Hand && bottom.Hand.length > 0 ? (
