@@ -73,6 +73,7 @@ function PlayerPosition({ playerName, position, isFirstPlayer }) {
 export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
+    const [sortEnabled, setSortEnabled] = useState(false);
     const { ws, error, clearError } = useContext(WebSocketContext);
     
     // Map suit numbers to suit names
@@ -211,9 +212,18 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                         {bottom.Name} (Team {bottom.TeamId})
                         {gameState.FirstPlayer === bottom.Name && <span className="first-badge">Di mano</span>}
                     </div>
+                    <div className="sort-button-container">
+                        <button 
+                            className={`sort-button ${sortEnabled ? 'active' : ''}`}
+                            onClick={() => setSortEnabled(!sortEnabled)}
+                            title="Sort cards by suit and rank"
+                        >
+                            Ordina
+                        </button>
+                    </div>
                     <div className="player-hand">
                         {bottom.Hand && bottom.Hand.length > 0 ? (
-                            bottom.Hand.map((card, index) => (
+                            (sortEnabled ? [...bottom.Hand].sort((a, b) => a.Suit - b.Suit || b.Rank - a.Rank) : bottom.Hand).map((card, index) => (
                                 <Card key={index} card={card} onClick={handleCardClick} />
                             ))
                         ) : (

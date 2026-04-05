@@ -222,6 +222,37 @@
     padding: 20px;
 }
 
+/* Sort Button */
+.sort-button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.sort-button {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #ecf0f1;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.sort-button:hover {
+    border-color: #f39c12;
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.sort-button.active {
+    background: rgba(243, 156, 18, 0.3);
+    border-color: #f39c12;
+    color: #f39c12;
+}
+
 /* Other Players */
 .player-position {
     display: flex;
