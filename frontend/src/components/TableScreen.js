@@ -181,8 +181,8 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                     )}
                 </div>
                 <div className="match-info">
-                    <div>Team 0: {gameState.MatchPoints[0]} pts</div>
-                    <div>Team 1: {gameState.MatchPoints[1]} pts</div>
+                    <div>Team 0: {gameState.MatchPoints[0]} figure</div>
+                    <div>Team 1: {gameState.MatchPoints[1]} figure</div>
                 </div>
             </div>
             
