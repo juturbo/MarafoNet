@@ -74,7 +74,6 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
     const { ws, error, clearError } = useContext(WebSocketContext);
-    console.log('TableScreen received error from context:', error);
     
     // Map suit numbers to suit names
     const getSuitName = (suitNumber) => {
