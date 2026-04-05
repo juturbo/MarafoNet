@@ -111,6 +111,44 @@
     border-radius: 5px;
 }
 
+/* Total Points Info */
+.total-points-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+    gap: 8px;
+    flex: 0 0 calc(28% - 3.33px);
+    height: calc(28vh - 1.67px);
+    font-size: 13px;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.total-points-title {
+    font-size: 14px;
+    color: #f39c12;
+    text-transform: uppercase;
+}
+
+.total-points-score {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-separator {
+    font-size: 48px;
+    color: #f39c12;
+}
+
 /* Card Styling */
 .card {
     width: 90px;

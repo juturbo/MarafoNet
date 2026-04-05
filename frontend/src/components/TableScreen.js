@@ -139,8 +139,15 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
     return (
         <div className="table-screen">
             <DangerAlert message={error} onClose={clearError} />
-            {/* Row 1: Empty, Top Player, Empty */}
-            <div className="position-empty"></div>
+            {/* Row 1: Total Points, Top Player, Empty */}
+            <div className="total-points-info">
+                <div className="total-points-title">Total Points</div>
+                <div className="total-points-score">
+                    {gameState.TotalPoints && gameState.TotalPoints[currentPlayer.TeamId] !== undefined ? gameState.TotalPoints[currentPlayer.TeamId] : 0}
+                    <span className="score-separator">-</span>
+                    {gameState.TotalPoints && gameState.TotalPoints[1 - currentPlayer.TeamId] !== undefined ? gameState.TotalPoints[1 - currentPlayer.TeamId] : 0}
+                </div>
+            </div>
             
             {/* Top Player - Teammate */}
             <div className="position top">
