@@ -53,6 +53,7 @@ func main() {
 
 	log.Printf("configuring routing...")
 	// Set the router as the default one shipped with Gin
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	// Serve frontend static files
