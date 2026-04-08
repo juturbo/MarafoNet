@@ -28,6 +28,7 @@ type handler func(ctx context.Context, id string) (<-chan []byte, context.Cancel
 // Returns a new Matchmaking hub
 func NewMatchmakingHub(etcdService *service.EtcdService, gameService *service.GameService) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
+	log.Printf("started Matchmaking service")
 	return &MatchmakingHub{
 		cancel:      cancel,
 		ctx:         ctx,
@@ -78,8 +79,8 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, writeChannel chan json.RawMessage) context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
-	println("Setting game watcher for match ID:", matchId)
 	go func() {
+		log.Printf("matchmaking: setting game watcher for match ID: %s", matchId)
 		for update := range watchChannel {
 			sendMatchUpdate(update, writeChannel)
 		}
@@ -89,7 +90,7 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 }
 
 func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
-	println("New update: ", string(update))
+	log.Printf("matchmaking: sending update for match: %s", string(update))
 	message := MatchUpdateMessage{
 		Type:  "match_update",
 		Match: update,
@@ -104,11 +105,13 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
 	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
 	go func() {
+		log.Printf("matchmaking: started watching lobby for player %s", playerName)
 		for lobbyUpdate := range lobbyChannel {
-			println("New lobby update for player", playerName, ":", string(lobbyUpdate))
 			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), writeChannel)
 			if onGameID != nil {
 				onGameID(string(lobbyUpdate))
+				log.Printf("matchmaking: lobby update for player %s: %s, starting watcher and returning", playerName, string(lobbyUpdate))
+				return
 			}
 		}
 	}()
