@@ -5,24 +5,27 @@ import (
 	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 type WebSocketHub struct {
-	Connection         *websocket.Conn
-	WriteChannel       chan json.RawMessage
-	StorageService     *service.EtcdService
-	GameService        *service.GameService
-	MatchmakingService *matchmaking.MatchmakingHub
-	playerName         string
-	playerNameOnce     sync.Once
-	cancelFunc         context.CancelFunc
-	closeOnce          sync.Once
-	isAuthenticated    bool
-	matchID            string
+	Connection             *websocket.Conn
+	WriteChannel           chan json.RawMessage
+	StorageService         *service.EtcdService
+	GameService            *service.GameService
+	MatchmakingService     *matchmaking.MatchmakingHub
+	playerName             string
+	playerNameOnce         sync.Once
+	lobbyWatcherCancelFunc context.CancelFunc
+	closeOnce              sync.Once
+	isAuthenticated        bool
+	matchID                string
 }
+
+type cancelFunc func()
 
 func CreateWebSocketHub(
 	Conn *websocket.Conn,
@@ -71,19 +74,20 @@ func (hub *WebSocketHub) GetMatchID() string {
 // Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).
 // Overwrites the previous cancel function if it exists.
 func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) {
-	hub.cancelFunc = cancelFunc
+	hub.lobbyWatcherCancelFunc = cancelFunc
 }
 
 func (hub *WebSocketHub) CancelWatcher() {
-	if hub.cancelFunc != nil {
-		hub.cancelFunc()
-		hub.cancelFunc = nil
+	if hub.lobbyWatcherCancelFunc != nil {
+		hub.lobbyWatcherCancelFunc()
+		hub.lobbyWatcherCancelFunc = nil
 	}
 }
 
 func (hub *WebSocketHub) Cleanup() {
 	hub.closeOnce.Do(func() {
 		closeConnection(hub)
+		log.Printf("connection cleaned up correctly for client %s", hub.Connection.RemoteAddr())
 	})
 }
 
