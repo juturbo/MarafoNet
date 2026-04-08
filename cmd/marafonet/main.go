@@ -32,6 +32,7 @@ const webSocketPath = "/ws"
 var etcdEndpoint = []string{"localhost:2379"}
 
 func main() {
+	printHeader()
 	etcdService, err := service.NewEtcdService(etcdEndpoint, time.Second)
 	if err != nil {
 		log.Fatalf("failed to connect to etcd: %v", err)
@@ -43,10 +44,14 @@ func main() {
 		}
 	}()
 
+	log.Printf("connected to etcd at %v", etcdEndpoint)
+	log.Printf("starting game services...")
+
 	gameService := service.NewGameService(etcdService)
 	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
 	matchMakingService.StartMatchmaking()
 
+	log.Printf("configuring routing...")
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
@@ -70,8 +75,15 @@ func main() {
 		}
 		networking.ServeWS(conn, gameService, etcdService, matchMakingService)
 	})
-	// Start and run the server
+
+	log.Printf("starting server on port 5000")
 	if err := router.Run(":5000"); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+func printHeader() {
+	log.Println("====================================")
+	log.Println("          Marafonet Server          ")
+	log.Println("====================================")
 }

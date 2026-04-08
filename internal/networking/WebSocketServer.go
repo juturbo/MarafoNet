@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -22,6 +23,7 @@ func ServeWS(
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) {
 	hub := websockethub.CreateWebSocketHub(Conn, GameService, StorageService, MatchmakingService)
+	log.Printf("New WebSocket connection established with client %s", hub.Connection.RemoteAddr())
 	go ServeWrite(hub)
 	go ServeRead(hub)
 
