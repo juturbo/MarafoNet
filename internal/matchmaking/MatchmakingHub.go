@@ -52,14 +52,14 @@ func (hub *MatchmakingHub) StartMatchmaking() {
 	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
 	go func() {
 		for users := range queueChannel {
-			log.Printf("Current users in queue: %v", users)
+			log.Printf("- matchmaking: Current users in queue: %v", users)
 			select {
 			case <-hub.ctx.Done():
 				cancelQueueWatcher()
 				return
 			default:
 				if len(users) >= 4 {
-					log.Printf("Found 4 players in queue, starting a game with players: %v", users[:4])
+					log.Printf("- matchmaking: Found 4 players in queue, starting a game with players: %v", users[:4])
 					matchID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
 					for _, user := range users[:4] {
 						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
@@ -81,11 +81,11 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
 	go func() {
-		log.Printf("matchmaking: setting game watcher for match ID: %s", matchId)
+		log.Printf("- game watcher: setting game watcher for match ID: %s", matchId)
 		for {
 			update, ok := <-watchChannel
 			if !ok {
-				log.Printf("matchmaking: watch channel closed for match ID: %s", matchId)
+				log.Printf("- game watcher: watch channel closed for match ID: %s", matchId)
 				return
 			}
 			sendMatchUpdate(update, writeChannel)
@@ -110,12 +110,12 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
 	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
 	go func() {
-		log.Printf("matchmaking: started watching lobby for player %s", playerName)
+		log.Printf("- lobby watcher: started watching lobby for player %s", playerName)
 		for lobbyUpdate := range lobbyChannel {
 			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), writeChannel)
 			if onGameID != nil {
 				onGameID(string(lobbyUpdate))
-				log.Printf("matchmaking: lobby update for player %s: %s, starting watcher and returning", playerName, string(lobbyUpdate))
+				log.Printf("- lobby watcher: lobby update for player %s: %s, starting watcher and returning", playerName, string(lobbyUpdate))
 				return
 			}
 		}
