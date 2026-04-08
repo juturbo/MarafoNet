@@ -65,6 +65,12 @@ func (hub *MatchmakingHub) StartMatchmaking() {
 						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
 						hub.GetStorageService().SetUserCurrentMatchId(context.Background(), user, matchID)
 					}
+					usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
+					log.Printf("- matchmaking: Current users in queue after matchmaking: %v", usersStillInQueue)
+					for _, user := range users[:4] {
+						matchID, _ := hub.GetStorageService().GetUserCurrentMatchId(context.Background(), user)
+						log.Printf("- matchmaking: user %s joined game %s", user, matchID)
+					}
 				}
 			}
 		}
@@ -111,7 +117,12 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
 	go func() {
 		log.Printf("- lobby watcher: started watching lobby for player %s", playerName)
-		for lobbyUpdate := range lobbyChannel {
+		for {
+			lobbyUpdate, ok := <-lobbyChannel
+			if !ok {
+				log.Printf("- lobby watcher: lobby channel closed for player %s", playerName)
+				return
+			}
 			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), writeChannel)
 			if onGameID != nil {
 				onGameID(string(lobbyUpdate))
