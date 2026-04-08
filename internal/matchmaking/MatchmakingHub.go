@@ -59,6 +59,7 @@ func (hub *MatchmakingHub) StartMatchmaking() {
 				return
 			default:
 				if len(users) >= 4 {
+					log.Printf("Found 4 players in queue, starting a game with players: %v", users[:4])
 					matchID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
 					for _, user := range users[:4] {
 						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
@@ -81,7 +82,12 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
 	go func() {
 		log.Printf("matchmaking: setting game watcher for match ID: %s", matchId)
-		for update := range watchChannel {
+		for {
+			update, ok := <-watchChannel
+			if !ok {
+				log.Printf("matchmaking: watch channel closed for match ID: %s", matchId)
+				return
+			}
 			sendMatchUpdate(update, writeChannel)
 		}
 	}()
@@ -90,7 +96,6 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 }
 
 func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
-	log.Printf("matchmaking: sending update for match: %s", string(update))
 	message := MatchUpdateMessage{
 		Type:  "match_update",
 		Match: update,
