@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY cmd ./cmd
 COPY internal ./internal
+COPY model ./model
 COPY frontend/build ./frontend
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /marafonet ./cmd/marafonet
