@@ -17,7 +17,6 @@ matchmaking:
 run:
 	docker run -p 5000:5000 marafonet:latest
 	docker run matchmaking:latest
-	etcd
 
 dockerize:
 	docker build -f deployment/marafonet/Dockerfile -t marafonet:latest .
