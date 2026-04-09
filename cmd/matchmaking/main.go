@@ -5,6 +5,7 @@ import (
 	"MarafoNet/internal/service"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -46,7 +47,14 @@ func main() {
 
 	gameService := service.NewGameService(etcdService)
 	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
-	matchMakingService.StartMatchmaking()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	matchMakingService.StartMatchmaking(&wg)
+
+	wg.Wait()
+
 }
 
 func printHeader() {

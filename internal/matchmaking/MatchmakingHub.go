@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sync"
 )
 
 type MatchmakingHub struct {
@@ -48,7 +49,7 @@ func (hub *MatchmakingHub) GetGameService() *service.GameService {
 // Starts the matchmaking service as a Go Routine.
 // It will start to check for players in queue and create games.
 // Can be stopped by calling StopMatchmaking().
-func (hub *MatchmakingHub) StartMatchmaking() {
+func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
 	go func() {
 		for users := range queueChannel {
@@ -56,6 +57,8 @@ func (hub *MatchmakingHub) StartMatchmaking() {
 			select {
 			case <-hub.ctx.Done():
 				cancelQueueWatcher()
+				wg.Done()
+				log.Printf("- matchmaking: Stopping matchmaking service")
 				return
 			default:
 				if len(users) >= 4 {
