@@ -79,7 +79,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			)
 		} else if !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
-				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
+				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.GetPlayerName(), hub.WriteChannel),
 			)
 			hub.SetMatchID(gameID)
 		}
