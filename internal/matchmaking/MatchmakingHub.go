@@ -98,6 +98,16 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, w
 				return
 			}
 			sendMatchUpdate(update, writeChannel)
+			gameOver, err := hub.GetGameService().IsGameEnded(update)
+			if err != nil {
+				log.Printf("- game watcher: error checking if game is over for match ID: %s, error: %v", matchId, err)
+				continue
+			}
+			if gameOver {
+				log.Printf("- game watcher: game over for match ID: %s, stopping watcher", matchId)
+				cancelFunc()
+				return
+			}
 		}
 	}()
 	sendMatchUpdate(matchJSON, writeChannel)
