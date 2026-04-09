@@ -24,8 +24,8 @@ var upgrader = websocket.Upgrader{
 const rootPath string = "/"
 
 // FOR LOCAL DEVELOPMENT ONLY: CHANGE WHEN CREATING DOCKER IMAGE
-const indexPath string = "./frontend/build/index.html"
-const localFilePath string = "./frontend/build"
+const indexPath string = "./frontend/index.html"
+const localFilePath string = "./frontend"
 
 const webSocketPath = "/ws"
 
