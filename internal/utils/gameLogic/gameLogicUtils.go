@@ -139,7 +139,7 @@ func initializeDeck() model.Deck {
 
 func distributeCards(deck model.Deck, players []model.Player) ([]model.Player, model.Deck) {
 	for i := range len(players) {
-		players[i].Hand, deck = deckUtils.DrawCards(deck, model.CardsPerPlayer)
+		players[i].Hand, deck = deckUtils.DrawCards(deck, model.CARDS_PER_PLAYER)
 	}
 	return players, deck
 }
@@ -236,7 +236,7 @@ func isEligibleForMarafona(match model.Game, playerName string, card model.Card)
 		if player.Name != playerName {
 			continue
 		}
-		if len(player.Hand) != model.CardsPerPlayer {
+		if len(player.Hand) != model.CARDS_PER_PLAYER {
 			return false
 		}
 		hasAce := false
@@ -316,6 +316,9 @@ func calculateTrickWinnerAndUpdate(match model.Game) model.Game {
 	winningPlayerName := getTrickWinner(match)
 	winningTeamId := getTrickWinningTeamId(match, winningPlayerName)
 	trickPoints := calculateTrickPoints(match)
+	if isMatchOver(match) {
+		trickPoints += model.Point(model.MATCH_END_BONUS_POINTS)
+	}
 	match.MatchPoints[winningTeamId] += trickPoints
 	match.Table = nil
 	// The winner of the trick becomes the player who starts the next trick
@@ -365,7 +368,7 @@ func isMatchOver(match model.Game) bool {
 }
 
 func calculateMatchPointsAndReset(match model.Game) model.Game {
-	for i := range model.NumberOfTeams {
+	for i := range model.NUMBER_OF_TEAMS {
 		match.TotalPoints[i] += int(match.MatchPoints[i] / model.ACE_POINTS)
 		match.MatchPoints[i] = 0
 	}
@@ -386,7 +389,7 @@ func calculateMatchPointsAndReset(match model.Game) model.Game {
 func checkVictoryAndUpdate(match model.Game) (model.Game, bool) {
 	var teamsOver []int
 	for i := range match.TotalPoints {
-		if match.TotalPoints[i] >= model.PointsToWin {
+		if match.TotalPoints[i] >= model.POINTS_TO_WIN {
 			teamsOver = append(teamsOver, i)
 		}
 	}
@@ -422,7 +425,7 @@ func printMatch(match model.Game) {
 	for i := 0; i < len(match.Players); i++ {
 		fmt.Printf("Team %d\t%s\tHand: %v\n", match.Players[i].TeamId+1, match.Players[i].Name, match.Players[i].Hand)
 	}
-	for i := range model.NumberOfTeams {
+	for i := range model.NUMBER_OF_TEAMS {
 		fmt.Printf("Team %d Match Points: %d, Total Points: %d\n", i+1, match.MatchPoints[i], match.TotalPoints[i])
 	}
 	fmt.Printf("Table: %+v\n", match.Table)
