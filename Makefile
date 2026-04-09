@@ -11,6 +11,9 @@ react:
 straight:
 	go run ./cmd/marafonet
 
+matchmaking:
+	go run ./cmd/matchmaking
+
 run:
 	docker run -p 5000:5000 marafonet:latest
 
