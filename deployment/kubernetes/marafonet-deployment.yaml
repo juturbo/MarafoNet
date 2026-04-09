@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marafonet
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: marafonet
+  template:
+    metadata:
+      labels:
+        app: marafonet
+    spec:
+      affinity:
+        # ⬇⬇⬇ This ensures pods will land on separate hosts
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions: [{ key: app, operator: In, values: [marafonet] }]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: marafonet
+          image: feder/marafonet:latest
+          ports:
+            - name: http
+              containerPort: 5000
+      terminationGracePeriodSeconds: 1
