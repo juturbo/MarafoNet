@@ -1,9 +1,11 @@
 package main
 
 import (
-	"encoding/json"
+	"MarafoNet/internal/matchmaking"
+	"MarafoNet/internal/networking"
+	"MarafoNet/internal/service"
+	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/contrib/static"
@@ -19,68 +21,69 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Payload struct {
-	Seed  string `json:"seed"`
-	Power int    `json:"power"`
-	Table string `json:"table"`
-}
+const rootPath string = "/"
+
+// FOR LOCAL DEVELOPMENT ONLY: CHANGE WHEN CREATING DOCKER IMAGE
+const indexPath string = "./frontend/index.html"
+const localFilePath string = "./frontend"
+
+const webSocketPath = "/ws"
+
+var etcdEndpoint = []string{"localhost:2379"}
 
 func main() {
+	printHeader()
+	etcdService, err := service.NewEtcdService(etcdEndpoint, time.Second)
+	if err != nil {
+		log.Fatalf("failed to connect to etcd: %v", err)
+	}
+	defer func() {
+		closeErr := etcdService.Close()
+		if closeErr != nil {
+			log.Printf("failed to close etcd client: %v", closeErr)
+		}
+	}()
+
+	log.Printf("connected to etcd at %v", etcdEndpoint)
+	log.Printf("starting game services...")
+
+	gameService := service.NewGameService(etcdService)
+	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
+
+	log.Printf("configuring routing...")
 	// Set the router as the default one shipped with Gin
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile("./frontend/build", true)))
+	router.Use(static.Serve(rootPath, static.LocalFile(localFilePath, true)))
 
-	router.GET("/ws", func(c *gin.Context) {
+	router.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if path == webSocketPath {
+			c.String(404, "Not Found")
+		} else {
+			c.File(indexPath)
+		}
+	})
+
+	router.GET(webSocketPath, func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.String(400, "websocket upgrade failed")
 			return
 		}
-		defer conn.Close()
-
-		done := make(chan struct{})
-		defer close(done)
-
-		var writeMu sync.Mutex
-		writeText := func(message string) error {
-			writeMu.Lock()
-			defer writeMu.Unlock()
-			return conn.WriteMessage(websocket.TextMessage, []byte(message))
-		}
-		writeJSON := func(payload Payload) error {
-			writeMu.Lock()
-			defer writeMu.Unlock()
-			jsonBytes, err := json.Marshal(payload)
-			if err != nil {
-				return err
-			}
-			return conn.WriteMessage(websocket.TextMessage, jsonBytes)
-		}
-
-		go func() {
-			ticker := time.NewTicker(time.Second)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-done:
-					return
-				case <-ticker.C:
-					if err := writeText("Hello, WebSocket!"); err != nil {
-						return
-					}
-				}
-			}
-		}()
-
-		for {
-			conn.ReadMessage()
-			if err := writeJSON(Payload{Seed: "Coppe", Power: 2, Table: "asso di denari"}); err != nil {
-				return
-			}
-		}
+		networking.ServeWS(conn, gameService, etcdService, matchMakingService)
 	})
-	// Start and run the server
-	router.Run(":5000")
+
+	log.Printf("starting server on port 5000")
+	if err := router.Run(":5000"); err != nil {
+		log.Fatalf("server failed: %v", err)
+	}
+}
+
+func printHeader() {
+	log.Println("====================================")
+	log.Println("          Marafonet Server          ")
+	log.Println("====================================")
 }

@@ -5,9 +5,46 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  transition: background-image 0.5s ease-in-out;
+  background-image: url('./assets/wallpaper/1.jpg');
+  overflow: hidden;
+}
+
+body.theme-wood {
+  background-image: url('./assets/wallpaper/1.jpg');
+  color: #ffffff; /* White text for wood table */
+}
+
+body.theme-green {
+  background-image: url('./assets/wallpaper/2.jpg');
+  color: #ffffff; /* White text for green felt */
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90px;
+}
+
+.logo {
+  height: 70px;
+  width: auto;
+}
+
+.header .background-button {
+  position: absolute;
+  right: 3%;
+  top: 50%;
+  transform: translateY(-50%);
 }

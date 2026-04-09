@@ -1,0 +1,133 @@
+//go:generate stringer -type=Suit,Rank
+
+package model
+
+import (
+	"strings"
+)
+
+const (
+	ACE_POINTS      = 3
+	MINOR_POINTS    = 1
+	BLANK_POINTS    = 0
+	MARAFONA_POINTS = 3 * ACE_POINTS
+)
+
+const (
+	Clubs Suit = iota + 1
+	Cups
+	Coins
+	Swords
+)
+
+const (
+	Ace Rank = iota + 1
+	Two
+	Three
+	Four
+	Five
+	Six
+	Seven
+	Jack
+	Knight
+	King
+)
+
+const (
+	StartSuit = Clubs
+	EndSuit   = Swords
+)
+
+const (
+	StartRank = Ace
+	EndRank   = King
+)
+
+type Card struct {
+	Suit Suit
+	Rank Rank
+}
+
+type Suit uint8
+type Rank uint8
+
+type Hand []Card
+
+type Deck []Card
+
+func (card Card) String() string {
+	return card.Rank.String() + " di " + card.Suit.String()
+}
+
+func (hand Hand) String() string {
+	strs := make([]string, len(hand))
+	for i, card := range hand {
+		strs[i] = card.String()
+	}
+	return strings.Join(strs, ", ")
+}
+
+func (card1 Card) Equal(card2 Card) bool {
+	var isValid = false
+	var cardMatchesRank = card1.Rank == card2.Rank
+	var cardMatchesSuit = card1.Suit == card2.Suit
+	if cardMatchesRank && cardMatchesSuit {
+		isValid = true
+		return isValid
+	}
+	isValid = false
+	return isValid
+}
+
+func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
+	var card1IsTrump = card1.Suit == trumpSuit
+	var card2IsTrump = card2.Suit == trumpSuit
+	if card1IsTrump && !card2IsTrump {
+		return true
+	}
+	if !card1IsTrump && card2IsTrump {
+		return false
+	}
+	if card1.Suit == card2.Suit {
+		return card1.Power() > card2.Power()
+	}
+	return false
+}
+
+func (card Card) PointValue() Point {
+	switch card.Rank {
+	case Ace:
+		return ACE_POINTS
+	case Two, Three, Jack, Knight, King:
+		return MINOR_POINTS
+	default:
+		return BLANK_POINTS
+	}
+}
+
+func (card Card) Power() int {
+	switch card.Rank {
+	case Three:
+		return 10
+	case Two:
+		return 9
+	case Ace:
+		return 8
+	case King:
+		return 7
+	case Knight:
+		return 6
+	case Jack:
+		return 5
+	case Seven:
+		return 4
+	case Six:
+		return 3
+	case Five:
+		return 2
+	case Four:
+		return 1
+	default:
+		return 0
+	}
+}

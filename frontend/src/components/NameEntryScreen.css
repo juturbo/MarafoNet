@@ -1,0 +1,11 @@
+.name-entry-screen {
+    backdrop-filter: blur(3px);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.name-entry-screen h1 {
+    margin-bottom: 20px;
+    color: #ffffff; /* White text for better contrast */
+}
