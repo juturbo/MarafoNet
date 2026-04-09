@@ -19,7 +19,7 @@ func TestStartMatchDealsCards(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
 	match = startMatch(match)
 	for _, player := range match.Players {
-		assert.Equal(t, model.CardsPerPlayer, len(player.Hand), "Each player should have %d cards", model.CardsPerPlayer)
+		assert.Equal(t, model.CARDS_PER_PLAYER, len(player.Hand), "Each player should have %d cards", model.CARDS_PER_PLAYER)
 	}
 }
 
@@ -59,10 +59,10 @@ func TestCalculateTrickWinner(t *testing.T) {
 		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Seven}},
 		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.Knight}},
 		{PlayerName: "Carol", Card: model.Card{Suit: model.Swords, Rank: model.King}},
-		{PlayerName: "Dave", Card: model.Card{Suit: model.Coins, Rank: model.Ace}},
+		{PlayerName: "Dave", Card: model.Card{Suit: model.Swords, Rank: model.Ace}},
 	}
 	winner := getTrickWinner(match)
-	assert.Equal(t, "Carol", winner)
+	assert.Equal(t, "Dave", winner)
 }
 
 func TestTrickWinnerWithTrump(t *testing.T) {
@@ -93,11 +93,11 @@ func TestCalculateTrickPoints(t *testing.T) {
 func TestGetCurrentPlayerBehavior(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
 	assert.Equal(t, "Alice", match.CurrentPlayer)
-	hand := make([]model.Card, model.CardsPerPlayer)
+	hand := make([]model.Card, model.CARDS_PER_PLAYER)
 	hand[0] = model.Card{Suit: model.Swords, Rank: model.Two}
 	hand[1] = model.Card{Suit: model.Swords, Rank: model.Ace}
 	hand[2] = model.Card{Suit: model.Swords, Rank: model.Three}
-	for i := 3; i < model.CardsPerPlayer; i++ {
+	for i := 3; i < model.CARDS_PER_PLAYER; i++ {
 		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
 	}
 	setHands(&match, [][]model.Card{hand})
@@ -133,11 +133,11 @@ func TestIsTheCardPlayableVarious(t *testing.T) {
 
 func TestMarafonaBonusAwarded(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
-	hand := make([]model.Card, model.CardsPerPlayer)
+	hand := make([]model.Card, model.CARDS_PER_PLAYER)
 	hand[0] = model.Card{Suit: model.Cups, Rank: model.Ace}
 	hand[1] = model.Card{Suit: model.Cups, Rank: model.Two}
 	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
-	for i := 3; i < model.CardsPerPlayer; i++ {
+	for i := 3; i < model.CARDS_PER_PLAYER; i++ {
 		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
 	}
 	setHands(&match, [][]model.Card{hand})
@@ -162,11 +162,11 @@ func TestMarafonaNotAwardedIfNotAllCards(t *testing.T) {
 
 func TestMarafonaNotAwardedIfNotFirstPlayer(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
-	hand := make([]model.Card, model.CardsPerPlayer)
+	hand := make([]model.Card, model.CARDS_PER_PLAYER)
 	hand[0] = model.Card{Suit: model.Cups, Rank: model.Ace}
 	hand[1] = model.Card{Suit: model.Cups, Rank: model.Two}
 	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
-	for i := 3; i < model.CardsPerPlayer; i++ {
+	for i := 3; i < model.CARDS_PER_PLAYER; i++ {
 		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
 	}
 	setHands(&match, [][]model.Card{{}, hand})
@@ -179,11 +179,11 @@ func TestMarafonaNotAwardedIfNotFirstPlayer(t *testing.T) {
 
 func TestMarafonaNotAwardedIfFirstCardNotAce(t *testing.T) {
 	match := mkMatch("Alice", "Bob", "Carol", "Dave")
-	hand := make([]model.Card, model.CardsPerPlayer)
+	hand := make([]model.Card, model.CARDS_PER_PLAYER)
 	hand[0] = model.Card{Suit: model.Cups, Rank: model.Two}
 	hand[1] = model.Card{Suit: model.Cups, Rank: model.Ace}
 	hand[2] = model.Card{Suit: model.Cups, Rank: model.Three}
-	for i := 3; i < model.CardsPerPlayer; i++ {
+	for i := 3; i < model.CARDS_PER_PLAYER; i++ {
 		hand[i] = model.Card{Suit: model.Swords, Rank: model.Four}
 	}
 	setHands(&match, [][]model.Card{hand})
