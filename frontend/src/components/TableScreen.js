@@ -71,7 +71,7 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 }
 
 // Main TableScreen component
-export default function TableScreen({ matchUpdate, currentPlayerName }) {
+export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgain }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
     const [sortEnabled, setSortEnabled] = useState(false);
@@ -128,6 +128,11 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
         
         ws.send(JSON.stringify(message));
         console.log('Sent first_join message to return to lobby');
+        
+        // Navigate back to lobby screen
+        if (onPlayAgain) {
+            onPlayAgain();
+        }
     };
     
     useEffect(() => {

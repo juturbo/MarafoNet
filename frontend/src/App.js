@@ -82,7 +82,7 @@ function App() {
       case 'LOBBY':
         return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
       case 'PLAYING':
-        return <TableScreen matchUpdate={gameState} currentPlayerName={currentPlayerName} />;
+        return <TableScreen matchUpdate={gameState} currentPlayerName={currentPlayerName} onPlayAgain={() => setPhase('LOBBY')} />;
       default:
         return <div>Unknown Phase</div>;
     }
