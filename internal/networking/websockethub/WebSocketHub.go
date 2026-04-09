@@ -77,6 +77,10 @@ func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) {
 	hub.lobbyWatcherCancelFunc = cancelFunc
 }
 
+func (hub *WebSocketHub) IsWatcherCancelFuncSet() bool {
+	return hub.lobbyWatcherCancelFunc != nil
+}
+
 func (hub *WebSocketHub) CancelWatcher() {
 	if hub.lobbyWatcherCancelFunc != nil {
 		hub.lobbyWatcherCancelFunc()
