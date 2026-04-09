@@ -16,9 +16,12 @@ matchmaking:
 
 run:
 	docker run -p 5000:5000 marafonet:latest
+	docker run matchmaking:latest
+	etcd
 
 dockerize:
-	docker build -f deployment/Dockerfile -t marafonet:latest .
+	docker build -f deployment/marafonet/Dockerfile -t marafonet:latest .
+	docker build -f deployment/matchmaking/Dockerfile -t matchmaking:latest .
 
 etcd:
 	docker run -d --name etcd-test -p 2379:2379 -e ALLOW_NONE_AUTHENTICATION=yes -e ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379" -e ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379" quay.io/coreos/etcd:v3.6.8
