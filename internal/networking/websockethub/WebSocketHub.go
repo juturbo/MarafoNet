@@ -19,7 +19,7 @@ type WebSocketHub struct {
 	MatchmakingService     *matchmaking.MatchmakingHub
 	playerName             string
 	playerNameOnce         sync.Once
-	lobbyWatcherCancelFunc context.CancelFunc
+	lobbyWatcherCancelFunc *context.CancelFunc
 	closeOnce              sync.Once
 	isAuthenticated        bool
 	matchID                string
@@ -73,7 +73,7 @@ func (hub *WebSocketHub) GetMatchID() string {
 
 // Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).
 // Overwrites the previous cancel function if it exists.
-func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc context.CancelFunc) {
+func (hub *WebSocketHub) SetWatcherCancelFunc(cancelFunc *context.CancelFunc) {
 	hub.lobbyWatcherCancelFunc = cancelFunc
 }
 
@@ -83,7 +83,8 @@ func (hub *WebSocketHub) IsWatcherCancelFuncSet() bool {
 
 func (hub *WebSocketHub) CancelWatcher() {
 	if hub.lobbyWatcherCancelFunc != nil {
-		hub.lobbyWatcherCancelFunc()
+		(*hub.lobbyWatcherCancelFunc)()
+		log.Printf("- lobby watcher: cancelled lobby watcher for player %s", hub.GetPlayerName())
 		hub.lobbyWatcherCancelFunc = nil
 	}
 }

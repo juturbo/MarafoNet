@@ -86,7 +86,7 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 }
 
 // Sets a watcher on the requested game, sending the information down the write channel..
-func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, playerId string, writeChannel chan json.RawMessage) context.CancelFunc {
+func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
 	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
 	go func() {
@@ -106,13 +106,14 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, p
 			if gameOver {
 				log.Printf("- game watcher: game over for match ID: %s, stopping watcher", matchId)
 				hub.GetStorageService().RemoveUserCurrentMatchId(ctx, playerId)
+				cleanUpFunc()
 				cancelFunc()
 				return
 			}
 		}
 	}()
 	sendMatchUpdate(matchJSON, writeChannel)
-	return cancelFunc
+	return &cancelFunc
 }
 
 func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
@@ -126,9 +127,10 @@ func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
 
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
 // a watcher for the game. The onGameID callback will be called with the gameID once assigned.
-func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage, onGameID OnGameIDCallback) context.CancelFunc {
+func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage, cleanUpFunc func(), onGameID OnGameIDCallback) *context.CancelFunc {
 	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
-	lobbyChannel, cancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
+	lobbyChannel, watcherCancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
+	cancelFunc := watcherCancelFunc
 	go func() {
 		log.Printf("- lobby watcher: started watching lobby for player %s", playerName)
 		for {
@@ -137,7 +139,7 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 				log.Printf("- lobby watcher: lobby channel closed for player %s", playerName)
 				return
 			}
-			cancelFunc = hub.SetGameWatcher(ctx, string(lobbyUpdate), playerName, writeChannel)
+			cancelFunc = *hub.SetGameWatcher(ctx, string(lobbyUpdate), playerName, cleanUpFunc, writeChannel)
 			if onGameID != nil {
 				onGameID(string(lobbyUpdate))
 				log.Printf("- lobby watcher: lobby update for player %s: %s, starting watcher and returning", playerName, string(lobbyUpdate))
@@ -145,7 +147,7 @@ func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, wri
 			}
 		}
 	}()
-	return cancelFunc
+	return &cancelFunc
 }
 
 func newPlayerList(players []string) json.RawMessage {
