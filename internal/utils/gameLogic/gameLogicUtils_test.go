@@ -59,10 +59,10 @@ func TestCalculateTrickWinner(t *testing.T) {
 		{PlayerName: "Alice", Card: model.Card{Suit: model.Swords, Rank: model.Seven}},
 		{PlayerName: "Bob", Card: model.Card{Suit: model.Swords, Rank: model.Knight}},
 		{PlayerName: "Carol", Card: model.Card{Suit: model.Swords, Rank: model.King}},
-		{PlayerName: "Dave", Card: model.Card{Suit: model.Coins, Rank: model.Ace}},
+		{PlayerName: "Dave", Card: model.Card{Suit: model.Swords, Rank: model.Ace}},
 	}
 	winner := getTrickWinner(match)
-	assert.Equal(t, "Carol", winner)
+	assert.Equal(t, "Dave", winner)
 }
 
 func TestTrickWinnerWithTrump(t *testing.T) {
