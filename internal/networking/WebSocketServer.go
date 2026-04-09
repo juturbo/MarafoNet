@@ -71,13 +71,13 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
-		if gameID == "" {
+		if gameID == "" && !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func(gameID string) {
 					hub.SetMatchID(gameID)
 				}),
 			)
-		} else {
+		} else if !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
 			)
