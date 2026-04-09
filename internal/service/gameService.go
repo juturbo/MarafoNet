@@ -41,6 +41,14 @@ func (gameService *GameService) StartGame(ctx context.Context, playerNames []str
 	return matchId, nil
 }
 
+func (gameService *GameService) IsGameEnded(matchJson []byte) (bool, error) {
+	var match model.Game
+	if err := json.Unmarshal(matchJson, &match); err != nil {
+		return false, err
+	}
+	return gameLogic.IsGameEnded(match), nil
+}
+
 func (gameService *GameService) SetTrumpSuit(ctx context.Context, matchId string, playerName string, suit model.Suit) error {
 	return gameService.applyUpdate(ctx, matchId, func(m model.Game) (model.Game, error) {
 		return gameLogic.SetTrumpSuit(m, playerName, suit)

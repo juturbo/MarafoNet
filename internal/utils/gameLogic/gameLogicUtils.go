@@ -24,6 +24,10 @@ func StartGame(playerNames []string) (model.Game, error) {
 	return startMatch(match), nil
 }
 
+func IsGameEnded(match model.Game) bool {
+	return match.WinnerPlayers != nil
+}
+
 func SetTrumpSuit(match model.Game, playerName string, suit model.Suit) (model.Game, error) {
 	if isTrumpSuitChosen(match) {
 		return match, errors.New("trump suit has already been chosen")
@@ -54,7 +58,7 @@ func PlayCard(match model.Game, playerName string, card model.Card) (model.Game,
 	}
 	if isMatchOver(match) {
 		match = calculateMatchPointsAndReset(match)
-		if match.WinnerPlayers != nil {
+		if IsGameEnded(match) {
 			return match, nil
 		}
 		match = startMatch(match)
