@@ -1,13 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gin-app-ingress
+  name: marafonet-ingress
 spec:
   ingressClassName: nginx
-  tls:
-  - hosts:
-    - localhost
-    secretName: gin-app-tls-secret # TODO: set up secret inside cluster
+  #tls:
+  #- hosts:
+  #  - localhost
+  #  secretName: marafonet-tls-secret # TODO: set up secret inside cluster
   rules:
   - host: localhost
     http:
@@ -16,6 +16,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: gin-app-service
+            name: marafonet
             port:
-              number: 8080
+              number: 5000
