@@ -14,7 +14,7 @@ matchmaking:
 etcd:
 	docker run -d --name etcd-test -p 2379:2379 -e ALLOW_NONE_AUTHENTICATION=yes -e ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379" -e ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379" quay.io/coreos/etcd:v3.6.8
 
-destroy:
+destroy-etcd:
 	docker stop etcd-test && docker rm etcd-test
 
 # Build targets
@@ -32,6 +32,24 @@ push:
 	docker tag matchmaking:latest bagarozzi/marafonet-matchmaking:latest
 	docker push bagarozzi/marafonet-matchmaking:latest
 
-run:
-	docker run -p 5000:5000 marafonet:latest
-	docker run matchmaking:latest
+# Deploy targets
+
+deploy: etcd cluster kube
+
+cluster:
+	minikube start --nodes 2 --driver=docker -p marafonet-cluster
+	minikube addons enable ingress -p marafonet-cluster
+
+kube:
+	kubectl get nodes
+	kubectl apply -f deployment/kubernetes/
+	kubectl get pods
+	minikube tunnel -p marafonet-cluster
+
+destroy-kube:
+	kubectl delete -f deployment/kubernetes/
+
+destroy-cluster: 
+	minikube delete -p marafonet-cluster
+	
+
