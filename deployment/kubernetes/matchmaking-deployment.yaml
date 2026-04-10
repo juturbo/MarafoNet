@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: matchmaking
+    spec:
       containers:
         - name: matchmaking
           image: bagarozzi/marafonet-matchmaking:latest
