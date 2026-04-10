@@ -44,7 +44,9 @@ kube:
 	kubectl get nodes
 	kubectl apply -f deployment/kubernetes/
 	kubectl get pods
-	minikube tunnel -p marafonet-cluster
+
+tunnel: 
+	kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
 
 destroy-kube:
 	kubectl delete -f deployment/kubernetes/
