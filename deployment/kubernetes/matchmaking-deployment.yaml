@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: matchmaking
-          image: bagarozzi/marafonet-matchmaking:latest
+          image: ghcr.io/juturbo/mf-matchmaking:latest
           ports:
             - name: http
               containerPort: 5000

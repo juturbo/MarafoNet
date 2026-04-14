@@ -25,7 +25,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
         - name: marafonet
-          image: bagarozzi/marafonet:latest
+          image: ghcr.io/juturbo/marafonet:latest
           ports:
             - name: http
               containerPort: 5000
