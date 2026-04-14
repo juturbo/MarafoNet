@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import ListGroup from 'react-bootstrap/ListGroup';
 import './LobbyScreen.css';
 
 export default function LobbyScreen({ ws }) {

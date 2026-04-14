@@ -7,7 +7,6 @@ import NameEntryScreen from './components/LogInScreen';
 import LobbyScreen from './components/LobbyScreen';
 import TableScreen from './components/TableScreen';
 import RegisterScreen from './components/RegisterScreen';
-import BackgroundButton from './components/BackgroundButton';
 
 function App() {
   const { ws, isConnected } = useContext(WebSocketContext);
@@ -16,7 +15,6 @@ function App() {
   // PHASES: 'LOG_IN' | 'REGISTER' | 'LOBBY' | 'PLAYING'
   const [phase, setPhase] = useState('LOG_IN');
   const [gameState, setGameState] = useState(null);
-  const [lobbyInfo, setLobbyInfo] = useState(null);
   const [currentPlayerName, setCurrentPlayerName] = useState(null);
 
   useEffect(() => {
@@ -80,7 +78,7 @@ function App() {
       case 'REGISTER':
         return <RegisterScreen ws={ws} onRegisterSuccess={onRegisterSuccess} />;
       case 'LOBBY':
-        return <LobbyScreen ws={ws} lobbyState={lobbyInfo} />;
+        return <LobbyScreen ws={ws} />;
       case 'PLAYING':
         return <TableScreen matchUpdate={gameState} currentPlayerName={currentPlayerName} onPlayAgain={() => setPhase('LOBBY')} />;
       default:

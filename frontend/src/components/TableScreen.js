@@ -73,7 +73,6 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 // Main TableScreen component
 export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgain }) {
     const [gameState, setGameState] = useState(matchUpdate);
-    const [trumpSelected, setTrumpSelected] = useState(false);
     const [sortEnabled, setSortEnabled] = useState(false);
     const { ws, error, clearError } = useContext(WebSocketContext);
     
@@ -285,7 +284,6 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
             <TrumpSelector 
                 isFirstPlayer={gameState.FirstPlayer === bottom.Name && (!gameState.TrumpSuit || gameState.TrumpSuit === 'None')}
                 matchID={gameState.MatchID}
-                onTrumpSelected={() => setTrumpSelected(true)}
             />
         </div>
     );
