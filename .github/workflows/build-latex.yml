@@ -1,0 +1,44 @@
+name: Build LaTeX Report
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'report-src/**'
+      - '.github/workflows/build-latex.yml'
+  pull_request:
+    paths:
+      - 'report-src/**'
+      - '.github/workflows/build-latex.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+
+      - name: Install dependencies
+        run: |
+          gem install bibtex-ruby
+
+      - name: Generate bibliography
+        working-directory: report-src
+        run: |
+          ruby bibtex_prettifier.rb
+
+      - name: Compile LaTeX
+        uses: DanySK/compile-and-publish-all-latex@2.2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: report-src
