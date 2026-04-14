@@ -5,8 +5,9 @@ on:
     branches:
       - main
     paths:
-      - 'deployment/marafonet/**'
-      - 'deployment/matchmaking/**'
+      - 'internal/**'
+      - 'cmd/**'
+      - 'model/**'
       - 'frontend/**'
       - 'go.mod'
       - 'go.sum'
