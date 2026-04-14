@@ -9,10 +9,10 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
 spec:
   ingressClassName: nginx
-  #tls:
-  #- hosts:
-  #  - localhost
-  #  secretName: marafonet-tls-secret # TODO: set up secret inside cluster
+  tls:
+  - hosts:
+    - marafo.net
+    secretName: marafonet-tls-secret # TODO: set up secret inside cluster
   rules:
   - host: marafo.net
     http:
