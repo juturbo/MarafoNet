@@ -11,6 +11,7 @@ on:
       - 'frontend/**'
       - 'go.mod'
       - 'go.sum'
+  workflow_dispatch:
   # Uncomment to also trigger on pull requests for testing
   # pull_request:
   #   branches:
