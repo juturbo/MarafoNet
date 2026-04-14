@@ -48,6 +48,16 @@ kube:
 tunnel: 
 	kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
 
+# Run once: TLS certificate generation and K8s secret creation
+certs: 
+	openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout ./deployment/certs/tls.key -subj "/CN=marafo.net" -days 365
+	kubectl create secret tls marafonet-tls --key=./deployment/kubernetes/certs/tls.key --cert=./deployment/kubernetes/certs/tls.crt
+
+# Add minikube's IP to /etc/hosts
+hosts:
+	echo "$(minikube ip -p marafonet-cluster) marafo.net" | sudo tee -a /etc/hosts
+
+# Cleanup targets
 destroy-kube:
 	kubectl delete -f deployment/kubernetes/
 
