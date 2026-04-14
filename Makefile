@@ -34,7 +34,7 @@ push:
 
 # Deploy targets
 
-deploy: etcd cluster kube
+deploy: etcd cluster certs kube
 
 cluster:
 	minikube start --nodes 2 --driver=docker -p marafonet-cluster
