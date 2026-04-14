@@ -42,3 +42,17 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: report-src
+
+      - name: Update release with container images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}-${{ github.run_number }}
+          body: |
+            ## Container Images
+            Latest container images for this release:
+            - **MarafoNet**: `ghcr.io/juturbo/marafonet:latest`
+            - **Matchmaking**: `ghcr.io/juturbo/mf-matchmaking:latest`
+            
+            View in package registry: https://github.com/${{ github.repository }}/pkgs/container
