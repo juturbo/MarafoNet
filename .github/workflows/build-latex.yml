@@ -48,11 +48,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ github.ref_name }}-${{ github.run_number }}
+          tag_name: Marafonet-${{ github.ref_name }}-${{ github.run_number }}
           body: |
             ## Container Images
             Latest container images for this release:
             - **MarafoNet**: `ghcr.io/juturbo/marafonet:latest`
             - **Matchmaking**: `ghcr.io/juturbo/mf-matchmaking:latest`
             
-            View in package registry: https://github.com/${{ github.repository }}/pkgs/container
+            View in package registry: https://github.com/juturbo?tab=packages&repo_name=marafonet
