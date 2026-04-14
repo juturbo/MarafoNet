@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'deployment/marafonet/**'
+      - 'deployment/matchmaking/**'
+      - 'frontend/**'
+      - 'go.mod'
+      - 'go.sum'
   # Uncomment to also trigger on pull requests for testing
   # pull_request:
   #   branches:
@@ -19,6 +25,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Tidy Go modules
+        run: go mod tidy
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -42,7 +67,8 @@ jobs:
       - name: Build and push marafonet image
         uses: docker/build-push-action@v5
         with:
-          context: ./deployment/marafonet
+          context: .
+          file: ./deployment/marafonet/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -57,6 +83,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Tidy Go modules
+        run: go mod tidy
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
