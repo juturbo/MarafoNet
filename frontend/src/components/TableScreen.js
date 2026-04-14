@@ -71,7 +71,7 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 }
 
 // Main TableScreen component
-export default function TableScreen({ matchUpdate, currentPlayerName }) {
+export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgain }) {
     const [gameState, setGameState] = useState(matchUpdate);
     const [trumpSelected, setTrumpSelected] = useState(false);
     const [sortEnabled, setSortEnabled] = useState(false);
@@ -105,6 +105,34 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
         
         ws.send(JSON.stringify(message));
         console.log('Sent play_card message:', message);
+    };
+    
+    // Handle exit button - close WebSocket and exit to login screen
+    const handleExit = () => {
+        if (ws) {
+            ws.close();
+        }
+        window.location.reload();
+    };
+    
+    // Handle play again button - send first_join to go back to lobby
+    const handlePlayAgain = () => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not connected');
+            return;
+        }
+        
+        const message = {
+            type: 'first_join'
+        };
+        
+        ws.send(JSON.stringify(message));
+        console.log('Sent first_join message to return to lobby');
+        
+        // Navigate back to lobby screen
+        if (onPlayAgain) {
+            onPlayAgain();
+        }
     };
     
     useEffect(() => {
@@ -241,6 +269,14 @@ export default function TableScreen({ matchUpdate, currentPlayerName }) {
                     <div className="result-text">Team {gameState.WinnerTeam} Wins!</div>
                     <div className="result-players">
                         {gameState.WinnerPlayers && gameState.WinnerPlayers.join(', ')}
+                    </div>
+                    <div className="result-buttons">
+                        <button className="result-button play-again-btn" onClick={handlePlayAgain}>
+                            Play Again
+                        </button>
+                        <button className="result-button exit-btn" onClick={handleExit}>
+                            Exit to Login
+                        </button>
                     </div>
                 </div>
             )}

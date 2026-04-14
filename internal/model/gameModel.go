@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	CardsPerPlayer = 10
-	NumberOfTeams  = 2
-	PointsToWin    = 41
+	CARDS_PER_PLAYER       = 10
+	NUMBER_OF_TEAMS        = 2
+	POINTS_TO_WIN          = 41
+	MATCH_END_BONUS_POINTS = 3
 )
 
 type Point uint8
@@ -25,15 +26,15 @@ type PlayedCard struct {
 }
 
 type Game struct {
-	Players       []Player             `json:"Players"`
-	Table         []PlayedCard         `json:"Table"`
-	MatchPoints   [NumberOfTeams]Point `json:"MatchPoints"`
-	TotalPoints   [NumberOfTeams]int   `json:"TotalPoints"`
-	FirstPlayer   string               `json:"FirstPlayer"`
-	CurrentPlayer string               `json:"CurrentPlayer"`
-	TrumpSuit     Suit                 `json:"TrumpSuit"`
-	WinnerTeam    *int                 `json:"WinnerTeam,omitempty"`
-	WinnerPlayers []string             `json:"WinnerPlayers,omitempty"`
+	Players       []Player               `json:"Players"`
+	Table         []PlayedCard           `json:"Table"`
+	MatchPoints   [NUMBER_OF_TEAMS]Point `json:"MatchPoints"`
+	TotalPoints   [NUMBER_OF_TEAMS]int   `json:"TotalPoints"`
+	FirstPlayer   string                 `json:"FirstPlayer"`
+	CurrentPlayer string                 `json:"CurrentPlayer"`
+	TrumpSuit     Suit                   `json:"TrumpSuit"`
+	WinnerTeam    *int                   `json:"WinnerTeam,omitempty"`
+	WinnerPlayers []string               `json:"WinnerPlayers,omitempty"`
 }
 
 // TODO: check

@@ -73,13 +73,17 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		}
 		if gameID == "" && !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
-				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func(gameID string) {
+				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func() {
+					hub.SetWatcherCancelFunc(nil)
+				}, func(gameID string) {
 					hub.SetMatchID(gameID)
 				}),
 			)
 		} else if !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
-				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.WriteChannel),
+				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.GetPlayerName(), func() {
+					hub.SetWatcherCancelFunc(nil)
+				}, hub.WriteChannel),
 			)
 			hub.SetMatchID(gameID)
 		}

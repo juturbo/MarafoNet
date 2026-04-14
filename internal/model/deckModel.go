@@ -89,7 +89,7 @@ func (card1 Card) IsHigherThan(card2 Card, trumpSuit Suit) bool {
 		return false
 	}
 	if card1.Suit == card2.Suit {
-		return card1.Rank > card2.Rank
+		return card1.Power() > card2.Power()
 	}
 	return false
 }
@@ -102,5 +102,32 @@ func (card Card) PointValue() Point {
 		return MINOR_POINTS
 	default:
 		return BLANK_POINTS
+	}
+}
+
+func (card Card) Power() int {
+	switch card.Rank {
+	case Three:
+		return 10
+	case Two:
+		return 9
+	case Ace:
+		return 8
+	case King:
+		return 7
+	case Knight:
+		return 6
+	case Jack:
+		return 5
+	case Seven:
+		return 4
+	case Six:
+		return 3
+	case Five:
+		return 2
+	case Four:
+		return 1
+	default:
+		return 0
 	}
 }
