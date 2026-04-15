@@ -17,7 +17,10 @@ const MATCH_PREFIX = "match/%d"
 const USER_QUEUE_PATH = "user_queue/"
 const USERS_NAME_PATH = "users/%s"
 const USERS_PASSWORD_PATH = "users/%s/password"
+const USERS_IS_CONNECTED_PATH = "users/%s/is_connected"
 const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
+const IS_ONLINE = "1"
+const IS_OFFLINE = "0"
 const KEEP_ALIVE_TTL = 300
 
 type EtcdService struct {
@@ -155,19 +158,10 @@ func (etcdService *EtcdService) RemoveUserCurrentMatchId(ctx context.Context, pl
 	return etcdService.deleteKey(ctx, key)
 }
 
-func (etcdService *EtcdService) IsUsernameAvailable(ctx context.Context, playerName string) (bool, error) {
-	key := fmt.Sprintf(USERS_NAME_PATH, playerName)
-	exists, err := etcdService.keyExists(ctx, key)
-	if err != nil {
-		return false, err
-	}
-
-	return !exists, nil
-}
-
 func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.User) error {
 	userKey := fmt.Sprintf(USERS_NAME_PATH, user.Name)
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
 	hashedPassword, err := user.GeneratePasswordHash()
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
@@ -181,6 +175,7 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 		Then(
 			clientv3.OpPut(userKey, user.Name),
 			clientv3.OpPut(passwordKey, hashedPassword),
+			clientv3.OpPut(isConnectedKey, IS_OFFLINE),
 		)
 
 	transactionResponse, err := transaction.Commit()
@@ -189,6 +184,36 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 	}
 	if !transactionResponse.Succeeded {
 		return fmt.Errorf("username not available: %s", user.Name)
+	}
+
+	return nil
+}
+
+func (etcdService *EtcdService) LoginUser(ctx context.Context, user model.User) error {
+	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
+
+	isValid, err := etcdService.VerifyUser(ctx, user)
+	if err != nil {
+		return fmt.Errorf("failed to verify user: %w", err)
+	}
+	if !isValid {
+		return fmt.Errorf("invalid password for user: %s", user.Name)
+	}
+
+	updateStateIfOffline := etcdService.client.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.Value(isConnectedKey), "=", IS_OFFLINE),
+		).
+		Then(
+			clientv3.OpPut(isConnectedKey, IS_ONLINE),
+		)
+
+	transactionResponse, err := updateStateIfOffline.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to login user: %w", err)
+	}
+	if !transactionResponse.Succeeded {
+		return fmt.Errorf("user is already connected: %s", user.Name)
 	}
 
 	return nil
@@ -205,8 +230,18 @@ func (etcdService *EtcdService) VerifyUser(ctx context.Context, user model.User)
 	return user.CheckPassword(hashedPassword), nil
 }
 
+func (etcdService *EtcdService) IsUserConnected(ctx context.Context, playerName string) (bool, error) {
+	key := fmt.Sprintf(USERS_IS_CONNECTED_PATH, playerName)
+	value, err := etcdService.getValue(ctx, key)
+	if err != nil {
+		return false, err
+	}
+	return value == IS_ONLINE, nil
+}
+
 func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, user model.User) error {
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
 
 	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
 	if err != nil {
@@ -222,12 +257,17 @@ func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, user model
 		return err
 	}
 
+	err = etcdService.putValue(ctx, isConnectedKey, IS_OFFLINE)
+	if err != nil {
+		return fmt.Errorf("failed to set user offline: %w", err)
+	}
 	_, err = etcdService.client.Put(ctx, passwordKey, hashedPassword, clientv3.WithLease(lease.ID))
 	return err
 }
 
 func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.User) error {
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
 
 	if isValid, err := etcdService.VerifyUser(ctx, user); err != nil || !isValid {
 		return fmt.Errorf("reconnection failed for user: %s", user.Name)
@@ -238,6 +278,10 @@ func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	err = etcdService.putValue(ctx, isConnectedKey, IS_ONLINE)
+	if err != nil {
+		return fmt.Errorf("failed to set user online: %w", err)
+	}
 	return etcdService.putValue(ctx, passwordKey, hashedPassword)
 }
 

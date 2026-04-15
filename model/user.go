@@ -7,8 +7,8 @@ type User struct {
 	Password string `json:"password"`
 }
 
-func NewUser(name string, password string) (*User, error) {
-	return &User{Name: name, Password: password}, nil
+func NewUser(name string, password string) User {
+	return User{Name: name, Password: password}
 }
 
 func (u *User) GeneratePasswordHash() (passwordHash string, err error) {
