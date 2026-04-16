@@ -49,9 +49,10 @@ func main() {
 	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 
 	matchMakingService.StartMatchmaking(&wg)
+	matchMakingService.StartTimeoutWatcher(&wg)
 
 	wg.Wait()
 

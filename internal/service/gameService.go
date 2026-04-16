@@ -49,15 +49,21 @@ func (gameService *GameService) IsGameEnded(matchJson []byte) (bool, error) {
 	return gameLogic.IsGameEnded(match), nil
 }
 
+func (gameService *GameService) ForfeitMatch(ctx context.Context, matchId string, playerName string) error {
+	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
+		return gameLogic.ForfeitMatch(match, playerName)
+	})
+}
+
 func (gameService *GameService) SetTrumpSuit(ctx context.Context, matchId string, playerName string, suit model.Suit) error {
-	return gameService.applyUpdate(ctx, matchId, func(m model.Game) (model.Game, error) {
-		return gameLogic.SetTrumpSuit(m, playerName, suit)
+	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
+		return gameLogic.SetTrumpSuit(match, playerName, suit)
 	})
 }
 
 func (gameService *GameService) PlayCard(ctx context.Context, matchId string, playerName string, card model.Card) error {
-	return gameService.applyUpdate(ctx, matchId, func(m model.Game) (model.Game, error) {
-		return gameLogic.PlayCard(m, playerName, card)
+	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
+		return gameLogic.PlayCard(match, playerName, card)
 	})
 }
 

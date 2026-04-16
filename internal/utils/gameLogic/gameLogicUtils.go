@@ -28,6 +28,22 @@ func IsGameEnded(match model.Game) bool {
 	return match.WinnerPlayers != nil
 }
 
+func ForfeitMatch(match model.Game, playerName string) (model.Game, error) {
+	playerTeam := -1
+	for _, player := range match.Players {
+		if player.Name == playerName {
+			playerTeam = player.TeamId
+			break
+		}
+	}
+	if playerTeam == -1 {
+		return match, fmt.Errorf("player %s not found in match", playerName)
+	}
+	winnerTeam := 1 - playerTeam
+	match = setMatchWinner(match, winnerTeam)
+	return match, nil
+}
+
 func SetTrumpSuit(match model.Game, playerName string, suit model.Suit) (model.Game, error) {
 	if isTrumpSuitChosen(match) {
 		return match, errors.New("trump suit has already been chosen")
@@ -411,14 +427,19 @@ func checkVictoryAndUpdate(match model.Game) (model.Game, bool) {
 	if secondTeamPoints > firstTeamPoints {
 		winner = 1
 	}
-	match.WinnerTeam = &winner
+	match = setMatchWinner(match, winner)
+	return match, true
+}
+
+func setMatchWinner(match model.Game, winnerTeam int) model.Game {
+	match.WinnerTeam = &winnerTeam
 	match.WinnerPlayers = nil
-	for _, p := range match.Players {
-		if p.TeamId == winner {
-			match.WinnerPlayers = append(match.WinnerPlayers, p.Name)
+	for _, player := range match.Players {
+		if player.TeamId == winnerTeam {
+			match.WinnerPlayers = append(match.WinnerPlayers, player.Name)
 		}
 	}
-	return match, true
+	return match
 }
 
 func printMatch(match model.Game) {

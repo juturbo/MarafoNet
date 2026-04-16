@@ -101,4 +101,5 @@ func closeConnection(hub *WebSocketHub) {
 	hub.Connection.Close()
 	hub.CancelWatcher()
 	hub.StorageService.RemoveUserFromQueue(context.Background(), hub.playerName)
+	hub.StorageService.OnUserDisconnect(context.Background(), hub.playerName)
 }
