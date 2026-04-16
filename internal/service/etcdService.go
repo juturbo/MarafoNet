@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	uuid "github.com/google/uuid"
@@ -14,6 +15,8 @@ import (
 
 const MATCH_COUNTER_PATH = "global/match_counter"
 const MATCH_PREFIX = "match/%d"
+const MATCH_TIMEOUT_PREFIX = "match_timeout/"
+const MATCH_TIMEOUT_PATH = MATCH_TIMEOUT_PREFIX + "%s/%s" // match_timeout/{matchId}/{playerName}
 const USER_QUEUE_PATH = "user_queue/"
 const USERS_NAME_PATH = "users/%s"
 const USERS_PASSWORD_PATH = "users/%s/password"
@@ -21,11 +24,18 @@ const USERS_IS_CONNECTED_PATH = "users/%s/is_connected"
 const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
 const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
-const KEEP_ALIVE_TTL = 300
+const TIMEOUT = "1"
+const KEEP_ALIVE_TTL = 180
 
 type EtcdService struct {
 	client *clientv3.Client
 	uuid   uuid.UUID
+}
+
+// MatchTimeoutEvent is emitted by the watcher when a user's match timeout lease expires.
+type MatchTimeoutEvent struct {
+	MatchID  string
+	Username string
 }
 
 func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService, error) {
@@ -190,9 +200,7 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 }
 
 func (etcdService *EtcdService) LoginUser(ctx context.Context, user model.User) error {
-	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
-
-	isValid, err := etcdService.VerifyUser(ctx, user)
+	isValid, err := etcdService.verifyUser(ctx, user)
 	if err != nil {
 		return fmt.Errorf("failed to verify user: %w", err)
 	}
@@ -200,89 +208,31 @@ func (etcdService *EtcdService) LoginUser(ctx context.Context, user model.User) 
 		return fmt.Errorf("invalid password for user: %s", user.Name)
 	}
 
-	updateStateIfOffline := etcdService.client.Txn(ctx).
-		If(
-			clientv3.Compare(clientv3.Value(isConnectedKey), "=", IS_OFFLINE),
-		).
-		Then(
-			clientv3.OpPut(isConnectedKey, IS_ONLINE),
-		)
-
-	transactionResponse, err := updateStateIfOffline.Commit()
-	if err != nil {
-		return fmt.Errorf("failed to login user: %w", err)
+	if err = etcdService.setUserOnlineStatus(ctx, user); err != nil {
+		return err
 	}
-	if !transactionResponse.Succeeded {
-		return fmt.Errorf("user is already connected: %s", user.Name)
+
+	if etcdService.isUserInAMatch(ctx, user) {
+		return etcdService.removeUserTimeout(ctx, user)
 	}
 
 	return nil
 }
 
-func (etcdService *EtcdService) VerifyUser(ctx context.Context, user model.User) (bool, error) {
-	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
-
-	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
-	if err != nil {
-		return false, err
-	}
-
-	return user.CheckPassword(hashedPassword), nil
-}
-
-func (etcdService *EtcdService) IsUserConnected(ctx context.Context, playerName string) (bool, error) {
-	key := fmt.Sprintf(USERS_IS_CONNECTED_PATH, playerName)
-	value, err := etcdService.getValue(ctx, key)
-	if err != nil {
-		return false, err
-	}
-	return value == IS_ONLINE, nil
-}
-
 func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, user model.User) error {
-	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
-	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
-
-	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
+	err := etcdService.setUserOfflineStatus(ctx, user)
 	if err != nil {
 		return err
 	}
 
-	if hashedPassword == "" {
-		return fmt.Errorf("user not found: %s", user.Name)
+	if etcdService.isUserInAMatch(ctx, user) {
+		err := etcdService.setUserMatchTimeout(ctx, user)
+		if err != nil {
+			return err
+		}
 	}
 
-	lease, err := etcdService.client.Grant(ctx, KEEP_ALIVE_TTL)
-	if err != nil {
-		return err
-	}
-
-	err = etcdService.putValue(ctx, isConnectedKey, IS_OFFLINE)
-	if err != nil {
-		return fmt.Errorf("failed to set user offline: %w", err)
-	}
-	_, err = etcdService.client.Put(ctx, passwordKey, hashedPassword, clientv3.WithLease(lease.ID))
 	return err
-}
-
-func (etcdService *EtcdService) OnUserReconnect(ctx context.Context, user model.User) error {
-	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
-	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
-
-	if isValid, err := etcdService.VerifyUser(ctx, user); err != nil || !isValid {
-		return fmt.Errorf("reconnection failed for user: %s", user.Name)
-	}
-
-	hashedPassword, err := user.GeneratePasswordHash()
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	err = etcdService.putValue(ctx, isConnectedKey, IS_ONLINE)
-	if err != nil {
-		return fmt.Errorf("failed to set user online: %w", err)
-	}
-	return etcdService.putValue(ctx, passwordKey, hashedPassword)
 }
 
 func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {
@@ -310,6 +260,38 @@ func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []st
 				if event.Type == clientv3.EventTypePut {
 					var userQueue, _ = etcdService.GetUserQueue(ctx)
 					channel <- userQueue
+				}
+			}
+		}
+	}()
+
+	return channel, cancel
+}
+
+func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-chan MatchTimeoutEvent, context.CancelFunc) {
+	channel := make(chan MatchTimeoutEvent)
+	watchCtx, cancel := context.WithCancel(ctx)
+	watchChannel := etcdService.client.Watch(watchCtx, MATCH_TIMEOUT_PREFIX, clientv3.WithPrefix())
+	go func() {
+		defer close(channel)
+		for watchResponse := range watchChannel {
+			if watchResponse.Err() != nil {
+				return
+			}
+			for _, event := range watchResponse.Events {
+				if event.Type == clientv3.EventTypeDelete {
+					timeoutKey := string(event.Kv.Key)
+					// Extract matchId and username from key: match_timeout/{matchId}/{username}
+					parts := strings.Split(timeoutKey, "/")
+					if len(parts) != 3 {
+						continue
+					}
+					matchId := parts[1]
+					username := parts[2]
+					isOnline, err := etcdService.isUserConnected(ctx, username)
+					if err == nil && !isOnline { // If lease expired and user is still offline, notify timeout
+						channel <- MatchTimeoutEvent{MatchID: matchId, Username: username}
+					}
 				}
 			}
 		}
@@ -419,4 +401,91 @@ func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string,
 	}
 
 	return transactionResponse.Succeeded, nil
+}
+
+func (etcdService *EtcdService) verifyUser(ctx context.Context, user model.User) (bool, error) {
+	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+
+	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
+	if err != nil {
+		return false, err
+	}
+
+	return user.CheckPassword(hashedPassword), nil
+}
+
+func (etcdService *EtcdService) updateUserConnectionStatus(ctx context.Context, user model.User, expect string, newState string) error {
+	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
+
+	txn := etcdService.client.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.Value(isConnectedKey), "=", expect),
+		).
+		Then(
+			clientv3.OpPut(isConnectedKey, newState),
+		)
+
+	transactionResponse, err := txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to login user: %w", err)
+	}
+	if !transactionResponse.Succeeded {
+		if newState == IS_ONLINE {
+			return fmt.Errorf("user is already online: %s", user.Name)
+		}
+		if newState == IS_OFFLINE {
+			return fmt.Errorf("user is already offline: %s", user.Name)
+		}
+		return fmt.Errorf("unexpected state transition for user %s", user.Name)
+	}
+	return nil
+}
+
+func (etcdService *EtcdService) setUserOnlineStatus(ctx context.Context, user model.User) error {
+	return etcdService.updateUserConnectionStatus(ctx, user, IS_OFFLINE, IS_ONLINE)
+}
+
+func (etcdService *EtcdService) setUserOfflineStatus(ctx context.Context, user model.User) error {
+	return etcdService.updateUserConnectionStatus(ctx, user, IS_ONLINE, IS_OFFLINE)
+}
+
+func (etcdService *EtcdService) setUserMatchTimeout(ctx context.Context, user model.User) error {
+	matchId, err := etcdService.GetUserCurrentMatchId(ctx, user.Name)
+	if err != nil {
+		return fmt.Errorf("failed to get user's current match ID: %w", err)
+	}
+
+	lease, err := etcdService.client.Grant(ctx, KEEP_ALIVE_TTL)
+	if err != nil {
+		return err
+	}
+
+	matchTimeoutKey := fmt.Sprintf(MATCH_TIMEOUT_PATH, matchId, user.Name)
+	_, err = etcdService.client.Put(ctx, matchTimeoutKey, TIMEOUT, clientv3.WithLease(lease.ID))
+	return nil
+}
+
+func (etcdService *EtcdService) removeUserTimeout(ctx context.Context, user model.User) error {
+	matchId, err := etcdService.GetUserCurrentMatchId(ctx, user.Name)
+	if err != nil {
+		return fmt.Errorf("failed to get user's current match ID: %w", err)
+	}
+
+	matchTimeoutKey := fmt.Sprintf(MATCH_TIMEOUT_PATH, matchId, user.Name)
+
+	return etcdService.deleteKey(ctx, matchTimeoutKey)
+}
+
+func (etcdService *EtcdService) isUserInAMatch(ctx context.Context, user model.User) bool {
+	matchId, err := etcdService.GetUserCurrentMatchId(ctx, user.Name)
+	return matchId != "" && err == nil
+}
+
+func (etcdService *EtcdService) isUserConnected(ctx context.Context, playerName string) (bool, error) {
+	key := fmt.Sprintf(USERS_IS_CONNECTED_PATH, playerName)
+	value, err := etcdService.getValue(ctx, key)
+	if err != nil {
+		return false, err
+	}
+	return value == IS_ONLINE, nil
 }

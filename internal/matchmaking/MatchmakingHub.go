@@ -85,6 +85,39 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 	hub.cancel()
 }
 
+func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
+	timeoutWatcher, cancelTimeoutWatcher := hub.GetStorageService().WatchUserTimeoutLease(context.Background())
+	go func() {
+		log.Printf("- timeout watcher: started watching timeout lease")
+		for {
+			select {
+			case <-hub.ctx.Done():
+				cancelTimeoutWatcher()
+				wg.Done()
+				log.Printf("- timeout watcher: Stopping timeout watcher service")
+				return
+			default:
+				timeoutEvent, ok := <-timeoutWatcher
+				if !ok {
+					log.Printf("- timeout watcher: timeout channel closed")
+					return
+				}
+				log.Printf("- timeout watcher: received timeout event for user %s in match %s", timeoutEvent.Username, timeoutEvent.MatchID)
+				err := hub.GetGameService().ForfeitMatch(context.Background(), timeoutEvent.MatchID, timeoutEvent.Username)
+				if err != nil {
+					log.Printf("- timeout watcher: error forfeiting match %s for user %s: %v", timeoutEvent.MatchID, timeoutEvent.Username, err)
+				} else {
+					log.Printf("- timeout watcher: successfully forfeited match %s for user %s", timeoutEvent.MatchID, timeoutEvent.Username)
+				}
+			}
+		}
+	}()
+}
+
+func (hub *MatchmakingHub) StopTimeoutWatcher() {
+	hub.cancel()
+}
+
 // Sets a watcher on the requested game, sending the information down the write channel..
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
