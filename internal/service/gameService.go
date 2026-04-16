@@ -49,7 +49,6 @@ func (gameService *GameService) IsGameEnded(matchJson []byte) (bool, error) {
 	return gameLogic.IsGameEnded(match), nil
 }
 
-// ForfeitMatch marks the opponent team as the winner when a player forfeits (e.g., timeout on reconnect).
 func (gameService *GameService) ForfeitMatch(ctx context.Context, matchId string, playerName string) error {
 	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
 		return gameLogic.ForfeitMatch(match, playerName)
