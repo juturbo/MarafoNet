@@ -27,9 +27,9 @@ build: react
 	docker build -f deployment/matchmaking/Dockerfile -t matchmaking:latest .
 
 push:
-	docker tag marafonet:latest bagarozzi/marafonet:latest
+	docker tag marafonet:latest ghcr.io/juturbo/marafonet:latest
 	docker push bagarozzi/marafonet:latest
-	docker tag matchmaking:latest bagarozzi/marafonet-matchmaking:latest
+	docker tag matchmaking:latest ghcr.io/juturbo/marafonet-matchmaking:latest
 	docker push bagarozzi/marafonet-matchmaking:latest
 
 # Deploy targets
@@ -50,7 +50,7 @@ tunnel:
 
 # Run once: TLS certificate generation and K8s secret creation
 certs: 
-	openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout ./deployment/certs/tls.key -subj "/CN=marafo.net" -days 365
+	openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout ./deployment/certs/tls.key -out ./deployment/certs/tls.crt -subj "/CN=marafo.net" -days 365
 	kubectl create secret tls marafonet-tls --key=./deployment/kubernetes/certs/tls.key --cert=./deployment/kubernetes/certs/tls.crt
 
 # Add minikube's IP to /etc/hosts
