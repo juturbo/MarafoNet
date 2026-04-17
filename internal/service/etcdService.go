@@ -25,7 +25,7 @@ const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
 const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
-const KEEP_ALIVE_TTL = 20
+const KEEP_ALIVE_TTL = 120
 
 type EtcdService struct {
 	client *clientv3.Client
@@ -280,14 +280,20 @@ func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-ch
 			}
 			for _, event := range watchResponse.Events {
 				if event.Type == clientv3.EventTypeDelete {
-					timeoutKey := string(event.Kv.Key)
-					// Extract matchId and username from key: match_timeout/{matchId}/{username}
-					parts := strings.Split(timeoutKey, "/")
-					if len(parts) != 3 {
+					if event.Kv == nil {
 						continue
 					}
-					matchId := parts[1]
-					username := parts[2]
+					timeoutKey := string(event.Kv.Key)
+					if !strings.HasPrefix(timeoutKey, MATCH_TIMEOUT_PREFIX) {
+						continue
+					}
+					trimmed := strings.TrimPrefix(timeoutKey, MATCH_TIMEOUT_PREFIX) // "{matchId}/{username}"
+					last := strings.LastIndex(trimmed, "/")
+					if last <= 0 {
+						continue
+					}
+					matchId := trimmed[:last]
+					username := trimmed[last+1:]
 					isOnline, err := etcdService.isUserConnected(ctx, username)
 					if err == nil && !isOnline { // If lease expired and user is still offline, notify timeout
 						channel <- MatchTimeoutEvent{MatchID: matchId, Username: username}
@@ -430,12 +436,6 @@ func (etcdService *EtcdService) updateUserConnectionStatus(ctx context.Context, 
 		return fmt.Errorf("failed to login user: %w", err)
 	}
 	if !transactionResponse.Succeeded {
-		if newState == IS_ONLINE {
-			return fmt.Errorf("user is already online: %s", playerName)
-		}
-		if newState == IS_OFFLINE {
-			return fmt.Errorf("user is already offline: %s", playerName)
-		}
 		return fmt.Errorf("unexpected state transition for user %s", playerName)
 	}
 	return nil
