@@ -63,6 +63,7 @@ hosts:
 # Cleanup targets
 destroy-kube:
 	kubectl delete -f deployment/kubernetes/
+	kubectl delete secret marafonet-tls
 
 destroy-cluster: 
 	minikube delete -p marafonet-cluster
