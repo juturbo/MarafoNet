@@ -11,10 +11,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - marafo.net
+    - localhost
     secretName: marafonet-tls-secret # TODO: set up secret inside cluster
   rules:
-  - host: marafo.net
+  - host: localhost
     http:
       paths:
       - path: /
