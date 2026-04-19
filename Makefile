@@ -28,13 +28,13 @@ build: react
 
 push:
 	docker tag marafonet:latest ghcr.io/juturbo/marafonet:latest
-	docker push bagarozzi/marafonet:latest
-	docker tag matchmaking:latest ghcr.io/juturbo/marafonet-matchmaking:latest
-	docker push bagarozzi/marafonet-matchmaking:latest
+	docker push ghcr.io/juturbo/marafonet:latest
+	docker tag matchmaking:latest ghcr.io/juturbo/mf-matchmaking:latest
+	docker push ghcr.io/juturbo/mf-matchmaking:latest
 
 # Deploy targets
 
-deploy: etcd cluster certs kube
+deploy: etcd cluster certs secrets kube tunnel
 
 cluster:
 	minikube start --nodes 2 --driver=docker -p marafonet-cluster
@@ -46,11 +46,13 @@ kube:
 	kubectl get pods
 
 tunnel: 
-	kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
+	kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:443
 
 # Run once: TLS certificate generation and K8s secret creation
 certs: 
-	openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout ./deployment/certs/tls.key -out ./deployment/certs/tls.crt -subj "/CN=marafo.net" -days 365
+	openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout ./deployment/kubernetes/certs/tls.key -out ./deployment/kubernetes/certs/tls.crt -subj "/CN=localhost" -days 365
+
+secrets:	
 	kubectl create secret tls marafonet-tls --key=./deployment/kubernetes/certs/tls.key --cert=./deployment/kubernetes/certs/tls.crt
 
 # Add minikube's IP to /etc/hosts
