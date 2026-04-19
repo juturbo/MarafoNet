@@ -39,6 +39,7 @@ deploy: etcd cluster certs secrets kube tunnel
 cluster:
 	minikube start --nodes 2 --driver=docker -p marafonet-cluster
 	minikube addons enable ingress -p marafonet-cluster
+	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
 
 kube:
 	kubectl get nodes
@@ -65,5 +66,7 @@ destroy-kube:
 
 destroy-cluster: 
 	minikube delete -p marafonet-cluster
+
+cleanup: destroy-kube destroy-cluster
 	
 
