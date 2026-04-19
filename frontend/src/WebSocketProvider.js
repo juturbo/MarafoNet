@@ -8,7 +8,7 @@ export const WebSocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
 
-  const address = 'wss://marafo.net/ws';
+  const address = 'wss://localhost:8080/ws';
   useEffect(() => {
     // Connect to your K8s load balancer
     ws.current = new WebSocket(address);
