@@ -72,13 +72,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 		if gameID == "" && !hub.IsWatcherCancelFuncSet() {
-			hub.SetWatcherCancelFunc(
-				hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func() {
-					hub.SetWatcherCancelFunc(nil)
-				}, func(gameID string) {
-					hub.SetMatchID(gameID)
-				}),
-			)
+			putUserInQueue(hub)
 		} else if !hub.IsWatcherCancelFuncSet() {
 			hub.SetWatcherCancelFunc(
 				hub.MatchmakingService.SetGameWatcher(context.Background(), gameID, hub.GetPlayerName(), func() {
@@ -114,6 +108,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 				hub.CancelWatcher()
 			}
 			hub.StorageService.RemoveUserCurrentMatchId(context.Background(), hub.GetPlayerName())
+			putUserInQueue(hub)
 		} else {
 			return true, BuildJSONErrorResponse("cannot play again until current match is over or if no matchId is set")
 		}
@@ -173,4 +168,14 @@ func isGameOver(hub *websockethub.WebSocketHub, matchId string) bool {
 		return false
 	}
 	return result
+}
+
+func putUserInQueue(hub *websockethub.WebSocketHub) {
+	hub.SetWatcherCancelFunc(
+		hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func() {
+			hub.SetWatcherCancelFunc(nil)
+		}, func(gameID string) {
+			hub.SetMatchID(gameID)
+		}),
+	)
 }
