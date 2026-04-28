@@ -122,11 +122,11 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
         }
         
         const message = {
-            type: 'first_join'
+            type: 'play_again'
         };
         
         ws.send(JSON.stringify(message));
-        console.log('Sent first_join message to return to lobby');
+        console.log('Sent play_again message to return to lobby');
         
         // Navigate back to lobby screen
         if (onPlayAgain) {
