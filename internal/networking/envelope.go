@@ -20,6 +20,10 @@ const (
 	PlayCardType MessageType = "play_card"
 	// A message sent by the client to set the trump suit.
 	SetTrumpType MessageType = "set_trump"
+	// A message sent by the client when they want to start a new match.
+	PlayAgainType MessageType = "play_again"
+	// A message sent by the client when they want to leave the server.
+	QuitType MessageType = "quit"
 )
 
 type Envelope interface {
