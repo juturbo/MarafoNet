@@ -13,13 +13,12 @@ export default function NameEntryScreen({ ws, onAuthSuccess, onSwitchToRegister 
         const handleMessage = (event) => {
             try {
                 const response = JSON.parse(event.data);
-                console.log('📨 LogInScreen received:', response);
                 
                 if (response.type === 'login_failed') {
-                    console.error('❌ Login failed:', response.message);
+                    console.error('Login failed:', response.message);
                     setError(response.message || 'Login failed');
                 } else if (response.type === 'login_success') {
-                    console.log('✅ Login successful for:', name);
+                    console.log('Login successful for:', name);
                     setError('');
                     onAuthSuccess(name);
                 }
@@ -54,8 +53,6 @@ export default function NameEntryScreen({ ws, onAuthSuccess, onSwitchToRegister 
             },
             payload: null,
         };
-        
-        console.log('📤 Sending login payload:', payload);
         ws.send(JSON.stringify(payload));
     };
 
