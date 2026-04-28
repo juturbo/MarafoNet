@@ -97,8 +97,8 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
-	case envelope.EqualsType(PlayAgainType):
-		log.Printf(" - wss: received play again request from player %s", hub.GetPlayerName())
+	case envelope.EqualsType(PlayAgainType) || envelope.EqualsType(QuitType):
+		log.Printf(" - wss: received %s request from player %s", envelope.GetMessageType(), hub.GetPlayerName())
 		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), hub.GetPlayerName())
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
@@ -108,7 +108,9 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 				hub.CancelWatcher()
 			}
 			hub.StorageService.RemoveUserCurrentMatchId(context.Background(), hub.GetPlayerName())
-			putUserInQueue(hub)
+			if envelope.EqualsType(PlayAgainType) {
+				putUserInQueue(hub)
+			}
 		} else {
 			return true, BuildJSONErrorResponse("cannot play again until current match is over or if no matchId is set")
 		}
