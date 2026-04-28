@@ -103,6 +103,18 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
+	case envelope.EqualsType(PlayAgainType):
+		log.Printf(" - wss: received play again request from player %s", hub.GetPlayerName())
+		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), hub.GetPlayerName())
+		if err != nil {
+			return true, BuildJSONErrorResponse(err.Error())
+		}
+		if gameID != "" && isGameOver(hub, gameID) {
+			hub.CancelWatcher()
+			hub.StorageService.RemoveUserCurrentMatchId(context.Background(), hub.GetPlayerName())
+		} else {
+			return true, BuildJSONErrorResponse("cannot play again until current match is over or if no matchId is set")
+		}
 	default:
 		return true, BuildJSONErrorResponse("invalid message type")
 	}
@@ -145,4 +157,18 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 // Check if the player can register in the connection with the provided username.
 func isPlayerNew(hub *websockethub.WebSocketHub, envelope Envelope) bool {
 	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() != ""
+}
+
+func isGameOver(hub *websockethub.WebSocketHub, matchId string) bool {
+	match, _, err := hub.StorageService.GetMatchJsonAndRevision(context.Background(), matchId)
+	if err != nil {
+		log.Printf("error fetching match data for match ID %s: %v", matchId, err.Error())
+		return false
+	}
+	result, err := hub.GameService.IsGameEnded(match)
+	if err != nil {
+		log.Printf("error checking if game is over for match ID %s: %v", matchId, err.Error())
+		return false
+	}
+	return result
 }
