@@ -29,10 +29,8 @@ function App() {
     const handleGameMessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        console.log('📨 App.js received:', payload);
 
         if(payload.type === "match_update") {
-          console.log('🎮 Phase changing to PLAYING');
           setPhase('PLAYING');
           setGameState(payload.match);
         }
@@ -42,15 +40,15 @@ function App() {
     };
 
     const handleError = (error) => {
-      console.error('❌ WebSocket error:', error);
+      console.error('WebSocket error:', error);
     };
 
     const handleOpen = () => {
-      console.log('✅ WebSocket opened');
+      console.log('WebSocket opened');
     };
 
     const handleClose = () => {
-      console.log('❌ WebSocket closed');
+      console.log('WebSocket closed');
     };
 
     ws.addEventListener('message', handleGameMessage);
