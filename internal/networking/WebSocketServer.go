@@ -110,7 +110,9 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 		if gameID != "" && isGameOver(hub, gameID) {
-			hub.CancelWatcher()
+			if hub.IsWatcherCancelFuncSet() {
+				hub.CancelWatcher()
+			}
 			hub.StorageService.RemoveUserCurrentMatchId(context.Background(), hub.GetPlayerName())
 		} else {
 			return true, BuildJSONErrorResponse("cannot play again until current match is over or if no matchId is set")
