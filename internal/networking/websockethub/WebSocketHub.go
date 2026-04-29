@@ -22,7 +22,7 @@ type WebSocketHub struct {
 	lobbyWatcherCancelFunc *context.CancelFunc
 	closeOnce              sync.Once
 	isAuthenticated        bool
-	matchID                string
+	gameId                 string
 }
 
 type cancelFunc func()
@@ -41,7 +41,7 @@ func CreateWebSocketHub(
 	hub.MatchmakingService = MatchmakingService
 	hub.closeOnce = sync.Once{}
 	hub.isAuthenticated = false
-	hub.matchID = ""
+	hub.gameId = ""
 	return &hub
 }
 
@@ -63,12 +63,12 @@ func (hub *WebSocketHub) IsAuthenticated() bool {
 	return hub.isAuthenticated
 }
 
-func (hub *WebSocketHub) SetMatchID(matchID string) {
-	hub.matchID = matchID
+func (hub *WebSocketHub) SetGameID(gameID string) {
+	hub.gameId = gameID
 }
 
-func (hub *WebSocketHub) GetMatchID() string {
-	return hub.matchID
+func (hub *WebSocketHub) GetGameID() string {
+	return hub.gameId
 }
 
 // Sets the cancel function for the.current watch associated with the WebSocketHub (that is associated with the connection).

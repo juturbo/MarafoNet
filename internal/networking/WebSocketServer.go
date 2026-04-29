@@ -66,8 +66,8 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	switch {
 	case envelope.EqualsType(JoinType):
 		log.Printf(" - wss: received join request from player %s", hub.GetPlayerName())
-		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), hub.GetPlayerName())
-		log.Printf(" - wss: player %s current match ID is %s", hub.GetPlayerName(), gameID)
+		gameID, err := hub.StorageService.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
+		log.Printf(" - wss: player %s current game ID is %s", hub.GetPlayerName(), gameID)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
@@ -79,27 +79,27 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 					hub.SetWatcherCancelFunc(nil)
 				}, hub.WriteChannel),
 			)
-			hub.SetMatchID(gameID)
+			hub.SetGameID(gameID)
 		}
 	case envelope.EqualsType(PlayCardType):
 		card, marshalingError := PayloadFromJSON(envelope.GetPayload())
 		if marshalingError != nil {
 			return true, BuildJSONErrorResponse(marshalingError.Error())
 		}
-		err := hub.GameService.PlayCard(context.Background(), hub.GetMatchID(), hub.GetPlayerName(), card)
+		err := hub.GameService.PlayCard(context.Background(), hub.GetGameID(), hub.GetPlayerName(), card)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 	case envelope.EqualsType(SetTrumpType):
 		var payload SetTrumpPayLoad
 		json.Unmarshal(envelope.GetPayload(), &payload)
-		err := hub.GameService.SetTrumpSuit(context.Background(), hub.GetMatchID(), hub.GetPlayerName(), payload.Suit)
+		err := hub.GameService.SetTrumpSuit(context.Background(), hub.GetGameID(), hub.GetPlayerName(), payload.Suit)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
 	case envelope.EqualsType(PlayAgainType) || envelope.EqualsType(QuitType):
 		log.Printf(" - wss: received %s request from player %s", envelope.GetMessageType(), hub.GetPlayerName())
-		gameID, err := hub.StorageService.GetUserCurrentMatchId(context.Background(), hub.GetPlayerName())
+		gameID, err := hub.StorageService.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
@@ -107,12 +107,12 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 			if hub.IsWatcherCancelFuncSet() {
 				hub.CancelWatcher()
 			}
-			hub.StorageService.RemoveUserCurrentMatchId(context.Background(), hub.GetPlayerName())
+			hub.StorageService.RemoveUserCurrentGameId(context.Background(), hub.GetPlayerName())
 			if envelope.EqualsType(PlayAgainType) {
 				putUserInQueue(hub)
 			}
 		} else {
-			return true, BuildJSONErrorResponse("cannot play again until current match is over or if no matchId is set")
+			return true, BuildJSONErrorResponse("cannot play again until current game is over or if no gameId is set")
 		}
 	default:
 		return true, BuildJSONErrorResponse("invalid message type")
@@ -158,15 +158,15 @@ func isPlayerNew(hub *websockethub.WebSocketHub, envelope Envelope) bool {
 	return hub.GetPlayerName() == "" && envelope.GetPlayerName() != "" && envelope.GetPassword() != ""
 }
 
-func isGameOver(hub *websockethub.WebSocketHub, matchId string) bool {
-	match, _, err := hub.StorageService.GetMatchJsonAndRevision(context.Background(), matchId)
+func isGameOver(hub *websockethub.WebSocketHub, gameId string) bool {
+	game, _, err := hub.StorageService.GetGameJsonAndRevision(context.Background(), gameId)
 	if err != nil {
-		log.Printf("error fetching match data for match ID %s: %v", matchId, err.Error())
+		log.Printf("error fetching game data for game ID %s: %v", gameId, err.Error())
 		return false
 	}
-	result, err := hub.GameService.IsGameEnded(match)
+	result, err := hub.GameService.IsGameEnded(game)
 	if err != nil {
-		log.Printf("error checking if game is over for match ID %s: %v", matchId, err.Error())
+		log.Printf("error checking if game is over for game ID %s: %v", gameId, err.Error())
 		return false
 	}
 	return result
@@ -177,7 +177,7 @@ func putUserInQueue(hub *websockethub.WebSocketHub) {
 		hub.MatchmakingService.JoinQueue(context.Background(), hub.GetPlayerName(), hub.WriteChannel, func() {
 			hub.SetWatcherCancelFunc(nil)
 		}, func(gameID string) {
-			hub.SetMatchID(gameID)
+			hub.SetGameID(gameID)
 		}),
 	)
 }

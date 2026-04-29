@@ -30,9 +30,9 @@ function App() {
       try {
         const payload = JSON.parse(event.data);
 
-        if(payload.type === "match_update") {
+        if(payload.type === "game_update") {
           setPhase('PLAYING');
-          setGameState(payload.match);
+          setGameState(payload.game);
         }
       } catch (err) {
         console.error('Error parsing message in App.js:', err);
@@ -78,7 +78,7 @@ function App() {
       case 'LOBBY':
         return <LobbyScreen ws={ws} />;
       case 'PLAYING':
-        return <TableScreen matchUpdate={gameState} currentPlayerName={currentPlayerName} onPlayAgain={() => setPhase('LOBBY')} />;
+        return <TableScreen gameUpdate={gameState} currentPlayerName={currentPlayerName} onPlayAgain={() => setPhase('LOBBY')} />;
       default:
         return <div>Unknown Phase</div>;
     }

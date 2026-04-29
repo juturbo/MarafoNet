@@ -16,9 +16,9 @@ type MatchmakingHub struct {
 	queueWatcher context.CancelFunc
 }
 
-type MatchUpdateMessage struct {
-	Type  string          `json:"type"`
-	Match json.RawMessage `json:"match"`
+type GameUpdateMessage struct {
+	Type string          `json:"type"`
+	Game json.RawMessage `json:"game"`
 }
 
 // Callback function type for when game ID is assigned
@@ -63,16 +63,16 @@ func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 			default:
 				if len(users) >= 4 {
 					log.Printf("- matchmaking: Found 4 players in queue, starting a game with players: %v", users[:4])
-					matchID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
+					gameID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
 					for _, user := range users[:4] {
 						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
-						hub.GetStorageService().SetUserCurrentMatchId(context.Background(), user, matchID)
+						hub.GetStorageService().SetUserCurrentGameId(context.Background(), user, gameID)
 					}
 					usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
 					log.Printf("- matchmaking: Current users in queue after matchmaking: %v", usersStillInQueue)
 					for _, user := range users[:4] {
-						matchID, _ := hub.GetStorageService().GetUserCurrentMatchId(context.Background(), user)
-						log.Printf("- matchmaking: user %s joined game %s", user, matchID)
+						gameID, _ := hub.GetStorageService().GetUserCurrentGameId(context.Background(), user)
+						log.Printf("- matchmaking: user %s joined game %s", user, gameID)
 					}
 				}
 			}
@@ -102,12 +102,12 @@ func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
 					log.Printf("- timeout watcher: timeout channel closed")
 					return
 				}
-				log.Printf("- timeout watcher: received timeout event for user %s in match %s", timeoutEvent.Username, timeoutEvent.MatchID)
-				err := hub.GetGameService().ForfeitMatch(context.Background(), timeoutEvent.MatchID, timeoutEvent.Username)
+				log.Printf("- timeout watcher: received timeout event for user %s in game %s", timeoutEvent.Username, timeoutEvent.GameID)
+				err := hub.GetGameService().ForfeitGame(context.Background(), timeoutEvent.GameID, timeoutEvent.Username)
 				if err != nil {
-					log.Printf("- timeout watcher: error forfeiting match %s for user %s: %v", timeoutEvent.MatchID, timeoutEvent.Username, err)
+					log.Printf("- timeout watcher: error forfeiting game %s for user %s: %v", timeoutEvent.GameID, timeoutEvent.Username, err)
 				} else {
-					log.Printf("- timeout watcher: successfully forfeited match %s for user %s", timeoutEvent.MatchID, timeoutEvent.Username)
+					log.Printf("- timeout watcher: successfully forfeited game %s for user %s", timeoutEvent.GameID, timeoutEvent.Username)
 				}
 			}
 		}
@@ -119,40 +119,40 @@ func (hub *MatchmakingHub) StopTimeoutWatcher() {
 }
 
 // Sets a watcher on the requested game, sending the information down the write channel..
-func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, matchId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
-	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, matchId)
-	matchJSON, _, _ := hub.GetStorageService().GetMatchJsonAndRevision(ctx, matchId)
+func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
+	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, gameId)
+	gameJSON, _, _ := hub.GetStorageService().GetGameJsonAndRevision(ctx, gameId)
 	go func() {
-		log.Printf("- game watcher: setting game watcher for match ID: %s", matchId)
+		log.Printf("- game watcher: setting game watcher for game ID: %s", gameId)
 		for {
 			update, ok := <-watchChannel
 			if !ok {
-				log.Printf("- game watcher: watch channel closed for match ID: %s", matchId)
+				log.Printf("- game watcher: watch channel closed for game ID: %s", gameId)
 				return
 			}
-			sendMatchUpdate(update, writeChannel)
+			sendGameUpdate(update, writeChannel)
 			gameOver, err := hub.GetGameService().IsGameEnded(update)
 			if err != nil {
-				log.Printf("- game watcher: error checking if game is over for match ID: %s, error: %v", matchId, err)
+				log.Printf("- game watcher: error checking if game is over for game ID: %s, error: %v", gameId, err)
 				continue
 			}
 			if gameOver {
-				log.Printf("- game watcher: game over for match ID: %s, stopping watcher", matchId)
-				hub.GetStorageService().RemoveUserCurrentMatchId(ctx, playerId)
+				log.Printf("- game watcher: game over for game ID: %s, stopping watcher", gameId)
+				hub.GetStorageService().RemoveUserCurrentGameId(ctx, playerId)
 				cleanUpFunc()
 				cancelFunc()
 				return
 			}
 		}
 	}()
-	sendMatchUpdate(matchJSON, writeChannel)
+	sendGameUpdate(gameJSON, writeChannel)
 	return &cancelFunc
 }
 
-func sendMatchUpdate(update []byte, writeChannel chan json.RawMessage) {
-	message := MatchUpdateMessage{
-		Type:  "match_update",
-		Match: update,
+func sendGameUpdate(update []byte, writeChannel chan json.RawMessage) {
+	message := GameUpdateMessage{
+		Type: "game_update",
+		Game: update,
 	}
 	payload, _ := json.Marshal(message)
 	writeChannel <- payload

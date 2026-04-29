@@ -26,7 +26,20 @@ type PlayedCard struct {
 }
 
 type Game struct {
-	Players       []Player               `json:"Players"`
+	Players []Player     `json:"Players"`
+	Table   []PlayedCard `json:"Table"`
+	// TODO: add a field to track the passed card played in the previeous round.
+	MatchPoints   [NUMBER_OF_TEAMS]Point `json:"MatchPoints"`
+	TotalPoints   [NUMBER_OF_TEAMS]int   `json:"TotalPoints"`
+	FirstPlayer   string                 `json:"FirstPlayer"`
+	CurrentPlayer string                 `json:"CurrentPlayer"`
+	TrumpSuit     Suit                   `json:"TrumpSuit"`
+	WinnerTeam    *int                   `json:"WinnerTeam,omitempty"`
+	WinnerPlayers []string               `json:"WinnerPlayers,omitempty"`
+}
+
+type GameView struct {
+	Player        Player                 `json:"Player"`
 	Table         []PlayedCard           `json:"Table"`
 	MatchPoints   [NUMBER_OF_TEAMS]Point `json:"MatchPoints"`
 	TotalPoints   [NUMBER_OF_TEAMS]int   `json:"TotalPoints"`
@@ -37,14 +50,36 @@ type Game struct {
 	WinnerPlayers []string               `json:"WinnerPlayers,omitempty"`
 }
 
+func (game Game) ViewForPlayer(playerName string) (GameView, error) {
+	gameView := GameView{
+		Table:         game.Table,
+		MatchPoints:   game.MatchPoints,
+		TotalPoints:   game.TotalPoints,
+		FirstPlayer:   game.FirstPlayer,
+		CurrentPlayer: game.CurrentPlayer,
+		TrumpSuit:     game.TrumpSuit,
+		WinnerTeam:    game.WinnerTeam,
+		WinnerPlayers: game.WinnerPlayers,
+	}
+
+	for _, player := range game.Players {
+		if player.Name == playerName {
+			gameView.Player = player
+			return gameView, nil
+		}
+	}
+
+	return GameView{}, fmt.Errorf("player %q not found in game", playerName)
+}
+
 // TODO: check
-func (match Game) String() string {
+func (game Game) String() string {
 	var sb strings.Builder
-	for i, player := range match.Players {
+	for i, player := range game.Players {
 		sb.WriteString("Player " + string(rune(i+1)) + ": " + player.String() + "\n")
 	}
-	sb.WriteString("Table: " + fmt.Sprintf("%+v", match.Table) + "\n")
-	sb.WriteString("Trump Suit: " + match.TrumpSuit.String() + "\n")
+	sb.WriteString("Table: " + fmt.Sprintf("%+v", game.Table) + "\n")
+	sb.WriteString("Trump Suit: " + game.TrumpSuit.String() + "\n")
 	return sb.String()
 }
 

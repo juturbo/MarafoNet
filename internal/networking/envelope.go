@@ -20,7 +20,7 @@ const (
 	PlayCardType MessageType = "play_card"
 	// A message sent by the client to set the trump suit.
 	SetTrumpType MessageType = "set_trump"
-	// A message sent by the client when they want to start a new match.
+	// A message sent by the client when they want to start a new game.
 	PlayAgainType MessageType = "play_again"
 	// A message sent by the client when they want to leave the server.
 	QuitType MessageType = "quit"
@@ -43,14 +43,14 @@ type WSEnvelope struct {
 }
 
 type playCardPayLoad struct {
-	MatchID string     `json:"matchId"`
-	Rank    model.Rank `json:"rank"`
-	Suit    model.Suit `json:"suit"`
+	GameID string     `json:"gameId"`
+	Rank   model.Rank `json:"rank"`
+	Suit   model.Suit `json:"suit"`
 }
 
 type SetTrumpPayLoad struct {
-	MatchID string     `json:"matchId"`
-	Suit    model.Suit `json:"suit"`
+	GameID string     `json:"gameId"`
+	Suit   model.Suit `json:"suit"`
 }
 
 type ReplyMessageBuilder struct {

@@ -71,8 +71,8 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 }
 
 // Main TableScreen component
-export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgain }) {
-    const [gameState, setGameState] = useState(matchUpdate);
+export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName, onPlayAgain }) {
+    const [gameState, setGameState] = useState(gameUpdate);
     const [sortEnabled, setSortEnabled] = useState(false);
     const { ws, error, clearError } = useContext(WebSocketContext);
     
@@ -135,10 +135,10 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
     };
     
     useEffect(() => {
-        if (matchUpdate) {
-            setGameState(matchUpdate);
+        if (gameUpdate) {
+            setGameState(gameUpdate);
         }
-    }, [matchUpdate]);
+    }, [gameUpdate]);
     
     if (!gameState || !gameState.Players || gameState.Players.length === 0) {
         return <div className="table-screen">Waiting for game data...</div>;
@@ -258,9 +258,9 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
                 </div>
             </div>
             
-            {/* Match Result - if game is over */}
+            {/* Game Result - if game is over */}
             {gameState.WinnerTeam !== null && gameState.WinnerTeam !== undefined && (
-                <div className="match-result">
+                <div className="game-result">
                     <div className="result-text">Team {gameState.WinnerTeam} Wins!</div>
                     <div className="result-players">
                         {gameState.WinnerPlayers && gameState.WinnerPlayers.join(', ')}
@@ -279,7 +279,7 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
             {/* Trump Selector - shows for First player */}
             <TrumpSelector 
                 isFirstPlayer={gameState.FirstPlayer === bottom.Name && (!gameState.TrumpSuit || gameState.TrumpSuit === 'None')}
-                matchID={gameState.MatchID}
+                gameID={gameState.gameID}
             />
         </div>
     );

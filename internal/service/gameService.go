@@ -18,75 +18,84 @@ func NewGameService(etcdService *EtcdService) *GameService {
 	}
 }
 
-func (gameService *GameService) StartGame(ctx context.Context, playerNames []string) (matchId string, err error) {
-	matchId, err = gameService.etcdService.GetNextMatchID(ctx)
+func (gameService *GameService) StartGame(ctx context.Context, playerNames []string) (gameId string, err error) {
+	gameId, err = gameService.etcdService.GetNextGameID(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	match, err := gameLogic.StartGame(playerNames)
+	game, err := gameLogic.StartGame(playerNames)
 	if err != nil {
 		return "", err
 	}
 
-	matchJson, err := json.Marshal(match)
+	gameJson, err := json.Marshal(game)
 	if err != nil {
 		return "", err
 	}
 
-	if err := gameService.etcdService.PutNewGame(ctx, matchId, matchJson); err != nil {
+	if err := gameService.etcdService.PutNewGame(ctx, gameId, gameJson); err != nil {
 		return "", fmt.Errorf("failed to create new game in etcd: %w", err)
 	}
 
-	return matchId, nil
+	return gameId, nil
 }
 
-func (gameService *GameService) IsGameEnded(matchJson []byte) (bool, error) {
-	var match model.Game
-	if err := json.Unmarshal(matchJson, &match); err != nil {
+func (gameService *GameService) IsGameEnded(gameJson []byte) (bool, error) {
+	var game model.Game
+	if err := json.Unmarshal(gameJson, &game); err != nil {
 		return false, err
 	}
-	return gameLogic.IsGameEnded(match), nil
+	return gameLogic.IsGameEnded(game), nil
 }
 
-func (gameService *GameService) ForfeitMatch(ctx context.Context, matchId string, playerName string) error {
-	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
-		return gameLogic.ForfeitMatch(match, playerName)
+func (gameService *GameService) ForfeitGame(ctx context.Context, gameId string, playerName string) error {
+	return gameService.applyUpdate(ctx, gameId, func(game model.Game) (model.Game, error) {
+		return gameLogic.ForfeitGame(game, playerName)
 	})
 }
 
-func (gameService *GameService) SetTrumpSuit(ctx context.Context, matchId string, playerName string, suit model.Suit) error {
-	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
-		return gameLogic.SetTrumpSuit(match, playerName, suit)
+func (gameService *GameService) GetGameView(ctx context.Context, gameJson []byte, playerName string) (model.GameView, error) {
+	var game model.Game
+	if err := json.Unmarshal(gameJson, &game); err != nil {
+		return model.GameView{}, err
+	}
+
+	return game.ViewForPlayer(playerName)
+}
+
+func (gameService *GameService) SetTrumpSuit(ctx context.Context, gameId string, playerName string, suit model.Suit) error {
+	return gameService.applyUpdate(ctx, gameId, func(game model.Game) (model.Game, error) {
+		return gameLogic.SetTrumpSuit(game, playerName, suit)
 	})
 }
 
-func (gameService *GameService) PlayCard(ctx context.Context, matchId string, playerName string, card model.Card) error {
-	return gameService.applyUpdate(ctx, matchId, func(match model.Game) (model.Game, error) {
-		return gameLogic.PlayCard(match, playerName, card)
+func (gameService *GameService) PlayCard(ctx context.Context, gameId string, playerName string, card model.Card) error {
+	return gameService.applyUpdate(ctx, gameId, func(game model.Game) (model.Game, error) {
+		return gameLogic.PlayCard(game, playerName, card)
 	})
 }
 
-func (gameService *GameService) applyUpdate(ctx context.Context, matchId string, updater func(model.Game) (model.Game, error)) error {
-	matchJson, revision, err := gameService.etcdService.GetMatchJsonAndRevision(ctx, matchId)
+func (gameService *GameService) applyUpdate(ctx context.Context, gameId string, updater func(model.Game) (model.Game, error)) error {
+	gameJson, revision, err := gameService.etcdService.GetGameJsonAndRevision(ctx, gameId)
 	if err != nil {
 		return err
 	}
 
-	var match model.Game
-	if err := json.Unmarshal(matchJson, &match); err != nil {
+	var game model.Game
+	if err := json.Unmarshal(gameJson, &game); err != nil {
 		return err
 	}
 
-	updatedMatch, err := updater(match)
+	updatedGame, err := updater(game)
 	if err != nil {
 		return fmt.Errorf("invalid move: %w", err)
 	}
 
-	updatedMatchJson, err := json.Marshal(updatedMatch)
+	updatedGameJson, err := json.Marshal(updatedGame)
 	if err != nil {
 		return err
 	}
 
-	return gameService.etcdService.PutUpdatedGameJsonIfRevisionMatch(ctx, matchId, updatedMatchJson, revision)
+	return gameService.etcdService.PutUpdatedGameJsonIfRevisionMatch(ctx, gameId, updatedGameJson, revision)
 }

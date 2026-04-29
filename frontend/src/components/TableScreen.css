@@ -97,15 +97,15 @@
     padding: 20px;
 }
 
-/* Match Info */
-.match-info {
+/* Game Info */
+.game-info {
     display: flex;
     gap: 15px;
     font-size: 12px;
     font-weight: bold;
 }
 
-.match-info div {
+.game-info div {
     padding: 3px 10px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
@@ -291,8 +291,8 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Match Result Overlay */
-.match-result {
+/* Game Result Overlay */
+.game-result {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -395,7 +395,7 @@
         gap: 8px;
     }
     
-    .match-info {
+    .game-info {
         gap: 15px;
         font-size: 12px;
     }

@@ -13,15 +13,15 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-const MATCH_COUNTER_PATH = "global/match_counter"
-const MATCH_PREFIX = "match/%d"
-const MATCH_TIMEOUT_PREFIX = "match_timeout/"
-const MATCH_TIMEOUT_PATH = MATCH_TIMEOUT_PREFIX + "%s/%s" // match_timeout/{matchId}/{playerName}
+const GAME_COUNTER_PATH = "global/game_counter"
+const GAME_PREFIX = "game/%d"
+const GAME_TIMEOUT_PREFIX = "game_timeout/"
+const GAME_TIMEOUT_PATH = GAME_TIMEOUT_PREFIX + "%s/%s" // game_timeout/{gameId}/{playerName}
 const USER_QUEUE_PATH = "user_queue/"
 const USERS_NAME_PATH = "users/%s"
 const USERS_PASSWORD_PATH = "users/%s/password"
 const USERS_IS_CONNECTED_PATH = "users/%s/is_connected"
-const USERS_CURRENT_MATCH_PATH = "users/%s/current_match"
+const USERS_CURRENT_GAME_PATH = "users/%s/current_game"
 const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
@@ -32,9 +32,9 @@ type EtcdService struct {
 	uuid   uuid.UUID
 }
 
-// MatchTimeoutEvent is emitted by the watcher when a user's match timeout lease expires.
-type MatchTimeoutEvent struct {
-	MatchID  string
+// GameTimeoutEvent is emitted by the watcher when a user's game timeout lease expires.
+type GameTimeoutEvent struct {
+	GameID   string
 	Username string
 }
 
@@ -55,8 +55,8 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 	}, nil
 }
 
-func (etcdService *EtcdService) GetNextMatchID(ctx context.Context) (matchId string, err error) {
-	key := MATCH_COUNTER_PATH
+func (etcdService *EtcdService) GetNextGameID(ctx context.Context) (gameId string, err error) {
+	key := GAME_COUNTER_PATH
 
 	for {
 		current, revision, err := etcdService.fetchCurrentAndRevision(ctx, key)
@@ -70,16 +70,16 @@ func (etcdService *EtcdService) GetNextMatchID(ctx context.Context) (matchId str
 			return "", err
 		}
 		if succeeded {
-			return fmt.Sprintf(MATCH_PREFIX, next), nil
+			return fmt.Sprintf(GAME_PREFIX, next), nil
 		}
 	}
 }
 
-func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matchJson []byte) error {
+func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, gameJson []byte) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
 		key,
-		string(matchJson),
+		string(gameJson),
 		clientv3.Compare(clientv3.CreateRevision(key), "=", 0),
 	)
 	if err != nil {
@@ -91,7 +91,7 @@ func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, matc
 	return nil
 }
 
-func (etcdService *EtcdService) GetMatchJsonAndRevision(ctx context.Context, key string) (matchJson json.RawMessage, revision int64, err error) {
+func (etcdService *EtcdService) GetGameJsonAndRevision(ctx context.Context, key string) (gameJson json.RawMessage, revision int64, err error) {
 	value, revision, err := etcdService.getKeyValue(ctx, key)
 	if err != nil {
 		return nil, 0, err
@@ -104,18 +104,18 @@ func (etcdService *EtcdService) GetMatchJsonAndRevision(ctx context.Context, key
 	return json.RawMessage(value), revision, nil
 }
 
-func (etcdService *EtcdService) PutUpdatedGameJsonIfRevisionMatch(ctx context.Context, matchId string, matchJson json.RawMessage, lastRevision int64) error {
+func (etcdService *EtcdService) PutUpdatedGameJsonIfRevisionMatch(ctx context.Context, gameId string, gameJson json.RawMessage, lastRevision int64) error {
 	succeeded, err := etcdService.putIfComparison(
 		ctx,
-		matchId,
-		string(matchJson),
-		clientv3.Compare(clientv3.ModRevision(matchId), "=", lastRevision),
+		gameId,
+		string(gameJson),
+		clientv3.Compare(clientv3.ModRevision(gameId), "=", lastRevision),
 	)
 	if err != nil {
 		return err
 	}
 	if !succeeded {
-		return fmt.Errorf("failed to update match: revision mismatch")
+		return fmt.Errorf("failed to update game: revision mismatch")
 	}
 	return nil
 }
@@ -153,18 +153,18 @@ func (etcdService *EtcdService) RemoveUserFromQueue(ctx context.Context, playerN
 	return etcdService.deleteKey(ctx, key)
 }
 
-func (etcdService *EtcdService) SetUserCurrentMatchId(ctx context.Context, playerName string, matchId string) error {
-	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
-	return etcdService.putValue(ctx, key, matchId)
+func (etcdService *EtcdService) SetUserCurrentGameId(ctx context.Context, playerName string, gameId string) error {
+	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
+	return etcdService.putValue(ctx, key, gameId)
 }
 
-func (etcdService *EtcdService) GetUserCurrentMatchId(ctx context.Context, playerName string) (string, error) {
-	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
+func (etcdService *EtcdService) GetUserCurrentGameId(ctx context.Context, playerName string) (string, error) {
+	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
 	return etcdService.getValue(ctx, key)
 }
 
-func (etcdService *EtcdService) RemoveUserCurrentMatchId(ctx context.Context, playerName string) error {
-	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, playerName)
+func (etcdService *EtcdService) RemoveUserCurrentGameId(ctx context.Context, playerName string) error {
+	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
 	return etcdService.deleteKey(ctx, key)
 }
 
@@ -212,7 +212,7 @@ func (etcdService *EtcdService) LoginUser(ctx context.Context, user model.User) 
 		return err
 	}
 
-	if etcdService.isUserInAMatch(ctx, user.Name) {
+	if etcdService.isUserInAGame(ctx, user.Name) {
 		return etcdService.removeUserTimeout(ctx, user.Name)
 	}
 
@@ -225,8 +225,8 @@ func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, playerName
 		return err
 	}
 
-	if etcdService.isUserInAMatch(ctx, playerName) {
-		err := etcdService.setUserMatchTimeout(ctx, playerName)
+	if etcdService.isUserInAGame(ctx, playerName) {
+		err := etcdService.setUserGameTimeout(ctx, playerName)
 		if err != nil {
 			return err
 		}
@@ -235,12 +235,12 @@ func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, playerName
 	return err
 }
 
-func (etcdService *EtcdService) WatchGame(ctx context.Context, matchId string) (<-chan []byte, context.CancelFunc) {
-	return etcdService.watchKey(ctx, matchId)
+func (etcdService *EtcdService) WatchGame(ctx context.Context, gameId string) (<-chan []byte, context.CancelFunc) {
+	return etcdService.watchKey(ctx, gameId)
 }
 
 func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username string) (<-chan []byte, context.CancelFunc) {
-	key := fmt.Sprintf(USERS_CURRENT_MATCH_PATH, username)
+	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, username)
 	return etcdService.watchKey(ctx, key)
 }
 
@@ -268,10 +268,10 @@ func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []st
 	return channel, cancel
 }
 
-func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-chan MatchTimeoutEvent, context.CancelFunc) {
-	channel := make(chan MatchTimeoutEvent)
+func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-chan GameTimeoutEvent, context.CancelFunc) {
+	channel := make(chan GameTimeoutEvent)
 	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, MATCH_TIMEOUT_PREFIX, clientv3.WithPrefix())
+	watchChannel := etcdService.client.Watch(watchCtx, GAME_TIMEOUT_PREFIX, clientv3.WithPrefix())
 	go func() {
 		defer close(channel)
 		for watchResponse := range watchChannel {
@@ -284,19 +284,19 @@ func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-ch
 						continue
 					}
 					timeoutKey := string(event.Kv.Key)
-					if !strings.HasPrefix(timeoutKey, MATCH_TIMEOUT_PREFIX) {
+					if !strings.HasPrefix(timeoutKey, GAME_TIMEOUT_PREFIX) {
 						continue
 					}
-					trimmed := strings.TrimPrefix(timeoutKey, MATCH_TIMEOUT_PREFIX) // "{matchId}/{username}"
+					trimmed := strings.TrimPrefix(timeoutKey, GAME_TIMEOUT_PREFIX) // "{gameId}/{username}"
 					last := strings.LastIndex(trimmed, "/")
 					if last <= 0 {
 						continue
 					}
-					matchId := trimmed[:last]
+					gameId := trimmed[:last]
 					username := trimmed[last+1:]
 					isOnline, err := etcdService.isUserConnected(ctx, username)
 					if err == nil && !isOnline { // If lease expired and user is still offline, notify timeout
-						channel <- MatchTimeoutEvent{MatchID: matchId, Username: username}
+						channel <- GameTimeoutEvent{GameID: gameId, Username: username}
 					}
 				}
 			}
@@ -449,10 +449,10 @@ func (etcdService *EtcdService) setUserOfflineStatus(ctx context.Context, player
 	return etcdService.updateUserConnectionStatus(ctx, playerName, IS_ONLINE, IS_OFFLINE)
 }
 
-func (etcdService *EtcdService) setUserMatchTimeout(ctx context.Context, playerName string) error {
-	matchId, err := etcdService.GetUserCurrentMatchId(ctx, playerName)
+func (etcdService *EtcdService) setUserGameTimeout(ctx context.Context, playerName string) error {
+	gameId, err := etcdService.GetUserCurrentGameId(ctx, playerName)
 	if err != nil {
-		return fmt.Errorf("failed to get user's current match ID: %w", err)
+		return fmt.Errorf("failed to get user's current game ID: %w", err)
 	}
 
 	lease, err := etcdService.client.Grant(ctx, KEEP_ALIVE_TTL)
@@ -460,25 +460,25 @@ func (etcdService *EtcdService) setUserMatchTimeout(ctx context.Context, playerN
 		return err
 	}
 
-	matchTimeoutKey := fmt.Sprintf(MATCH_TIMEOUT_PATH, matchId, playerName)
-	_, err = etcdService.client.Put(ctx, matchTimeoutKey, TIMEOUT, clientv3.WithLease(lease.ID))
+	gameTimeoutKey := fmt.Sprintf(GAME_TIMEOUT_PATH, gameId, playerName)
+	_, err = etcdService.client.Put(ctx, gameTimeoutKey, TIMEOUT, clientv3.WithLease(lease.ID))
 	return nil
 }
 
 func (etcdService *EtcdService) removeUserTimeout(ctx context.Context, playerName string) error {
-	matchId, err := etcdService.GetUserCurrentMatchId(ctx, playerName)
+	gameId, err := etcdService.GetUserCurrentGameId(ctx, playerName)
 	if err != nil {
-		return fmt.Errorf("failed to get user's current match ID: %w", err)
+		return fmt.Errorf("failed to get user's current game ID: %w", err)
 	}
 
-	matchTimeoutKey := fmt.Sprintf(MATCH_TIMEOUT_PATH, matchId, playerName)
+	gameTimeoutKey := fmt.Sprintf(GAME_TIMEOUT_PATH, gameId, playerName)
 
-	return etcdService.deleteKey(ctx, matchTimeoutKey)
+	return etcdService.deleteKey(ctx, gameTimeoutKey)
 }
 
-func (etcdService *EtcdService) isUserInAMatch(ctx context.Context, playerName string) bool {
-	matchId, err := etcdService.GetUserCurrentMatchId(ctx, playerName)
-	return matchId != "" && err == nil
+func (etcdService *EtcdService) isUserInAGame(ctx context.Context, playerName string) bool {
+	gameId, err := etcdService.GetUserCurrentGameId(ctx, playerName)
+	return gameId != "" && err == nil
 }
 
 func (etcdService *EtcdService) isUserConnected(ctx context.Context, playerName string) (bool, error) {
