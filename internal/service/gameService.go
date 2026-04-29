@@ -55,13 +55,20 @@ func (gameService *GameService) ForfeitGame(ctx context.Context, gameId string, 
 	})
 }
 
-func (gameService *GameService) GetGameView(ctx context.Context, gameJson []byte, playerName string) (model.GameView, error) {
+func (gameService *GameService) GetGameView(ctx context.Context, gameJson []byte, playerName string) (gameViewJson []byte, err error) {
 	var game model.Game
-	if err := json.Unmarshal(gameJson, &game); err != nil {
-		return model.GameView{}, err
+	if err = json.Unmarshal(gameJson, &game); err != nil {
+		return nil, err
 	}
-
-	return game.ViewForPlayer(playerName)
+	gameView, err := game.ViewForPlayer(playerName)
+	if err != nil {
+		return nil, err
+	}
+	gameViewJson, err = json.Marshal(gameView)
+	if err != nil {
+		return nil, err
+	}
+	return gameViewJson, nil
 }
 
 func (gameService *GameService) SetTrumpSuit(ctx context.Context, gameId string, playerName string, suit model.Suit) error {

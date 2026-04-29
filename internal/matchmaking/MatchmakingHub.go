@@ -125,13 +125,18 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, pl
 	go func() {
 		log.Printf("- game watcher: setting game watcher for game ID: %s", gameId)
 		for {
-			update, ok := <-watchChannel
+			gameUpdateJson, ok := <-watchChannel
 			if !ok {
 				log.Printf("- game watcher: watch channel closed for game ID: %s", gameId)
 				return
 			}
-			sendGameUpdate(update, writeChannel)
-			gameOver, err := hub.GetGameService().IsGameEnded(update)
+			gameViewJson, err := hub.gameService.GetGameView(ctx, gameUpdateJson, playerId)
+			if err != nil {
+				log.Printf("- game watcher: error getting game view for player %s in game %s: %v", playerId, gameId, err)
+				continue
+			}
+			sendGameView(gameViewJson, writeChannel)
+			gameOver, err := hub.GetGameService().IsGameEnded(gameUpdateJson)
 			if err != nil {
 				log.Printf("- game watcher: error checking if game is over for game ID: %s, error: %v", gameId, err)
 				continue
@@ -145,14 +150,14 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, pl
 			}
 		}
 	}()
-	sendGameUpdate(gameJSON, writeChannel)
+	sendGameView(gameJSON, writeChannel)
 	return &cancelFunc
 }
 
-func sendGameUpdate(update []byte, writeChannel chan json.RawMessage) {
+func sendGameView(gameViewJson []byte, writeChannel chan json.RawMessage) {
 	message := GameUpdateMessage{
 		Type: "game_update",
-		Game: update,
+		Game: gameViewJson,
 	}
 	payload, _ := json.Marshal(message)
 	writeChannel <- payload
