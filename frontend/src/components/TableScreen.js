@@ -247,8 +247,8 @@ export default function TableScreen({ matchUpdate, currentPlayerName, onPlayAgai
                         </button>
                     </div>
                     <div className="player-hand">
-                        {bottom.Hand && bottom.Hand.length > 0 ? (
-                            (sortEnabled ? [...bottom.Hand].sort((a, b) => a.Suit - b.Suit || b.Rank - a.Rank) : bottom.Hand).map((card, index) => (
+                        {gameState.Hand && gameState.Hand.length > 0 ? (
+                            (sortEnabled ? [...gameState.Hand].sort((a, b) => a.Suit - b.Suit || b.Rank - a.Rank) : gameState.Hand).map((card, index) => (
                                 <Card key={index} card={card} onClick={handleCardClick} />
                             ))
                         ) : (
