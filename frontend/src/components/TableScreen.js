@@ -74,6 +74,7 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName, onPlayAgain }) {
     const [gameState, setGameState] = useState(gameUpdate);
     const [sortEnabled, setSortEnabled] = useState(false);
+    const [showLastTrick, setShowLastTrick] = useState(true);
     const { ws, error, clearError } = useContext(WebSocketContext);
     
     // Map suit numbers to suit names
@@ -189,7 +190,32 @@ export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName,
                 )}
             </div>
             
-            <div className="position-empty"></div>
+            {/* Last Trick - Toggle Button and Display */}
+            <div className="position-empty last-trick-slot">
+                <div className="last-trick-header">
+                    <button 
+                        className="last-trick-button"
+                        onClick={() => setShowLastTrick(!showLastTrick)}
+                        title="Toggle last trick details"
+                        aria-expanded={showLastTrick}
+                    >
+                        {showLastTrick ? '▼ Nascondi presa' : '▶ Mostra presa'}
+                    </button>
+                </div>
+                {showLastTrick && gameState.LastTrick && gameState.LastTrick.length > 0 && (
+                    <div className="last-trick-container">
+                        <div className="last-trick-title">Ultima Presa</div>
+                        <div className="last-trick-cards">
+                            {gameState.LastTrick.map((playedCard, index) => (
+                                <div key={index} className="table-card-slot last-trick-card-slot">
+                                    <div className="table-card-player">{playedCard.PlayerName}</div>
+                                    <Card card={playedCard.Card} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
             
             {/* Row 2: Left Player, Table Center, Right Player */}
             {/* Left Player - Opponent */}

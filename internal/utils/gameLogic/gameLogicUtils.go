@@ -70,6 +70,7 @@ func PlayCard(game model.Game, playerName string, card model.Card) (model.Game, 
 	game.Players = removeCardFromPlayerHand(game.Players, playerName, card)
 	game.CurrentPlayer = getNextCurrentPlayerName(game)
 	if isTableFull(game) {
+		game.LastTrick = nil
 		game.LastTrick = append(game.LastTrick, game.Table...)
 		game = calculateTrickWinnerAndUpdate(game)
 	}
