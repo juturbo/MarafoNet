@@ -70,6 +70,7 @@ func PlayCard(game model.Game, playerName string, card model.Card) (model.Game, 
 	game.Players = removeCardFromPlayerHand(game.Players, playerName, card)
 	game.CurrentPlayer = getNextCurrentPlayerName(game)
 	if isTableFull(game) {
+		game.LastTrick = append(game.LastTrick, game.Table...)
 		game = calculateTrickWinnerAndUpdate(game)
 	}
 	if isMatchOver(game) {
@@ -396,6 +397,7 @@ func calculateMatchPointsAndReset(game model.Game) model.Game {
 		game.Players[i].Hand = nil
 	}
 	game.Table = nil
+	game.LastTrick = nil
 	game.FirstPlayer = getNextFirstPlayerName(game)
 	game.CurrentPlayer = game.FirstPlayer
 	game.TrumpSuit = 0
