@@ -27,7 +27,7 @@ const localFilePath string = "./frontend/build"
 
 const webSocketPath = "/ws"
 
-var etcdEndpoint = []string{"localhost:2379"}
+var etcdEndpoint = []string{"local-etcd-service:2379"}
 
 func main() {
 	printHeader()
