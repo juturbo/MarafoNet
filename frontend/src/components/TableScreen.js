@@ -122,11 +122,11 @@ export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName,
         }
         
         const message = {
-            type: 'first_join'
+            type: 'play_again'
         };
         
         ws.send(JSON.stringify(message));
-        console.log('Sent first_join message to return to lobby');
+        console.log('Sent play_again message to return to lobby');
         
         // Navigate back to lobby screen
         if (onPlayAgain) {
@@ -247,8 +247,8 @@ export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName,
                         </button>
                     </div>
                     <div className="player-hand">
-                        {bottom.Hand && bottom.Hand.length > 0 ? (
-                            (sortEnabled ? [...bottom.Hand].sort((a, b) => a.Suit - b.Suit || b.Rank - a.Rank) : bottom.Hand).map((card, index) => (
+                        {gameState.Hand && gameState.Hand.length > 0 ? (
+                            (sortEnabled ? [...gameState.Hand].sort((a, b) => a.Suit - b.Suit || b.Rank - a.Rank) : gameState.Hand).map((card, index) => (
                                 <Card key={index} card={card} onClick={handleCardClick} />
                             ))
                         ) : (
