@@ -35,7 +35,7 @@ func CreateWebSocketHub(
 ) *WebSocketHub {
 	var hub WebSocketHub
 	hub.Connection = Conn
-	hub.WriteChannel = make(chan json.RawMessage)
+	hub.WriteChannel = make(chan json.RawMessage, 10)
 	hub.GameService = GameService
 	hub.StorageService = StorageService
 	hub.MatchmakingService = MatchmakingService
@@ -98,6 +98,7 @@ func (hub *WebSocketHub) Cleanup() {
 
 // Closes the connection and everything related to it: watchers, channels, etc...
 func closeConnection(hub *WebSocketHub) {
+	close(hub.WriteChannel)
 	hub.Connection.Close()
 	hub.CancelWatcher()
 	hub.StorageService.RemoveUserFromQueue(context.Background(), hub.playerName)
