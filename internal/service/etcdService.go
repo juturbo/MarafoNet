@@ -40,15 +40,16 @@ type GameTimeoutEvent struct {
 
 func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService, error) {
 	cfg := clientv3.Config{
-		Endpoints:   endpoints,
-		DialTimeout: dialTimeout,
+		Endpoints:            endpoints,
+		DialTimeout:          dialTimeout,
+		DialKeepAliveTime:    5 * time.Second,
+		DialKeepAliveTimeout: 3 * time.Hour,
 	}
 
 	client, err := clientv3.New(cfg)
 	if err != nil {
 		return nil, err
 	}
-
 	return &EtcdService{
 		client: client,
 		uuid:   uuid.New(),
