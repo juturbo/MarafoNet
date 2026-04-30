@@ -169,6 +169,9 @@ func (etcdService *EtcdService) RemoveUserCurrentGameId(ctx context.Context, pla
 }
 
 func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.User) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	userKey := fmt.Sprintf(USERS_NAME_PATH, user.Name)
 	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
 	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)

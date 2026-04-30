@@ -122,6 +122,10 @@ func (hub *MatchmakingHub) StopTimeoutWatcher() {
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
 	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, gameId)
 	gameJSON, _, _ := hub.GetStorageService().GetGameJsonAndRevision(ctx, gameId)
+	gameViewJson, err := hub.gameService.GetGameView(gameJSON, playerId)
+	if err != nil {
+		log.Printf("- game watcher: error getting game view for player %s in game %s: %v", playerId, gameId, err)
+	}
 	go func() {
 		log.Printf("- game watcher: setting game watcher for game ID: %s", gameId)
 		for {
@@ -130,7 +134,7 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, pl
 				log.Printf("- game watcher: watch channel closed for game ID: %s", gameId)
 				return
 			}
-			gameViewJson, err := hub.gameService.GetGameView(ctx, gameUpdateJson, playerId)
+			gameViewJson, err := hub.gameService.GetGameView(gameUpdateJson, playerId)
 			if err != nil {
 				log.Printf("- game watcher: error getting game view for player %s in game %s: %v", playerId, gameId, err)
 				continue
@@ -150,7 +154,7 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, pl
 			}
 		}
 	}()
-	sendGameView(gameJSON, writeChannel)
+	sendGameView(gameViewJson, writeChannel)
 	return &cancelFunc
 }
 

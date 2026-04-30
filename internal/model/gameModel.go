@@ -20,6 +20,11 @@ type Player struct {
 	Hand   Hand   `json:"Hand"`
 }
 
+type PlayerView struct {
+	TeamId int    `json:"TeamId"`
+	Name   string `json:"Name"`
+}
+
 type PlayedCard struct {
 	PlayerName string `json:"PlayerName"`
 	Card       Card   `json:"Card"`
@@ -39,7 +44,8 @@ type Game struct {
 }
 
 type GameView struct {
-	Player        Player                 `json:"Player"`
+	Players       []PlayerView           `json:"Players"`
+	PlayerHand    Hand                   `json:"Hand"`
 	Table         []PlayedCard           `json:"Table"`
 	MatchPoints   [NUMBER_OF_TEAMS]Point `json:"MatchPoints"`
 	TotalPoints   [NUMBER_OF_TEAMS]int   `json:"TotalPoints"`
@@ -62,14 +68,21 @@ func (game Game) ViewForPlayer(playerName string) (GameView, error) {
 		WinnerPlayers: game.WinnerPlayers,
 	}
 
+	playerFound := false
 	for _, player := range game.Players {
+		gameView.Players = append(gameView.Players, PlayerView{
+			TeamId: player.TeamId,
+			Name:   player.Name,
+		})
 		if player.Name == playerName {
-			gameView.Player = player
-			return gameView, nil
+			gameView.PlayerHand = player.Hand
+			playerFound = true
 		}
 	}
-
-	return GameView{}, fmt.Errorf("player %q not found in game", playerName)
+	if !playerFound {
+		return GameView{}, fmt.Errorf("player %q not found in game", playerName)
+	}
+	return gameView, nil
 }
 
 // TODO: check

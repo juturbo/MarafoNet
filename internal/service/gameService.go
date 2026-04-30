@@ -55,7 +55,7 @@ func (gameService *GameService) ForfeitGame(ctx context.Context, gameId string, 
 	})
 }
 
-func (gameService *GameService) GetGameView(ctx context.Context, gameJson []byte, playerName string) (gameViewJson []byte, err error) {
+func (gameService *GameService) GetGameView(gameJson []byte, playerName string) (gameViewJson []byte, err error) {
 	var game model.Game
 	if err = json.Unmarshal(gameJson, &game); err != nil {
 		return nil, err
