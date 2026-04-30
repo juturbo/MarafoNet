@@ -18,43 +18,55 @@ var once sync.Once
 // Calls goroutines to serve read and write channels for one WebSocket connection.
 func ServeWS(
 	Conn *websocket.Conn,
+	GracefulShutdownContext context.Context,
 	GameService *service.GameService,
 	StorageService *service.EtcdService,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) {
 	hub := websockethub.CreateWebSocketHub(Conn, GameService, StorageService, MatchmakingService)
 	log.Printf("New WebSocket connection established with client %s", hub.Connection.RemoteAddr())
-	go ServeWrite(hub)
-	go ServeRead(hub)
+	go ServeWrite(hub, GracefulShutdownContext)
+	go ServeRead(hub, GracefulShutdownContext)
 
 }
 
-func ServeWrite(hub *websockethub.WebSocketHub) {
+func ServeWrite(hub *websockethub.WebSocketHub, GracefulShutdownContext context.Context) {
 	defer hub.Cleanup()
 
-	for message := range hub.WriteChannel {
-		err := hub.Connection.WriteJSON(message)
-		if err != nil {
+	for {
+		select {
+		case <-GracefulShutdownContext.Done():
+			log.Printf("graceful shutdown signal received, closing write channel for client %s", hub.Connection.RemoteAddr())
 			return
+		case message := <-hub.WriteChannel:
+			err := hub.Connection.WriteJSON(message)
+			if err != nil {
+				return
+			}
 		}
 	}
 }
 
-func ServeRead(hub *websockethub.WebSocketHub) {
+func ServeRead(hub *websockethub.WebSocketHub, GracefulShutdownContext context.Context) {
 	defer hub.Cleanup()
 
 	for {
-		var envelope WSEnvelope
-		err := hub.Connection.ReadJSON(&envelope)
-		if err != nil {
-			log.Printf("error reading message from client %s: %v. Closing connection", hub.Connection.RemoteAddr(), err.Error())
-			close(hub.WriteChannel)
-			hub.Cleanup()
-			break
-		}
-		var response, payload = HandleWSEnvelope(envelope, hub)
-		if response {
-			hub.WriteChannel <- payload
+		select {
+		case <-GracefulShutdownContext.Done():
+			log.Printf("graceful shutdown signal received, closing read channel for client %s", hub.Connection.RemoteAddr())
+			return
+		default:
+			var envelope WSEnvelope
+			err := hub.Connection.ReadJSON(&envelope)
+			if err != nil {
+				log.Printf("error reading message from client %s: %v. Closing connection", hub.Connection.RemoteAddr(), err.Error())
+				hub.Cleanup()
+				return
+			}
+			var response, payload = HandleWSEnvelope(envelope, hub)
+			if response {
+				hub.WriteChannel <- payload
+			}
 		}
 	}
 }
