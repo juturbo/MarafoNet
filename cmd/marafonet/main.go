@@ -4,8 +4,12 @@ import (
 	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/networking"
 	"MarafoNet/internal/service"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/contrib/static"
@@ -33,7 +37,7 @@ var etcdEndpoint = []string{"local-etcd-service:2379"}
 
 func main() {
 	printHeader()
-	etcdService, err := service.NewEtcdService(etcdEndpoint, time.Second)
+	etcdService, err := service.NewEtcdService(etcdEndpoint, 5*time.Second)
 	if err != nil {
 		log.Fatalf("failed to connect to etcd: %v", err)
 	}
@@ -67,19 +71,33 @@ func main() {
 		}
 	})
 
+	gracefulShutdownContext, gracefulShutdown := context.WithCancel(context.Background())
+
 	router.GET(webSocketPath, func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.String(400, "websocket upgrade failed")
 			return
 		}
-		networking.ServeWS(conn, gameService, etcdService, matchMakingService)
+		networking.ServeWS(conn, gracefulShutdownContext, gameService, etcdService, matchMakingService)
 	})
 
-	log.Printf("starting server on port 5000")
-	if err := router.Run(":5000"); err != nil {
-		log.Fatalf("server failed: %v", err)
-	}
+	log.Printf("Setting up signal handlers for graceful shutdown...")
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("starting server on port 5000")
+		if err := router.Run(":5000"); err != nil && err.Error() != "http: Server closed" {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
+
+	<-signalChan
+	log.Printf("shutdown signal received, closing connections...")
+	gracefulShutdown()
+	time.Sleep(500 * time.Millisecond)
+	log.Printf("server gracefully stopped")
 }
 
 func printHeader() {

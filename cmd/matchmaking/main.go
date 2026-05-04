@@ -31,7 +31,7 @@ var etcdEndpoint = []string{"local-etcd-service:2379"}
 
 func main() {
 	printHeader()
-	etcdService, err := service.NewEtcdService(etcdEndpoint, time.Second)
+	etcdService, err := service.NewEtcdService(etcdEndpoint, 5*time.Second)
 	if err != nil {
 		log.Fatalf("failed to connect to etcd: %v", err)
 	}
