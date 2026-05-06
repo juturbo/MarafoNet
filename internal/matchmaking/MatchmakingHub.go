@@ -53,18 +53,18 @@ func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
 	usersQueue, err := hub.GetStorageService().GetUserQueue(context.Background())
 	if err != nil {
-		log.Printf("- matchmaking: Error getting initial user queue: %v", err)
+		log.Printf("- [matchmaking]: Error getting initial user queue: %v", err)
 		return
 	}
 	hub.checkQueueAndStartGame(usersQueue)
 	go func() {
 		for users := range queueChannel {
-			log.Printf("- matchmaking: Currently %d users in queue", len(users))
+			log.Printf("- [matchmaking]: Currently %d users in queue", len(users))
 			select {
 			case <-hub.ctx.Done():
 				cancelQueueWatcher()
 				wg.Done()
-				log.Printf("- matchmaking: Stopping matchmaking service")
+				log.Printf("- [matchmaking]: Stopping matchmaking service")
 				return
 			default:
 				hub.checkQueueAndStartGame(users)
@@ -75,17 +75,17 @@ func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 
 func (hub *MatchmakingHub) checkQueueAndStartGame(users []string) {
 	if len(users) >= 4 {
-		log.Printf("- matchmaking: Found 4 players in queue, starting a game with players: %v", users[:4])
+		log.Printf("- [matchmaking]: Found 4 players in queue, starting a game with players: %v", users[:4])
 		gameID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
 		for _, user := range users[:4] {
 			hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
 			hub.GetStorageService().SetUserCurrentGameId(context.Background(), user, gameID)
 		}
 		usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
-		log.Printf("- matchmaking: Current users in queue after matchmaking: %v", usersStillInQueue)
+		log.Printf("- [matchmaking]: Current users in queue after matchmaking: %v", usersStillInQueue)
 		for _, user := range users[:4] {
 			gameID, _ := hub.GetStorageService().GetUserCurrentGameId(context.Background(), user)
-			log.Printf("- matchmaking: user %s joined game %s", user, gameID)
+			log.Printf("- [matchmaking]: user %s joined game %s", user, gameID)
 		}
 	}
 }
@@ -98,26 +98,30 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
 	timeoutWatcher, cancelTimeoutWatcher := hub.GetStorageService().WatchUserTimeoutLease(context.Background())
 	go func() {
-		log.Printf("- timeout watcher: started watching timeout lease")
+		log.Printf("- [timeout watcher]: started watching timeout lease")
 		for {
 			select {
 			case <-hub.ctx.Done():
 				cancelTimeoutWatcher()
 				wg.Done()
-				log.Printf("- timeout watcher: Stopping timeout watcher service")
+				log.Printf("- [timeout watcher]: Stopping timeout watcher service")
 				return
 			default:
 				timeoutEvent, ok := <-timeoutWatcher
 				if !ok {
-					log.Printf("- timeout watcher: timeout channel closed")
+					log.Printf("- [timeout watcher]: timeout channel closed")
 					return
 				}
-				log.Printf("- timeout watcher: received timeout event for user %s in game %s", timeoutEvent.Username, timeoutEvent.GameID)
+				log.Printf("- [timeout watcher]: received timeout event for user %s in game %s", timeoutEvent.Username, timeoutEvent.GameID)
 				err := hub.GetGameService().ForfeitGame(context.Background(), timeoutEvent.GameID, timeoutEvent.Username)
 				if err != nil {
-					log.Printf("- timeout watcher: error forfeiting game %s for user %s: %v", timeoutEvent.GameID, timeoutEvent.Username, err)
+					log.Printf("- [timeout watcher]: error forfeiting game %s for user %s: %v", timeoutEvent.GameID, timeoutEvent.Username, err)
 				} else {
-					log.Printf("- timeout watcher: successfully forfeited game %s for user %s", timeoutEvent.GameID, timeoutEvent.Username)
+					log.Printf("- [timeout watcher]: successfully forfeited game %s for user %s", timeoutEvent.GameID, timeoutEvent.Username)
+				}
+				err = hub.GetStorageService().RemoveUserCurrentGameId(context.Background(), timeoutEvent.Username)
+				if err != nil {
+					log.Printf("- [timeout watcher]: error removing current game ID for user %s: %v", timeoutEvent.Username, err)
 				}
 			}
 		}
