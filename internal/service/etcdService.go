@@ -26,6 +26,9 @@ const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
 const KEEP_ALIVE_TTL = 120
+const GAME_ID_MAX_RETRIES = 5
+const GAME_ID_INITIAL_BACKOFF = 25 * time.Millisecond
+const GAME_ID_MAX_BACKOFF = 500 * time.Millisecond
 
 type EtcdService struct {
 	client *clientv3.Client
@@ -58,8 +61,7 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 
 func (etcdService *EtcdService) GetNextGameID(ctx context.Context) (gameId string, err error) {
 	key := GAME_COUNTER_PATH
-
-	for {
+	allocateNextID := func() (string, error) {
 		current, revision, err := etcdService.fetchCurrentAndRevision(ctx, key)
 		if err != nil {
 			return "", err
@@ -70,10 +72,54 @@ func (etcdService *EtcdService) GetNextGameID(ctx context.Context) (gameId strin
 		if err != nil {
 			return "", err
 		}
-		if succeeded {
-			return fmt.Sprintf(GAME_PREFIX, next), nil
+		if !succeeded {
+			return "", nil
+		}
+
+		return fmt.Sprintf(GAME_PREFIX, next), nil
+	}
+
+	return etcdService.retryWithExponentialBackoff(ctx, GAME_ID_MAX_RETRIES, GAME_ID_INITIAL_BACKOFF, GAME_ID_MAX_BACKOFF, allocateNextID)
+}
+
+func (etcdService *EtcdService) retryWithExponentialBackoff(
+	ctx context.Context,
+	maxRetries int,
+	initialBackoff time.Duration,
+	maxBackoff time.Duration,
+	operation func() (string, error),
+) (string, error) {
+	backoff := initialBackoff
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		result, err := operation()
+		if err != nil {
+			return "", err
+		}
+		if result != "" {
+			return result, nil
+		}
+
+		if attempt == maxRetries-1 {
+			break
+		}
+
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return "", ctx.Err()
+		case <-timer.C:
+		}
+
+		backoff *= 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
 		}
 	}
+
+	return "", fmt.Errorf("failed to allocate next game id after %d retries", maxRetries)
 }
 
 func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, gameJson []byte) error {
