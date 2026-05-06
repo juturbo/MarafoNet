@@ -59,7 +59,7 @@ func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 	hub.checkQueueAndStartGame(usersQueue)
 	go func() {
 		for users := range queueChannel {
-			log.Printf("- matchmaking: Current users in queue: %v", users)
+			log.Printf("- matchmaking: Currently %d users in queue", len(users))
 			select {
 			case <-hub.ctx.Done():
 				cancelQueueWatcher()
