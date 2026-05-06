@@ -3,7 +3,7 @@ all: react dockerize run
 # Development targets
 
 dev:
-	cd frontend && npm start
+	npm --prefix frontend start
 
 straight:
 	go run ./cmd/marafonet
@@ -20,9 +20,9 @@ destroy-etcd:
 # Build targets
 
 react:
-	cd frontend && npm run build
+	npm --prefix frontend run build
 
-build: react
+build: test react
 	docker build -f deployment/marafonet/Dockerfile -t marafonet:latest .
 	docker build -f deployment/matchmaking/Dockerfile -t matchmaking:latest .
 
@@ -32,9 +32,21 @@ push:
 	docker tag matchmaking:latest ghcr.io/juturbo/mf-matchmaking:latest
 	docker push ghcr.io/juturbo/mf-matchmaking:latest
 
+# Test targets
+
+test:
+	@set -e; \
+	$(MAKE) destroy-etcd >/dev/null 2>&1 || true; \
+	trap '$(MAKE) destroy-etcd >/dev/null 2>&1 || true' EXIT; \
+	$(MAKE) etcd; \
+	$(MAKE) test-commands
+
+test-commands:
+	go test -v ./...
+
 # Deploy targets
 
-deploy: etcd cluster certs secrets kube tunnel
+deploy: test etcd cluster certs secrets kube tunnel
 
 cluster:
 	minikube start --nodes 2 --driver=docker -p marafonet-cluster
