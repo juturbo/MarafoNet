@@ -51,6 +51,12 @@ func (hub *MatchmakingHub) GetGameService() *service.GameService {
 // Can be stopped by calling StopMatchmaking().
 func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
+	usersQueue, err := hub.GetStorageService().GetUserQueue(context.Background())
+	if err != nil {
+		log.Printf("- matchmaking: Error getting initial user queue: %v", err)
+		return
+	}
+	hub.checkQueueAndStartGame(usersQueue)
 	go func() {
 		for users := range queueChannel {
 			log.Printf("- matchmaking: Current users in queue: %v", users)
@@ -61,23 +67,27 @@ func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
 				log.Printf("- matchmaking: Stopping matchmaking service")
 				return
 			default:
-				if len(users) >= 4 {
-					log.Printf("- matchmaking: Found 4 players in queue, starting a game with players: %v", users[:4])
-					gameID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
-					for _, user := range users[:4] {
-						hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
-						hub.GetStorageService().SetUserCurrentGameId(context.Background(), user, gameID)
-					}
-					usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
-					log.Printf("- matchmaking: Current users in queue after matchmaking: %v", usersStillInQueue)
-					for _, user := range users[:4] {
-						gameID, _ := hub.GetStorageService().GetUserCurrentGameId(context.Background(), user)
-						log.Printf("- matchmaking: user %s joined game %s", user, gameID)
-					}
-				}
+				hub.checkQueueAndStartGame(users)
 			}
 		}
 	}()
+}
+
+func (hub *MatchmakingHub) checkQueueAndStartGame(users []string) {
+	if len(users) >= 4 {
+		log.Printf("- matchmaking: Found 4 players in queue, starting a game with players: %v", users[:4])
+		gameID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
+		for _, user := range users[:4] {
+			hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
+			hub.GetStorageService().SetUserCurrentGameId(context.Background(), user, gameID)
+		}
+		usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
+		log.Printf("- matchmaking: Current users in queue after matchmaking: %v", usersStillInQueue)
+		for _, user := range users[:4] {
+			gameID, _ := hub.GetStorageService().GetUserCurrentGameId(context.Background(), user)
+			log.Printf("- matchmaking: user %s joined game %s", user, gameID)
+		}
+	}
 }
 
 // Stops the matchmaking service.
