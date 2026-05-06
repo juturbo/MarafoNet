@@ -115,16 +115,12 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
-		if gameID != "" && isGameOver(hub, gameID) {
-			if hub.IsWatcherCancelFuncSet() {
-				hub.CancelWatcher()
-			}
-			hub.StorageService.RemoveUserCurrentGameId(context.Background(), hub.GetPlayerName())
+		if gameID != "" && !isGameOver(hub, gameID) {
+			return true, BuildJSONErrorResponse("already in a game, game id: " + gameID)
+		} else {
 			if envelope.EqualsType(PlayAgainType) {
 				putUserInQueue(hub)
 			}
-		} else {
-			return true, BuildJSONErrorResponse("cannot play again until current game is over or if no gameId is set")
 		}
 	default:
 		return true, BuildJSONErrorResponse("invalid message type")
