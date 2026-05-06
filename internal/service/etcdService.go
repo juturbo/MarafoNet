@@ -11,6 +11,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	concurrency "go.etcd.io/etcd/client/v3/concurrency"
 )
 
 const GAME_COUNTER_PATH = "global/game_counter"
@@ -26,9 +27,6 @@ const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
 const KEEP_ALIVE_TTL = 120
-const GAME_ID_MAX_RETRIES = 5
-const GAME_ID_INITIAL_BACKOFF = 25 * time.Millisecond
-const GAME_ID_MAX_BACKOFF = 500 * time.Millisecond
 
 type EtcdService struct {
 	client *clientv3.Client
@@ -61,65 +59,30 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 
 func (etcdService *EtcdService) GetNextGameID(ctx context.Context) (gameId string, err error) {
 	key := GAME_COUNTER_PATH
-	allocateNextID := func() (string, error) {
-		current, revision, err := etcdService.fetchCurrentAndRevision(ctx, key)
-		if err != nil {
-			return "", err
-		}
 
-		next := current + 1
-		succeeded, err := etcdService.updateValueIfRevisionMatches(ctx, key, revision, next)
-		if err != nil {
-			return "", err
-		}
-		if !succeeded {
-			return "", nil
-		}
-
-		return fmt.Sprintf(GAME_PREFIX, next), nil
-	}
-
-	return etcdService.retryWithExponentialBackoff(ctx, GAME_ID_MAX_RETRIES, GAME_ID_INITIAL_BACKOFF, GAME_ID_MAX_BACKOFF, allocateNextID)
-}
-
-func (etcdService *EtcdService) retryWithExponentialBackoff(
-	ctx context.Context,
-	maxRetries int,
-	initialBackoff time.Duration,
-	maxBackoff time.Duration,
-	operation func() (string, error),
-) (string, error) {
-	backoff := initialBackoff
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		result, err := operation()
-		if err != nil {
-			return "", err
-		}
-		if result != "" {
-			return result, nil
-		}
-
-		if attempt == maxRetries-1 {
-			break
-		}
-
-		timer := time.NewTimer(backoff)
-		select {
-		case <-ctx.Done():
-			if !timer.Stop() {
-				<-timer.C
+	var next int
+	transactionResponse, err := concurrency.NewSTM(etcdService.client, func(stm concurrency.STM) error {
+		val := stm.Get(key)
+		if val == "" {
+			next = 1
+		} else {
+			current, convErr := strconv.Atoi(val)
+			if convErr != nil {
+				return convErr
 			}
-			return "", ctx.Err()
-		case <-timer.C:
+			next = current + 1
 		}
-
-		backoff *= 2
-		if backoff > maxBackoff {
-			backoff = maxBackoff
-		}
+		stm.Put(key, strconv.Itoa(next))
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if !transactionResponse.Succeeded {
+		return "", fmt.Errorf("failed to get next game ID")
 	}
 
-	return "", fmt.Errorf("failed to allocate next game id after %d retries", maxRetries)
+	return fmt.Sprintf(GAME_PREFIX, next), nil
 }
 
 func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, gameJson []byte) error {
@@ -183,9 +146,6 @@ func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []s
 	response, err := etcdService.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
-	}
-	if len(response.Kvs) == 0 {
-		return nil, fmt.Errorf("key not found: %s", key)
 	}
 
 	for _, kv := range response.Kvs {
@@ -378,34 +338,6 @@ func (etcdService *EtcdService) watchKey(ctx context.Context, key string, opts .
 
 func (etcdService *EtcdService) Close() error {
 	return etcdService.client.Close()
-}
-
-func (etcdService *EtcdService) fetchCurrentAndRevision(ctx context.Context, key string) (current int, revision int64, err error) {
-	response, err := etcdService.client.Get(ctx, key)
-	if err != nil {
-		return current, revision, err
-	}
-	if len(response.Kvs) == 0 {
-		return current, revision, nil
-	}
-
-	current, err = strconv.Atoi(string(response.Kvs[0].Value))
-	if err != nil {
-		return current, revision, err
-	}
-
-	revision = response.Kvs[0].ModRevision
-	return current, revision, nil
-}
-
-func (etcdService *EtcdService) updateValueIfRevisionMatches(ctx context.Context, key string, expectedRevision int64, value int) (bool, error) {
-	var compare clientv3.Cmp
-	if expectedRevision == 0 {
-		compare = clientv3.Compare(clientv3.CreateRevision(key), "=", 0)
-	} else {
-		compare = clientv3.Compare(clientv3.ModRevision(key), "=", expectedRevision)
-	}
-	return etcdService.putIfComparison(ctx, key, strconv.Itoa(value), compare)
 }
 
 func (etcdService *EtcdService) getValue(ctx context.Context, key string) (string, error) {
