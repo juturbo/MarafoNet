@@ -5,6 +5,8 @@ import (
 	"MarafoNet/internal/service"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,7 +29,7 @@ const localFilePath string = "./frontend/build"
 
 const webSocketPath = "/ws"
 
-var etcdEndpoint = []string{"local-etcd-service:2379"}
+var etcdEndpoint = getEtcdEndpoints()
 
 func main() {
 	printHeader()
@@ -56,6 +58,15 @@ func main() {
 
 	wg.Wait()
 
+}
+
+func getEtcdEndpoints() []string {
+	env := os.Getenv("ETCD_ENDPOINTS")
+	if env == "" {
+		// Fallback per 'make test' e 'make dev' in locale
+		return []string{"localhost:2379"}
+	}
+	return strings.Split(env, ",")
 }
 
 func printHeader() {

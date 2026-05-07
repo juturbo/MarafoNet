@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { WebSocketContext } from '../WebSocketProvider';
 import './TrumpSelector.css';
 
-export default function TrumpSelector({ isFirstPlayer, gameID: gameID }) {
+export default function TrumpSelector({ isFirstPlayer, gameID }) {
     const { ws } = useContext(WebSocketContext);
 
     React.useEffect(() => {

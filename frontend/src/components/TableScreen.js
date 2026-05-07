@@ -71,7 +71,7 @@ function PlayerPosition({ playerName, position, isFirstPlayer, isCurrentPlayer }
 }
 
 // Main TableScreen component
-export default function TableScreen({ gameUpdate: gameUpdate, currentPlayerName, onPlayAgain }) {
+export default function TableScreen({ gameUpdate, currentPlayerName, onPlayAgain }) {
     const [gameState, setGameState] = useState(gameUpdate);
     const [sortEnabled, setSortEnabled] = useState(false);
     const [showLastTrick, setShowLastTrick] = useState(true);
