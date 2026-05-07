@@ -19,7 +19,7 @@ func NewGameService(etcdService *EtcdService) *GameService {
 }
 
 func (gameService *GameService) StartGame(ctx context.Context, playerNames []string) (gameId string, err error) {
-	gameId, err = gameService.etcdService.GetNextGameID(ctx)
+	gameId, err = gameService.etcdService.GetNextGameID()
 	if err != nil {
 		return "", err
 	}
@@ -49,12 +49,6 @@ func (gameService *GameService) IsGameEnded(gameJson []byte) (bool, error) {
 	return gameLogic.IsGameEnded(game), nil
 }
 
-func (gameService *GameService) ForfeitGame(ctx context.Context, gameId string, playerName string) error {
-	return gameService.applyUpdate(ctx, gameId, func(game model.Game) (model.Game, error) {
-		return gameLogic.ForfeitGame(game, playerName)
-	})
-}
-
 func (gameService *GameService) GetGameView(gameJson []byte, playerName string) (gameViewJson []byte, err error) {
 	var game model.Game
 	if err = json.Unmarshal(gameJson, &game); err != nil {
@@ -69,6 +63,12 @@ func (gameService *GameService) GetGameView(gameJson []byte, playerName string) 
 		return nil, err
 	}
 	return gameViewJson, nil
+}
+
+func (gameService *GameService) ForfeitGame(ctx context.Context, gameId string, playerName string) error {
+	return gameService.applyUpdate(ctx, gameId, func(game model.Game) (model.Game, error) {
+		return gameLogic.ForfeitGame(game, playerName)
+	})
 }
 
 func (gameService *GameService) SetTrumpSuit(ctx context.Context, gameId string, playerName string, suit model.Suit) error {

@@ -57,7 +57,7 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 	}, nil
 }
 
-func (etcdService *EtcdService) GetNextGameID(ctx context.Context) (gameId string, err error) {
+func (etcdService *EtcdService) GetNextGameID() (gameId string, err error) {
 	key := GAME_COUNTER_PATH
 
 	var next int
