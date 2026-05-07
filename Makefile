@@ -46,7 +46,7 @@ test-commands:
 
 # Deploy targets
 
-deploy: test etcd cluster certs secrets kube tunnel
+deploy: cluster certs secrets kube tunnel
 
 cluster:
 	minikube start --nodes 2 --driver=docker -p marafonet-cluster
