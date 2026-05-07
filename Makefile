@@ -49,7 +49,7 @@ test-commands:
 deploy: cluster certs secrets kube tunnel
 
 cluster:
-	minikube start --nodes 2 --driver=docker -p marafonet-cluster
+	minikube start --nodes 3 --driver=docker -p marafonet-cluster
 	minikube addons enable ingress -p marafonet-cluster
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
 
