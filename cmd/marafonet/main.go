@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,7 +34,7 @@ const localFilePath string = "./frontend"
 
 const webSocketPath = "/ws"
 
-var etcdEndpoint = []string{"local-etcd-service:2379"}
+var etcdEndpoint = getEtcdEndpoints()
 
 func main() {
 	printHeader()
@@ -98,6 +99,15 @@ func main() {
 	gracefulShutdown()
 	time.Sleep(500 * time.Millisecond)
 	log.Printf("server gracefully stopped")
+}
+
+func getEtcdEndpoints() []string {
+	env := os.Getenv("ETCD_ENDPOINTS")
+	if env == "" {
+		// Fallback per 'make test' e 'make dev' in locale
+		return []string{"localhost:2379"}
+	}
+	return strings.Split(env, ",")
 }
 
 func printHeader() {
