@@ -426,6 +426,7 @@ database and clients change the state of the system: for instance clients make a
   \begin{itemize}
     \item \emph{what} data? \emph{where}? \emph{why}?
   \end{itemize}
+  \textbf{Answer: }game state on database to store ongoing games. data is registered as key-value
   
   \item how should \emph{persistent data} be \textbf{stored}?
   %
@@ -433,6 +434,7 @@ database and clients change the state of the system: for instance clients make a
     \item e.g.~relations, documents, key-value, graph, etc.
     \item why?
   \end{itemize}
+  \textbf{Answer: } as key-value.
   
   \item Which components perform queries on the database?
   %
@@ -440,12 +442,14 @@ database and clients change the state of the system: for instance clients make a
     \item \emph{when}? \emph{which} queries? \emph{why}?
     \item concurrent read? concurrent write? why?
   \end{itemize}
+  \textbf{Answer: } game server and microservices. Which queries, how many, when? explain.
   
   \item Is there any data that needs to be shared between components?
   %
   \begin{itemize}
     \item \emph{why}? \emph{what} data?
   \end{itemize}
+  \textbf{Answer: } yes the game state is shared throguht the DB
 \end{itemize}
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
