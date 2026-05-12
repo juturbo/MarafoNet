@@ -415,10 +415,8 @@ communicat throughs WebSockets. Different message types are used to communicate 
 
   \item which components are in charge of updating the \textbf{state} of the system? \emph{when}? \emph{how}?
 \end{itemize}
-
-\begin{quote}
-State diagrams are welcome here
-\end{quote}
+\textbf{Answer: }game server, martchamking and timeout are stateless, database is stateful.
+database and clients change the state of the system: for instance clients make a move and the game state changes or matchmaking creates a game.
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
