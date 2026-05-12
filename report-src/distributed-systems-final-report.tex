@@ -215,6 +215,9 @@ Motivate which distributed system features are relevant for your project, and wh
     \item does your system need to hide distribution details from users or developers?
     \item is it important that failures, location, or replication are invisible?
   \end{itemize}
+  \textbf{[TO-REVIEW] Answer: } the user doesn't see that the system is distributed as a consequence of Kubernetes nature.
+    The developer has to keep in mind that, while coding a distributed node, it will be replicated and not unique,
+    therefore keeping in mind concurrent and distributed best pracitses.
 
   \item fault tolerance, dependability -- availability, reliability, integrity, maintainability, safety
   \begin{itemize}
@@ -222,50 +225,58 @@ Motivate which distributed system features are relevant for your project, and wh
     \item is data loss or corruption unacceptable?
     \item how quickly must the system recover from faults?
   \end{itemize}
+  \textbf{Answer: } as mentioned in the non-functional requirements, availability, fault tolerance and integrity 
+    are core requirements of this system. The game has to be robust against sudden node crashes and the game's data too.
+    the server ensures integrity by being the only source of authenticity, veryfing the legality of the move and the identity of
+    its owner. (todo: expand on fault-tolerance) 
 
   \item scalability
   \begin{itemize}
     \item will the system need to handle increasing numbers of users, requests, or data?
     \item is it expected to grow over time?
   \end{itemize}
+  \textbf{Answer: } due to the local and folk nature of the game it is not expected to have a big increase in the user base,
+    but the system is ready to scale up (kubernetes can handle it).
 
   \item security, trust
   \begin{itemize}
-    \item is sensitive data being processed or stored?
-    \item are there multiple user roles with different permissions?
-    \item is authentication or authorization required?
+    \item is sensitive data being processed or stored? ???
+    \item are there multiple user roles with different permissions? no
+    \item is authentication or authorization required? -> yes
   \end{itemize}
+  \textbf{Answer: } no storage of sensitive data apart from passwords and username. explain passwords and security stack? 
 
   \item resource sharing
   \begin{itemize}
     \item do multiple users or components need access to shared resources?
     \item is coordination or synchronization needed?
   \end{itemize}
+  \textbf{Answer: } to access the data multiple nodes make requests to the same database. therefore a synchronization mechanism is needed.
 
-  \item openness, interoperability, heterogeneity of components
-  \begin{itemize}
-    \item Will your system interact with external systems or use components built with different technologies?
-    \item Is standardization or compatibility important?
-  \end{itemize}
+  %\item openness, interoperability, heterogeneity of components
+  %begin{itemize}
+  % \item Will your system interact with external systems or use components built with different technologies?
+  %  \item Is standardization or compatibility important?
+  %\end{itemize}
 
-  \item evolvability, maintainability
-  \begin{itemize}
-    \item Will the system need to be updated or extended after deployment?
-    \item Is long-term maintenance a concern?
-  \end{itemize}
+  %\item evolvability, maintainability
+  %\begin{itemize}
+  %  \item Will the system need to be updated or extended after deployment?
+  %  \item Is long-term maintenance a concern?
+  %\end{itemize}
 
-  \item performance, concurrency, computation / communication efficiency, bandwidth
-  \begin{itemize}
-    \item Are there strict requirements on response time or throughput?
-    \item Will many operations happen in parallel?
-    \item Is network usage a concern?
-  \end{itemize}
+  %\item performance, concurrency, computation / communication efficiency, bandwidth
+  %\begin{itemize}
+  %  \item Are there strict requirements on response time or throughput?
+  %  \item Will many operations happen in parallel?
+  %  \item Is network usage a concern?
+  %\end{itemize}
 
-  \item economy, costs  
-  \begin{itemize}
-    \item Are there budget constraints for development, deployment, or operation?
-    \item Is minimizing resource usage important?
-  \end{itemize}
+  %\item economy, costs  
+  %\begin{itemize}
+  %  \item Are there budget constraints for development, deployment, or operation?
+  %  \item Is minimizing resource usage important?
+  %\end{itemize}
 \end{itemize}
 
 \section{Design}\label{design}
