@@ -350,42 +350,49 @@ explain why matchamking, timeout and others do...
 
 \subsection{Modelling}\label{modelling}
 
+\textbf{TODO: CLASS DIAGRAM}
+
 \begin{itemize}
   \item which \textbf{domain entities} are there?
   %
   \begin{itemize}
     \item e.g.~\emph{users}, \emph{products}, \emph{orders}, \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } all the entities in model: player=user, game, hand, card. WebSocketHub
   
-  \item how do \emph{domain entities} \textbf{map to} \emph{infrastructural components}?
+  \item how do \emph{domain entities} \textbf{map to/used by} \emph{infrastructural components}?
   %
   \begin{itemize}
     \item e.g.~state of a video game on central server, while inputs/representations on clients
     \item e.g.~where to store messages in an IM app? for how long?
   \end{itemize}
+  \textbf{Answer: } state of a video game on database (server is stateless), while inputs/representations on clients.
+  matchmaking service scans queue and creates game entities on the database and the game server alerts clients of the new game.
 
   \item which \textbf{domain events} are there?
   %
   \begin{itemize}
     \item e.g.~\emph{user registered}, \emph{product added to cart}, \emph{order placed}, \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } almost everything in the functional requirements. user registered, logged in, joined the queue
+  left the queue, join a game, quit game, play again, play a card, choose a trump suit, player reconnection, game ended.
   
   \item which sorts of \textbf{messages} are exchanged?
   %
   \begin{itemize}
     \item e.g.~\emph{commands}, \emph{events}, \emph{queries}, \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } almost all domain events trigger messages, because everything has to be communicated to the clients.
+  different queries to the database\ldots.
 
   \item what information does the \textbf{state} of the system comprehend
   %
   \begin{itemize}
     \item e.g.~\emph{users' data}, \emph{products' data}, \emph{orders' data}, \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } WebSocketHub holds information about the state of the connection and the client's identity.
+  Only the database holds the state of the ongoing games, the matchmaking queue and the users' credentials.
 \end{itemize}
-
-\begin{quote}
-Class diagram are welcome here
-\end{quote}
 
 \subsection{Interaction}\label{interaction}
 
