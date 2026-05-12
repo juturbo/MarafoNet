@@ -96,6 +96,8 @@ Here you should explain:
     \item Web-service(s)
   \end{itemize}
 
+  \textbf{Answer}: We developed a web application for a turn-based card game typical in italy. 
+
   \item Use case description:
   %
   \begin{itemize}
@@ -107,17 +109,22 @@ Here you should explain:
     \item most likely, there will be \emph{multiple} \textbf{roles}
   \end{itemize}
 
+  \textbf{Answer}: maybe expand on the previous answer. Digitalizing the game makes it accessible to passionate expat users around the world.
+  Being turn-based, an action is performed every $\sim$30 seconds, on average. The users interact with the system through a web interface by registering with a 
+  username and a password, other than this no additional data is stored on the database. The game is created for a large screen such as a laptop, desktop or tablet.
+
   \item Why is distribution needed?
   %
   \begin{itemize}
     \item geographically distributed environments?
-    \item computation speedup?
-    \item resource sharing?
-    \item fault tolerance?
+    \item computation speedup? -> backend
+    \item resource sharing? -> etcd
+    \item fault tolerance? -> etcd
     \item other reasons?
   \end{itemize}
   %
-  In any case, please elaborate.
+  \textbf{Answer}: Being stricly diffused in the central italian regions, geographical distribution is not the primary concern.
+  The distribution favors data integrity allowing to distribute data in a robust way; morover it allows parallelization of computation and overall stability of the system under load.  
 \end{itemize}
 
 \section{Requirements Elicitation and Analysis}\label{requirements}
