@@ -396,14 +396,14 @@ explain why matchamking, timeout and others do...
 
 \subsection{Interaction}\label{interaction}
 
+\textbf{TODO: SEQUENCE DIAGRAM of matchmaking + timeout concurrent, playing a card}
+
 \begin{itemize}
   \item how do components \emph{communicate}? \emph{when}? \emph{what}?
   \item \emph{which} \textbf{interaction patterns} do they enact?
 \end{itemize}
-
-\begin{quote}
-Sequence diagrams are welcome here
-\end{quote}
+\textbf{Answer: }the microservices communicate with the database through queries. Whereas the clients and the game server
+communicat throughs WebSockets. Different message types are used to communicate client's intention and to update the client's game state.
 
 \subsection{Behaviour}\label{behaviour}
 
