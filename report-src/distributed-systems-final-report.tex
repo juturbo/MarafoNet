@@ -280,30 +280,34 @@ Motivate which distributed system features are relevant for your project, and wh
 \end{itemize}
 
 \section{Design}\label{design}
-
-This chapter explains the strategies used to meet the requirements identified in the analysis. 
 %
-Ideally, the design should be the same, regardless of the technological choices made during the implementation phase.
-
-\begin{quote}
-You can re-arrange the sections as you prefer, but all the sections must be present in the end
-\end{quote}
-
-\noindent
-\textbf{Important:} try to motivate your design choices in relation to the requirements and features identified 
-in \cref{requirements} and \cref{ds-features}.
-
+%This chapter explains the strategies used to meet the requirements identified in the analysis. 
+%
+%Ideally, the design should be the same, regardless of the technological choices made during the implementation phase.
+%
+%\begin{quote}
+%You can re-arrange the sections as you prefer, but all the sections must be present in the end
+%\end{quote}
+%
+%\noindent
+%\textbf{Important:} try to motivate your design choices in relation to the requirements and features identified 
+%in \cref{requirements} and \cref{ds-features}.
+%
 \subsection{Architecture}\label{architecture}
-
-\begin{itemize}
-  \item Which architectural style?
-  %
-  \begin{itemize}
-    \item why?
-  \end{itemize}
-\end{itemize}
+The architecture is a client-server where the client is totally dependent on the server's updates, so that the latter
+is the only source of truth in the system. It is also microservice architecture (explain how the division is beneficial).
+explain why matchamking, timeout and others do...
+%\begin{itemize}
+%  \item Which architectural style?
+%  %
+%  \begin{itemize}
+%    \item why?
+%  \end{itemize}
+%\end{itemize}
 
 \subsection{Infrastructure}\label{infrastructure}
+
+\textbf{TODO: COMPONENTS DIAGRAM}
 
 \begin{itemize}
   \item are there \emph{infrastructural components} that need to be introduced? \emph{how many}?
@@ -314,6 +318,9 @@ in \cref{requirements} and \cref{ds-features}.
     \emph{queues}, \emph{workers}, \emph{proxies}, \emph{firewalls},
     \emph{CDNs}, \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } Client, stateless game server (microservice too),ingress/service load balancer throught Kubernetes,
+  TLS termination for secure connection different other microservices that interrogate and change the database.
+  why only one matchmaking service (because it only does one thing?)? How many game servers? (3) how many nodes, LBs, etcd databases?(3)
 
   \item how do components \emph{distribute} over the network? \emph{where}?
   %
@@ -322,6 +329,9 @@ in \cref{requirements} and \cref{ds-features}.
     machine? on the same network? on the same datacenter? on the same
     continent?
   \end{itemize}
+  \textbf{Answer: } every stateless game servers and database servers are distributed over diffent bare-metal machines (1-1) to
+  ensure fault-tolerance.
+  clients will be mostly in the Emilia-Romagna and neighbor regions, and some in other countries (counting expats)
 
   \item how do components \emph{find} each other?
   %
@@ -330,11 +340,13 @@ in \cref{requirements} and \cref{ds-features}.
     \item e.g.~DNS, \emph{service discovery}, \emph{load balancing},
     \emph{etc.}
   \end{itemize}
+  \textbf{Answer: } components find themselves throught the Kubernetes' internal DNS and with human-readable names, not relying on
+  IP addresses of pods. explain how ingress and svc load balancing redirects traffic to pods.
 \end{itemize}
 
-\begin{quote}
-Component diagrams are welcome here
-\end{quote}
+%\begin{quote}
+%Component diagrams are welcome here
+%\end{quote}
 
 \subsection{Modelling}\label{modelling}
 
