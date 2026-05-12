@@ -127,7 +127,46 @@ Here you should explain:
   The distribution favors data integrity allowing to distribute data in a robust way; morover it allows parallelization of computation and overall stability of the system under load.  
 \end{itemize}
 
-\section{Requirements Elicitation and Analysis}\label{requirements}
+\section{Requirements elicitation and analysis}\label{requirements}
+
+\subsection*{Glossary}
+\begin{itemize}
+  \item game, match, trump suit (briscola), currentPlayer: essere di mano, trick (ultima presa), marafona (1,2,3 of briscola) 
+\end{itemize}
+
+\subsection*{Functional requirements}
+The user must be able to:
+\begin{enumerate}
+  \item register with a username and a password
+  \item login with the registered credentials
+  \item join a game, play in it and leave it
+  \item review the last hand played during a game (vedi glossario)
+  \item understand the game state at any time (turn, trump decision, points), including the wrong moves they made and why.
+  \item understand when a game is over and who won, and by how many points
+  \item have the ability to play again and quit
+  \item not to wait indefinitely for a disconnected player to play
+\end{enumerate}
+
+\subsection*{Non-functional requirements}
+The service must be:
+\begin{enumerate}
+  \item Consistent: the game state must be the same for all players at any time.
+    In case on reconnection after a network partitioning, the users must retrieve the same or most recent game state.
+  \item Fault-tolerant: in the event of a system's node failure the user must be able to continue playing without interruption
+    by seamlessly reconnecting. (se una partita fallisce devo riconnettermi e tornare dove ero prima, in a consistent way).
+    This also applies to the game's data: on a fault the data must remain integrous.
+  \item Available: on a node's failure the service must be available from another source(?)
+  \item Il client non deve avere memoria e deve dipendere totalmente dalle informazioni ed aggiornamnti di stato che gli vengono mandati
+    dal server. questo permette di evitare che lagente si inventi le cose etc\ldots
+\end{enumerate}
+
+\subsection*{Implementation}
+Different tools can be used to reach the non-functional requirements, namely:
+\begin{enumerate}
+  \item react: updating in real-time the front-end with the state received from the server
+  \item kubernetes: appears as an obvious choice for satisfying the Consistency and Availability requirements.
+  \item WebSocket: essential for detecting disconnections and pushing real-time updates (also strongly linked with React usage)
+\end{enumerate}
 
 \begin{itemize}
   \item The requirements must explain \textbf{what} (not how) the software
