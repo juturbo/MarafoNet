@@ -460,18 +460,21 @@ database and clients change the state of the system: for instance clients make a
   \begin{itemize}
     \item \emph{why}? \emph{how} does it work?
   \end{itemize}
+  \textbf{Answer: } yes, it is what we do with Kubernetes replication.
   
   \item Is there any \textbf{heart-beating}, \textbf{timeout}, \textbf{retry mechanism}?
   %
   \begin{itemize}
     \item \emph{why}? \emph{among} which components? \emph{how} does it work?
   \end{itemize}
+  \textbf{Answer: } yes, it is to be integrated with the database client connection and kubernetes liveness.
   
   \item Is there any form of \textbf{error handling}?
   %
   \begin{itemize}
     \item \emph{what} happens when a component fails? \emph{why}? \emph{how}?
   \end{itemize}
+  \textbf{Answer: } it panics and is recreated.
 \end{itemize}
 
 \subsection{Availability}\label{availability}
@@ -482,12 +485,14 @@ database and clients change the state of the system: for instance clients make a
   \begin{itemize}
     \item \emph{where}? \emph{why}?
   \end{itemize}
+  \textbf{Answer: } No
   
   \item Is there any form of \textbf{load balancing}?
   %
   \begin{itemize}
     \item \emph{where}? \emph{why}?
   \end{itemize}
+  \textbf{Answer: } Yes, Kubernetes
 
   \item In case of \textbf{network partitioning}, how does the system behave?
   %
@@ -495,6 +500,8 @@ database and clients change the state of the system: for instance clients make a
     \item \emph{why}? \emph{how}?
   \end{itemize}
 \end{itemize}
+\textbf{Answer: } The state is mantained on the database and the users can recconect to another node automatically.
+Game state is consistent when a partition from the user's side happens.
 
 \subsection{Security}\label{security}
 
