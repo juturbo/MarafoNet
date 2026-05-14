@@ -347,46 +347,6 @@ the same so the platform's internal DNS manages the addresses resolution.
 For instance, creating the connection of the game server to the database 
 only a URL-like address is needed. 
 
-
-\begin{itemize}
-  \item are there \emph{infrastructural components} that need to be introduced? \emph{how many}?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{clients}, \emph{servers}, \emph{load balancers},
-    \emph{caches}, \emph{databases}, \emph{message brokers},
-    \emph{queues}, \emph{workers}, \emph{proxies}, \emph{firewalls},
-    \emph{CDNs}, \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } Client, stateless game server (microservice too),ingress/service load balancer throught Kubernetes,
-  TLS termination for secure connection different other microservices that interrogate and change the database.
-  why only one matchmaking service (because it only does one thing?)? How many game servers? (3) how many nodes, LBs, etcd databases?(3)
-
-  \item how do components \emph{distribute} over the network? \emph{where}?
-  %
-  \begin{itemize}
-    \item e.g.~do servers / brokers / databases / etc. sit on the same
-    machine? on the same network? on the same datacenter? on the same
-    continent?
-  \end{itemize}
-  \textbf{Answer: } every stateless game servers and database servers are distributed over diffent bare-metal machines (1-1) to
-  ensure fault-tolerance.
-  clients will be mostly in the Emilia-Romagna and neighbor regions, and some in other countries (counting expats)
-
-  \item how do components \emph{find} each other?
-  %
-  \begin{itemize}
-    \item how to \emph{name} components?
-    \item e.g.~DNS, \emph{service discovery}, \emph{load balancing},
-    \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } components find themselves throught the Kubernetes' internal DNS and with human-readable names, not relying on
-  IP addresses of pods. explain how ingress and svc load balancing redirects traffic to pods.
-\end{itemize}
-
-%\begin{quote}
-%Component diagrams are welcome here
-%\end{quote}
-
 \subsection{Modelling}\label{modelling}
 
 \textbf{TODO: CLASS DIAGRAM: player, game with hand and cards}
