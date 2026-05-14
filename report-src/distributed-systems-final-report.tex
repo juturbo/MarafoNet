@@ -294,9 +294,18 @@ Motivate which distributed system features are relevant for your project, and wh
 %in \cref{requirements} and \cref{ds-features}.
 %
 \subsection{Architecture}\label{architecture}
-The architecture is a client-server where the client is totally dependent on the server's updates, so that the latter
-is the only source of truth in the system. It is also microservice architecture (explain how the division is beneficial).
-explain why matchamking, timeout and others do...
+The base architecture of the system is client-server where the client's state is
+totally dependent on the server's updates. In this way the server is the only
+source of truth in the system and there's not way for the client to change the game's
+state at its own will.
+
+The design of the server's side of the system follows the microservices pattern.
+This is beneficial for peformance because different services may use a differnet
+amount of resources and so can be provisioned differently and deployed with a 
+different number of replicas.
+For instance the game server microservice has to manage all the connections to 
+the client, whereas the matchmaking microservice is not externally exposed and only
+watches the user's queue so it will be provisioned with far lower resources.
 %\begin{itemize}
 %  \item Which architectural style?
 %  %
