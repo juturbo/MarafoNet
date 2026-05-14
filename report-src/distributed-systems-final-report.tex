@@ -329,8 +329,7 @@ The components that need to be introduced are:
     little work it has to do relative to the number of users
   \item the database, deployed with multiple instances, ideally three
   \item one load balancer, that would distribute incoming connections to the microservices.
-    This component may also serve as terminator for SSL/TLS connections before entering the cluster.
-  \item 
+    This component may also serve as terminator for SSL/TLS connections before entering the cluster. 
 \end{itemize}
 
 The services are distributed in a Kubernetes cluster composed of three nodes. These
