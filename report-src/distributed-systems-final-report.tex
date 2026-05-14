@@ -317,7 +317,33 @@ watches the user's queue so it will be provisioned with far lower resources.
 
 \subsection{Infrastructure}\label{infrastructure}
 
-\textbf{TODO: COMPONENTS DIAGRAM}
+As specified in the implementation requirements it has been decided
+to manage the infrastructure through Kubernetes. This facilitates the
+deployment and the network management of the system.
+The components that need to be introduced are:
+\begin{itemize}
+  \item the clients, obviously, that interact with the server
+  \item the game server's microservice, deployed with three replicas and with the
+    possibility to be scaled up
+  \item the matchmaking microservice, deployed with one replica due to the 
+    little work it has to do relative to the number of users
+  \item the database, deployed with multiple instances, ideally three
+  \item one load balancer, that would distribute incoming connections to the microservices.
+    This component may also serve as terminator for SSL/TLS connections before entering the cluster.
+  \item 
+\end{itemize}
+
+The services are distributed in a Kubernetes cluster composed of three nodes. These
+nodes could be deployed through a cloud provider or on bare metal machines.
+They must not live in the same node to ensure fault tolerance.
+
+\textbf{TODO: COMPONENTS DIAGRAM HERE}
+
+Due to the ephemeral nature of Kubernetes' pods their address is not always
+the same so the platform's internal DNS manages the addresses resolution.
+For instance, creating the connection of the game server to the database 
+only a URL-like address is needed. 
+
 
 \begin{itemize}
   \item are there \emph{infrastructural components} that need to be introduced? \emph{how many}?
