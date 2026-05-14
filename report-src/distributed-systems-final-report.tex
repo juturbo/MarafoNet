@@ -300,9 +300,10 @@ source of truth in the system and there's not way for the client to change the g
 state at its own will.
 
 The design of the server's side of the system follows the microservices pattern.
-This is beneficial for peformance because different services may use a differnet
-amount of resources and so can be provisioned differently and deployed with a 
-different number of replicas.
+This is beneficial for peformance and availability because different services may use a different
+amount of resources and so can be provisioned and deployed differently.
+It also enhances overall robustness: by decoupling the microservices, a failure in
+one component will not affect the others. 
 For instance the game server microservice has to manage all the connections to 
 the client, whereas the matchmaking microservice is not externally exposed and only
 watches the user's queue so it will be provisioned with far lower resources.
