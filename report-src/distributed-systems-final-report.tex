@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
@@ -355,7 +356,12 @@ Considering it is a popular game in Emilia-Romagna and neighbor regions most
 of the users will come from there, with a little percentage of traffic coming
 from expatriates.
 
-\textbf{TODO: COMPONENTS DIAGRAM HERE}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/design/deployment.png}
+  \caption{Deployment diagram of the system}
+  \label{fig:deployment}
+\end{figure}
 
 Due to the ephemeral nature of Kubernetes' pods their address is not always
 the same so the platform's internal DNS manages the addresses resolution.
