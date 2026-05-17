@@ -680,28 +680,21 @@ To deploy the application the following software must be installed on the target
   \item \href{https://minikube.sigs.k8s.io/docs/start}{minikube}
   \item \href{https://kubernetes.io/docs/tasks/tools/#kubectl}{kubectl}
 \end{itemize}
+After successful installation the user can proceed to the next section.
 %
 \subsection{Deployment instructions}
-The entire application is containerized and can be deployed through the \texttt{kubectl apply} command.
+All the Kubernetes' resources are grouped inside a \texttt{kustomize.yaml} file
+that can be used to deploy the system throguht \texttt{kubectl apply} command.
 \begin{lstlisting}[language=bash]
   kubectl apply -k github.com/juturbo/marafonet/deployment/kubernetes
 \end{lstlisting}
-
-\begin{itemize}
-  \item should one install your software from scratch, how to do it?
-  %
-  \begin{itemize}
-    \item provide instructions
-    \item provide expected outcomes
-  \end{itemize}
-
-  \item what software should be installed on the machines to run your project? which versions?
-  
-  \item should one set environment variables or configuration files?
-  
-  \item if you're using containerization (e.g.~Docker), 
-  describe how you engineered your deployment scrips (e.g. \texttt{docker-compose.yml} files)
-\end{itemize}
+the command should output the following:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/deployment/deployment-instructions.png}
+  \caption{Deployment command output}
+  \label{fig:instructions-output}
+\end{figure}
 
 \section{User Guide}\label{user-guide}
 
