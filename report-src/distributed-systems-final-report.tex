@@ -673,6 +673,13 @@ recall to test corner cases (crashes, errors, etc.)
 \end{itemize}
 
 \section{Deployment}\label{deployment}
+\subsection{Image building}
+Container images for the game server and the matchmaking service are built from
+source code by a GitHub Action Workflow; the same action releases the images to
+the project's repository.
+
+The images are then publicly available and can be pulled directly from GHCR
+to be deployed on Kubernetes.
 \subsection{Requirements}\label{deployment-requirements}
 To deploy the application the following software must be installed on the target machine:
 \begin{itemize}
