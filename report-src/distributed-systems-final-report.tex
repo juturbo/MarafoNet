@@ -5,7 +5,39 @@
 \usepackage{natbib}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage{cleveref} % this must be the last package to be loaded
+
+\definecolor{codegreen}{RGB}{193, 193, 193}
+\definecolor{codegray}{RGB}{193, 193, 193}
+\definecolor{codepurple}{RGB}{193, 193, 193}
+\definecolor{backcolour}{RGB}{21,21,21}
+\definecolor{codecolor}{RGB}{193, 193, 193}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize\color{codecolor},
+    breakatwhitespace=false,         
+    breaklines=false,                 
+    captionpos=b,                    
+    keepspaces=true,                               
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=none
+}
+
+\lstset{style=mystyle} 
+\lstset{
+  framesep=3pt,
+  frame=single
+}
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
 
@@ -641,6 +673,19 @@ recall to test corner cases (crashes, errors, etc.)
 \end{itemize}
 
 \section{Deployment}\label{deployment}
+\subsection{Requirements}\label{deployment-requirements}
+To deploy the application the following software must be installed on the target machine:
+\begin{itemize}
+  \item \href{https://docs.docker.com/engine/install}{Docker} (depending on the operating system, it may be necessary to install Docker Desktop)
+  \item \href{https://minikube.sigs.k8s.io/docs/start}{minikube}
+  \item \href{https://kubernetes.io/docs/tasks/tools/#kubectl}{kubectl}
+\end{itemize}
+%
+\subsection{Deployment instructions}
+The entire application is containerized and can be deployed through the \texttt{kubectl apply} command.
+\begin{lstlisting}[language=bash]
+  kubectl apply -k github.com/juturbo/marafonet/deployment/kubernetes
+\end{lstlisting}
 
 \begin{itemize}
   \item should one install your software from scratch, how to do it?
