@@ -680,6 +680,21 @@ the project's repository.
 
 The images are then publicly available and can be pulled directly from GHCR
 to be deployed on Kubernetes.
+\subsection{Manifests}
+Manifests in the \texttt{deployment/kubernetes} directory specify the deployment's
+characteristics such as the replica count for each pod, where the pods should be placed 
+and which ports to open.
+
+The \texttt{marafonet-deployment.yaml} file defines an environment variable containing
+the Etcd pods' addresses and a rule so that the pods from this deployment are scheduled
+in different nodes to ensure availability.
+
+The \texttt{marafonet-hpa.yaml} creates an Horizonal Pod Autoscaler so that the replica
+count of the Game Server's pods can change dinamically according to processor and memory
+usage.
+
+Other files define the Etcd cluster and the Ingress, a component that acts both as load 
+balancer and TLS terminator.
 \subsection{Requirements}\label{deployment-requirements}
 To deploy the application the following software must be installed on the target machine:
 \begin{itemize}
