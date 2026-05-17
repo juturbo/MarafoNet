@@ -1,0 +1,35 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: marafonet-hpa
+spec: 
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: marafonet
+  minReplicas: 3
+  maxReplicas: 30
+  metrics:
+    - type: Resource
+      resource: 
+        name: cpu
+        target: 
+          type: Utilization
+          averageUtilization: 50
+    - type: Resource
+      resource: 
+        name: memory
+        target: 
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # only in scaling down
+      selectPolicy: Min
+      policies:
+      - type: Pods
+        value: 4
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
