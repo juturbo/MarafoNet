@@ -30,12 +30,4 @@ export default function () {
 		sleep((Math.random() * 5) + 4)
 		ws.send(JSON.stringify(payload))
 	});
-	
-	ws.addEventListener("error", (error) => {
-		console.log("WebSocket error: " + error.error);
-	});
-
-	ws.addEventListener("close", () => {
-		console.log("Connection closed")
-	});
 }
