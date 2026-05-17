@@ -19,10 +19,12 @@ spec:
       affinity:
         # ⬇⬇⬇ This ensures pods will land on separate hosts
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions: [{ key: app, operator: In, values: [marafonet] }]
-              topologyKey: "kubernetes.io/hostname"
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions: [{ key: app, operator: In, values: [marafonet] }]
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: marafonet
           image: ghcr.io/juturbo/marafonet:latest
