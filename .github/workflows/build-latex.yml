@@ -51,7 +51,7 @@ jobs:
           LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
           
           # Get existing body
-          EXISTING_BODY=$(gh release view "$LATEST_RELEASE" -q '.body')
+          EXISTING_BODY=$(gh release view "$LATEST_RELEASE" --json body -q '.body')
           
           # Append container images
           NEW_BODY="
@@ -64,5 +64,5 @@ jobs:
 
           View in package registry: https://github.com/juturbo?tab=packages&repo_name=marafonet"
               
-          gh release edit "$LATEST_RELEASE" -n "$NEW_BODY
+          gh release edit "$LATEST_RELEASE" -n "$NEW_BODY"
 
