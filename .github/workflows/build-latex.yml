@@ -45,14 +45,24 @@ jobs:
 
       - name: Update release with container images
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: Marafonet-${{ github.ref_name }}-${{ github.run_number }}
-          body: |
-            ## Container Images
-            Latest container images for this release:
-            - **MarafoNet**: `ghcr.io/juturbo/marafonet:latest`
-            - **Matchmaking**: `ghcr.io/juturbo/mf-matchmaking:latest`
-            
-            View in package registry: https://github.com/juturbo?tab=packages&repo_name=marafonet
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          
+          # Get existing body
+          EXISTING_BODY=$(gh release view "$LATEST_RELEASE" -q '.body')
+          
+          # Append container images
+          NEW_BODY="
+          What's new: $EXISTING_BODY
+
+          ## Container Images
+          Latest container images for this release:
+          - **MarafoNet**: \`ghcr.io/juturbo/marafonet:latest\`
+          - **Matchmaking**: \`ghcr.io/juturbo/mf-matchmaking:latest\`
+
+          View in package registry: https://github.com/juturbo?tab=packages&repo_name=marafonet"
+              
+          gh release edit "$LATEST_RELEASE" -n "$NEW_BODY
+
