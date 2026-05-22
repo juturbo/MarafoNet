@@ -596,30 +596,33 @@ Please report here all the implementation (technology-dependent) choices you mad
   \begin{itemize}
     \item e.g.~UDP, TCP, HTTP, WebSockets, gRPC, XMPP, AMQP, MQTT, etc.
   \end{itemize}
+
+  \textbf{Answer:} we used HTTPS and WebSockets for delivering the web page
+  and communicating the updates to the clients in a persistent way. 
   
   \item how should \emph{in-transit data} be \textbf{represented}?
   %
   \begin{itemize}
     \item e.g.~JSON, XML, YAML, Protocol Buffers, etc.
   \end{itemize}
+  \textbf{Answer:} We used JSON for the messages to deliver updates
+  and for the clients to send their moves.
   
   \item how should \emph{databases} be \textbf{queried}?
   %
   \begin{itemize}
     \item e.g.~SQL, NoSQL, etc.
   \end{itemize}
+  \textbf{Answer:} NoSQL in particular queries to Etcd key-value storage.
   
   \item how should components be \emph{authenticated}?
   %
   \begin{itemize}
     \item e.g.~OAuth, JWT, etc.
   \end{itemize}
-
-  \item how should components be \emph{authorized}?
-  %
-  \begin{itemize}
-    \item e.g.~RBAC, ABAC, etc.
-  \end{itemize}
+  \textbf{Answer:} the clients are authenticated throught classic password
+  hashing comparing, also adding salt to enhance security. The password
+  exchange security is backed by the TLS protocol implemented in the cluster.
 \end{itemize}
 
 \subsection{Technological details}\label{technological-details}
@@ -627,6 +630,9 @@ Please report here all the implementation (technology-dependent) choices you mad
 \begin{itemize}
   \item any particular \emph{framework} / \emph{technology} being exploited goes here
 \end{itemize}
+
+For the front-end we used React, as mentioned in the requirements, so that
+the front-end updates on a state change.
 
 \section{Validation}\label{validation}
 
