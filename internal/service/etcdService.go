@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/google/uuid"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	concurrency "go.etcd.io/etcd/client/v3/concurrency"
 )
@@ -30,7 +29,6 @@ const KEEP_ALIVE_TTL = 120
 
 type EtcdService struct {
 	client *clientv3.Client
-	uuid   uuid.UUID
 }
 
 // GameTimeoutEvent is emitted by the watcher when a user's game timeout lease expires.
@@ -53,7 +51,6 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 	}
 	return &EtcdService{
 		client: client,
-		uuid:   uuid.New(),
 	}, nil
 }
 
