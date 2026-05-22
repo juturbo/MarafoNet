@@ -28,6 +28,14 @@ export default function () {
                 })
             }
         })
+
+        registerAndJoin(ws, randomUser, randomPassword)
+
+        
+    });
+}
+
+function registerAndJoin(ws, randomUser, randomPassword) {
         sleep((Math.random() * 5) + 4)
         ws.send(JSON.stringify({
             type: "register_user",
@@ -45,5 +53,4 @@ export default function () {
             }
         }))
         sleep((Math.random() * 5) + 4)
-    });
 }
