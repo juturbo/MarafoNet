@@ -13,6 +13,9 @@ export default function () {
     let randomUser = randomString(10)
     let randomPassword = randomString(10)
 
+    let userRegistered = false
+    let userLoggedIn = false
+
     const ws = WebSocket("wss://localhost:8080/ws")
     ws.addEventListener("open", () => {
         ws.addEventListener("message", (event) => {
@@ -21,21 +24,45 @@ export default function () {
                 check(reply, {
                     "is user registered": (r) => r.type == "register_success",
                 })
+                if (reply.type == "register_success") {
+                    console.log("Registration successful for user:", randomUser)
+                    login(ws, randomUser, randomPassword)
+                    console.log("Logging in user:", randomUser)
+                    userLoggedIn = true
+                    firstJoin(ws)
+                    return
+                }
             }
             else if (reply.type == "login_success" || reply.type == "login_failure") {
                 check(reply, {
                     "is user logged in": (r) => r.type == "login_success",
                 })
+                console.log("Login response received for user:", randomUser)
             }
+
+            if (reply.type == "game_update") {
+                check(reply, {
+                    "game state received": (r) => r.type == "game_state",
+                })
+                console.log("Game state received for user:", randomUser)
+            }
+
+            checkAndChooseTrump(ws, reply, randomUser)
+
+            checkAndPlayCard(ws, reply, randomUser)
+
         })
 
-        registerAndJoin(ws, randomUser, randomPassword)
+        if (!userRegistered) {
+            console.log("Registering user:", randomUser)
+            register(ws, randomUser, randomPassword)
+            userRegistered = true
+        };
 
-        
     });
 }
 
-function registerAndJoin(ws, randomUser, randomPassword) {
+function register(ws, randomUser, randomPassword) {
         sleep((Math.random() * 5) + 4)
         ws.send(JSON.stringify({
             type: "register_user",
@@ -44,13 +71,68 @@ function registerAndJoin(ws, randomUser, randomPassword) {
                 password: randomPassword,
             },
         }))
-        sleep((Math.random() * 5) + 4)
+}
+
+function login(ws, randomUser, randomPassword) {
+    sleep((Math.random() * 5) + 4)
+    ws.send(JSON.stringify({
+        type: "login_user",
+        user: {
+            name: randomUser,
+            password: randomPassword,
+        },
+    }))
+}
+
+function firstJoin(ws) {
+    sleep((Math.random() * 2) + 1)
+    ws.send(JSON.stringify({
+        type: "first_join",
+    }))
+}
+
+function checkAndChooseTrump(ws, reply, username) {
+    sleep((Math.random() * 2) + 1)
+    if (reply.type == "game_update" &&
+        reply.game.FirstPlayer === username &&
+        (!reply.game.TrumpSuit || reply.game.TrumpSuit === 'None')
+    ) {
         ws.send(JSON.stringify({
-            type: "first_join",
-            user: {
-                name: randomUser,
-                password: randomPassword,
-            }
+            type: "set_trump",
+            payload: {
+                gameId: null,
+                suit: 1,
+            },
         }))
-        sleep((Math.random() * 5) + 4)
+        console.log("Trump chosen: 1")
+        return true;
+    }
+}
+
+function checkAndPlayCard(ws, reply, username) {
+    sleep((Math.random() * 2) + 1)
+    if (reply.type == "game_update" &&
+        reply.game.CurrentPlayer === username
+    ) {
+        let cardToPlay;
+        if(reply.game.table != null) {
+            cardToPlay = chooseCard(reply, username, reply.game.table[0].Suit)
+        }
+        else {
+            cardToPlay = reply.game.Hand[0]
+        }
+        ws.send(JSON.stringify({
+            type: "play_card",
+            payload: {
+                rank: cardToPlay.Rank,
+                suit: cardToPlay.Suit,
+            },
+        }))
+        console.log("Played card:", cardToPlay)
+        return true;
+    }
+}
+
+function chooseCard(reply, username, suitToPlay) {
+    let card = reply.game.Hand.find(card => card.Suit == suitToPlay) || reply.game.Hand[0]
 }
