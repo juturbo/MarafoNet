@@ -642,18 +642,24 @@ the front-end updates on a state change.
   \item how were individual components \textbf{\emph{unit}-test}ed?
   Unit tests were performend on:
   \begin{itemize}
-    \item DB querying components to validate the correct querying
+    \item DB querying components to validate the correct querying, and the connection itself
     \item the Model to validate the game logic, corner cases and point system
     \item the message service to check the correct message types
   \end{itemize}
-  
-  \item how was communication, interaction, and/or integration among components tested?
+
+  to test these you command \texttt{make test}.
   
   \item how to \textbf{\emph{end-to-end}-test} the system?
   %
   \begin{itemize}
     \item e.g.~production vs.~test environment
   \end{itemize}
+  Testing end-to-end is automated throught Grafana K6 automatic testing
+  in which the K6 framework simulates users registering, logging in and
+  playing a few cards.
+  To run this test one must first deploy the cluster by following the
+  instruction at the Section~\ref{deployment} and then run:
+  \texttt{k6 run register\_test.js}.
 
   \item for each test specify:
   %
