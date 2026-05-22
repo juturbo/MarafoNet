@@ -55,7 +55,7 @@ cluster:
 
 kube:
 	kubectl get nodes
-	kubectl apply -f deployment/kubernetes/
+	kubectl apply -k deployment/kubernetes/
 	kubectl get pods
 
 tunnel: 
@@ -74,7 +74,7 @@ hosts:
 
 # Cleanup targets
 destroy-kube:
-	kubectl delete -f deployment/kubernetes/
+	kubectl delete -k deployment/kubernetes/
 	kubectl delete secret marafonet-tls
 
 destroy-cluster: 
