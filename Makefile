@@ -53,7 +53,7 @@ cluster:
 	minikube addons enable ingress -p marafonet-cluster
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
 
-kube:
+kube: secrets
 	kubectl get nodes
 	kubectl apply -k deployment/kubernetes/
 	kubectl get pods
@@ -76,6 +76,7 @@ hosts:
 destroy-kube:
 	kubectl delete -k deployment/kubernetes/
 	kubectl delete secret marafonet-tls
+	kubectl delete pvc --all
 
 destroy-cluster: 
 	minikube delete -p marafonet-cluster
