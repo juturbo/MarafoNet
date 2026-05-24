@@ -4,8 +4,8 @@ import { check } from 'k6';
 import { sleep } from 'k6';
 
 export const options = {
-    vus: 4,
-    iterations: 4,
+    vus: 3,
+    iterations: 3,
     insecureSkipTLSVerify: true,
 };
 
@@ -39,15 +39,14 @@ export default function () {
                 })
                 console.log("Login response received for user:", randomUser)
             }
-
-            if (reply.type == "game_update") {
+            else if (reply.type == "game_update") {
                 check(reply, {
                     "game state received": (r) => r.type == "game_state",
                 })
                 console.log("Game state received for user:", randomUser)
             }
 
-            checkAndChooseTrump(ws, reply, randomUser)
+            if(checkAndChooseTrump(ws, reply, randomUser)) return
 
             checkAndPlayCard(ws, reply, randomUser)
 
@@ -85,14 +84,12 @@ function login(ws, randomUser, randomPassword) {
 }
 
 function firstJoin(ws) {
-    sleep((Math.random() * 2) + 1)
     ws.send(JSON.stringify({
         type: "first_join",
     }))
 }
 
 function checkAndChooseTrump(ws, reply, username) {
-    sleep((Math.random() * 2) + 1)
     if (reply.type == "game_update" &&
         reply.game.FirstPlayer === username &&
         (!reply.game.TrumpSuit || reply.game.TrumpSuit === 'None')
@@ -104,19 +101,20 @@ function checkAndChooseTrump(ws, reply, username) {
                 suit: 1,
             },
         }))
-        console.log("Trump chosen: 1")
+        console.log(username + " trump chosen: 1")
         return true;
     }
+    return false
 }
 
 function checkAndPlayCard(ws, reply, username) {
     sleep((Math.random() * 2) + 1)
     if (reply.type == "game_update" &&
-        reply.game.CurrentPlayer === username
+        reply.game.CurrentPlayer == username
     ) {
         let cardToPlay;
-        if(reply.game.table != null) {
-            cardToPlay = chooseCard(reply, username, reply.game.table[0].Suit)
+        if(reply.game.Table != null) {
+            cardToPlay = chooseCard(reply, username, reply.game.Table[0].Card.Suit)
         }
         else {
             cardToPlay = reply.game.Hand[0]
@@ -128,11 +126,13 @@ function checkAndPlayCard(ws, reply, username) {
                 suit: cardToPlay.Suit,
             },
         }))
-        console.log("Played card:", cardToPlay)
+        console.log(username + " played card:", cardToPlay)
         return true;
     }
+    return false
 }
 
 function chooseCard(reply, username, suitToPlay) {
     let card = reply.game.Hand.find(card => card.Suit == suitToPlay) || reply.game.Hand[0]
+    return card
 }
