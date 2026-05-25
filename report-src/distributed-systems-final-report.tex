@@ -193,17 +193,14 @@ The system must allow the user to perform the following actions. Each requiremen
     \end{itemize}
 \end{enumerate}
 
-\subsection*{Non-functional requirements}
-The service must be:
+\subsection*{Non-Functional Requirements}
+The system must guarantee the following properties:
+
 \begin{enumerate}
-  \item Consistent: the game state must be the same for all players at any time.
-    In case on reconnection after a network partitioning, the users must retrieve the same or most recent game state.
-  \item Fault-tolerant: in the event of a system's node failure the user must be able to continue playing without interruption
-    by seamlessly reconnecting. (se una partita fallisce devo riconnettermi e tornare dove ero prima, in a consistent way).
-    This also applies to the game's data: on a fault the data must remain integrous.
-  \item Available: on a node's failure the service must be available from another source(?)
-  \item Il client non deve avere memoria e deve dipendere totalmente dalle informazioni ed aggiornamnti di stato che gli vengono mandati
-    dal server. questo permette di evitare che lagente si inventi le cose etc\ldots
+    \item \textbf{Consistency:} The game state must be identical for all players at any given time. Following a network partition, reconnecting users must retrieve the exact or most recent valid game state.
+    \item \textbf{Fault Tolerance:} The system must withstand node failures without data corruption or loss. In the event of a crash, users must be able to reconnect seamlessly and resume their game without interruption.
+    \item \textbf{Availability:} The service must remain accessible; if a node fails, traffic must be routed to another available source to maintain uptime.
+    \item \textbf{Client Statelessness:} The client application must not store internal game state memory. It must depend entirely on state updates pushed by the server, ensuring the server remains the single source of truth and preventing client-side state manipulation.
 \end{enumerate}
 
 \subsection*{Implementation}
