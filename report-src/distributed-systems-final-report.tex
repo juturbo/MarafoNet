@@ -203,13 +203,13 @@ The system must guarantee the following properties:
     \item \textbf{Client Statelessness:} The client application must not store internal game state memory. It must depend entirely on state updates pushed by the server, ensuring the server remains the single source of truth and preventing client-side state manipulation.
 \end{enumerate}
 
-\subsection*{Implementation}
-Different tools can be used to reach the non-functional requirements, namely:
-\begin{enumerate}
-  \item react: updating in real-time the front-end with the state received from the server
-  \item kubernetes: appears as an obvious choice for satisfying the Consistency and Availability requirements.
-  \item WebSocket: essential for detecting disconnections and pushing real-time updates (also strongly linked with React usage)
-\end{enumerate}
+%\subsection*{Implementation}
+%The system realization is constrained by the following technology choices, which emerge as a consequence of the architectural design needed to satisfy the non-functional requirements:
+%\begin{itemize}
+%    \item \textbf{React:} Required for the client-side front-end. It ensures real-time UI updates synchronized with the server game state.
+%    \item \textbf{Kubernetes:} Required for infrastructure management. It handles pod replication, automated recovery, and network routing to satisfy consistency and availability constraints.
+%    \item \textbf{WebSocket:} Required for client-server communication. It provides a persistent, full-duplex connection necessary to push real-time state updates and detect client disconnections.
+%\end{itemize}
 
 %\begin{itemize}
 %  \item The requirements must explain \textbf{what} (not how) the software
