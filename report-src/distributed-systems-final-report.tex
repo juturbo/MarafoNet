@@ -211,115 +211,22 @@ The system must guarantee the following properties:
 %    \item \textbf{WebSocket:} Required for client-server communication. It provides a persistent, full-duplex connection necessary to push real-time state updates and detect client disconnections.
 %\end{itemize}
 
-%\begin{itemize}
-%  \item The requirements must explain \textbf{what} (not how) the software
-%  being produced should do.
-%  %
-%  \begin{itemize}
-%    \item you should not focus on the particular problems, but exclusively on
-%     what you want the application to do.
-%   \end{itemize}
+\subsection*{Relevant Distributed System Features}
+The following distributed system features are explicitly relevant to the project:
 
-%   \item Requirements must be clearly identified, and possibly numbered
-
-%   \item Requirements are divided into:
-%   %
-%   \begin{itemize}
-%     \item \textbf{Functional}: some functionality the software should provide to the user
-
-%     \item \textbf{Non-functional}: requirements that do not directly concern behavioural aspects, such as consistency, availability, etc.
-
-%     \item \textbf{Implementation}: constrain the entire phase of system realization, 
-%     for instance by requiring the use of a specific programming language and/or a specific software tool
-%     %
-%     \begin{itemize}
-%       \item these constraints should be adequately justified by political / economic / administrative reasons\ldots{}
-%       \item \ldots{} otherwise, implementation choices should emerge \emph{as  a consequence of} design
-%     \end{itemize}
-%   \end{itemize}
-
-%   \item If there are domain-specific terms, these should be explained in a glossary
-  
-%   \item Each requirement must have its own \textbf{acceptance criterion}
-%   %
-%   \begin{itemize}
-%     \item these will be important for the validation phase
-%   \end{itemize}
-% \end{itemize}
-
-\subsection{Relevant Distributed System Features}
-\label{ds-features}
-
-Motivate which distributed system features are relevant for your project, and which are not.
-%
 \begin{itemize}
-  \item transparency
-  \begin{itemize}
-    \item does your system need to hide distribution details from users or developers?
-    \item is it important that failures, location, or replication are invisible?
-  \end{itemize}
-  \textbf{[TO-REVIEW] Answer: } the user doesn't see that the system is distributed as a consequence of Kubernetes nature.
-    The developer has to keep in mind that, while coding a distributed node, it will be replicated and not unique,
-    therefore keeping in mind concurrent and distributed best pracitses.
+    \item \textbf{Fault Tolerance and Availability:} Essential. The system must recover from node failures automatically to maintain uninterrupted gameplay and prevent game state corruption.
+    \item \textbf{Transparency:} Essential. Players must perceive the application as a single, centralized entity. The underlying infrastructure, including load balancing, state replication, and failure recovery, must remain invisible to the end user.
+    \item \textbf{Concurrency and Resource Sharing:} Essential. The system must manage parallel access to the shared game state, ensuring synchronized and consistent updates as multiple users execute actions across concurrent matches.
+    \item \textbf{Security:} Moderately relevant. The system requires standard authentication (username and password) to verify player identity and track match participation, but it does not process or store sensitive personal data.
+    \item \textbf{Scalability:} Moderately relevant. Although the regional nature of the game limits expected user growth, the system must accommodate potential traffic spikes. The architecture must support horizontal scaling, allowing the dynamic addition of server instances to distribute heavy loads without degrading response times.
+\end{itemize}
 
-  \item fault tolerance, dependability -- availability, reliability, integrity, maintainability, safety
-  \begin{itemize}
-    \item what happens if a component fails? is uninterrupted service required?
-    \item is data loss or corruption unacceptable?
-    \item how quickly must the system recover from faults?
-  \end{itemize}
-  \textbf{Answer: } as mentioned in the non-functional requirements, availability, fault tolerance and integrity 
-    are core requirements of this system. The game has to be robust against sudden node crashes and the game's data too.
-    the server ensures integrity by being the only source of authenticity, veryfing the legality of the move and the identity of
-    its owner. (todo: expand on fault-tolerance) 
+The following features are considered not relevant for the scope of this project:
 
-  \item scalability
-  \begin{itemize}
-    \item will the system need to handle increasing numbers of users, requests, or data?
-    \item is it expected to grow over time?
-  \end{itemize}
-  \textbf{Answer: } due to the local and folk nature of the game it is not expected to have a big increase in the user base,
-    but the system is ready to scale up (kubernetes can handle it).
-
-  \item security, trust
-  \begin{itemize}
-    \item is sensitive data being processed or stored? ???
-    \item are there multiple user roles with different permissions? no
-    \item is authentication or authorization required? -> yes
-  \end{itemize}
-  \textbf{Answer: } no storage of sensitive data apart from passwords and username. explain passwords and security stack? 
-
-  \item resource sharing
-  \begin{itemize}
-    \item do multiple users or components need access to shared resources?
-    \item is coordination or synchronization needed?
-  \end{itemize}
-  \textbf{Answer: } to access the data multiple nodes make requests to the same database. therefore a synchronization mechanism is needed.
-
-  %\item openness, interoperability, heterogeneity of components
-  %begin{itemize}
-  % \item Will your system interact with external systems or use components built with different technologies?
-  %  \item Is standardization or compatibility important?
-  %\end{itemize}
-
-  %\item evolvability, maintainability
-  %\begin{itemize}
-  %  \item Will the system need to be updated or extended after deployment?
-  %  \item Is long-term maintenance a concern?
-  %\end{itemize}
-
-  %\item performance, concurrency, computation / communication efficiency, bandwidth
-  %\begin{itemize}
-  %  \item Are there strict requirements on response time or throughput?
-  %  \item Will many operations happen in parallel?
-  %  \item Is network usage a concern?
-  %\end{itemize}
-
-  %\item economy, costs  
-  %\begin{itemize}
-  %  \item Are there budget constraints for development, deployment, or operation?
-  %  \item Is minimizing resource usage important?
-  %\end{itemize}
+\begin{itemize}
+    \item \textbf{Openness and Interoperability:} The application is fully self-contained. It does not integrate with external legacy systems, nor does it expose public APIs for third-party consumption.
+    \item \textbf{Economy and Costs:} The system is developed as an academic exercise. Consequently, commercial budget constraints and strict resource-usage minimization for hosting costs are not primary design drivers.
 \end{itemize}
 
 \section{Design}\label{design}
