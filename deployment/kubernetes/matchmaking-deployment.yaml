@@ -21,7 +21,7 @@ spec:
           image: ghcr.io/juturbo/mf-matchmaking:latest
           env:
             - name: ETCD_ENDPOINTS
-              value: "etcd-0.etcd-headless.default.svc.cluster.local:2379,etcd-1.etcd-headless.default.svc.cluster.local:2379,etcd-2.etcd-headless.default.svc.cluster.local:2379"
+              value: "etcd-client:2379"
           ports:
             - name: http
               containerPort: 5000
