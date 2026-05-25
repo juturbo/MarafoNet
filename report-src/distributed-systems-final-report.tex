@@ -143,17 +143,54 @@ Since the user base is concentrated in central Italy, geographical distribution 
   \item \textbf{Marafona:} A specific combination of cards (Ace, Two, and Three of the Trump suit) held by the first player in a match, which awards bonus points.
 \end{itemize}
 
-\subsection*{Functional requirements}
-The user must be able to:
+\subsection*{Functional Requirements}
+The system must allow the user to perform the following actions. Each requirement is tied to a specific acceptance criterion (AC) for validation purposes:
 \begin{enumerate}
-  \item register with a username and a password
-  \item login with the registered credentials
-  \item join a game, play in it and leave it
-  \item review the last hand played during a game (vedi glossario)
-  \item understand the game state at any time (turn, trump decision, points), including the wrong moves they made and why.
-  \item understand when a game is over and who won, and by how many points
-  \item have the ability to play again and quit
-  \item not to wait indefinitely for a disconnected player to play
+    \item \textbf{Account Registration:}
+    \begin{itemize}
+        \item Register a new account using a unique username and password.
+        \item \textit{AC:} The system stores the credentials and allows the user to log in immediately after.
+    \end{itemize}
+    \item \textbf{Authentication:}
+    \begin{itemize}
+        \item Log in using registered credentials.
+        \item \textit{AC:} The system grants access upon submitting correct credentials and explicitly denies access upon incorrect ones.
+    \end{itemize}
+    \item \textbf{Matchmaking:} 
+    \begin{itemize}
+        \item Join a queue to participate in a Game, and leave the queue if desired.
+        \item \textit{AC:} The system places the user in an active Game as soon as the required number of players is reached in the queue.
+    \end{itemize}
+    \item \textbf{Game Interaction:}
+    \begin{itemize}
+        \item Execute valid in-game actions (e.g., playing a card, choosing the Trump suit) during the user's turn.
+        \item \textit{AC:} The system accepts the action, updates the game state, and passes the turn to the next player.
+    \end{itemize}
+    \item \textbf{State Visibility:}
+    \begin{itemize}
+        \item View the real-time game state, including the current turn, active Trump suit, current score, and the cards played in the last Trick.
+        \item \textit{AC:} The client interface accurately reflects the server-side state without requiring manual page reloads.
+    \end{itemize}
+    \item \textbf{Move Validation:}
+    \begin{itemize}
+        \item Receive immediate feedback if an attempted move violates the game rules.
+        \item \textit{AC:} The system rejects the action, maintains the current turn, and displays an error message explaining the rule violation.
+    \end{itemize}
+    \item \textbf{Game Resolution:}
+    \begin{itemize}
+        \item View the final results when a Game concludes.
+        \item \textit{AC:} The system halts gameplay and displays the winning team along with the final score differential.
+    \end{itemize}
+    \item \textbf{Timeout Management:}
+    \begin{itemize}
+        \item Resolve the game without waiting indefinitely if an opponent disconnects.
+        \item \textit{AC:} The system starts a grace period timer upon a player's disconnection. If the player fails to reconnect before the timer expires, the system ends the game, registers a forfeit for the disconnected player, and declares the opposing team the winner.
+    \end{itemize}
+    \item \textbf{Post-Game Actions:}
+    \begin{itemize}
+        \item Choose to queue for a new Game or quit to the main menu after a Game ends.
+        \item \textit{AC:} The system routes the user to the matchmaking queue or the lobby based on their explicit selection.
+    \end{itemize}
 \end{enumerate}
 
 \subsection*{Non-functional requirements}
