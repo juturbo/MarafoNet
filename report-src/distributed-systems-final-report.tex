@@ -620,14 +620,6 @@ in particular:
     This check thats the server correctly verifies the identity of the connection before processing a message.
 \end{itemize}
 
-All the tests are performed in the production environment (the Kubernetes cluster), so to run them 
-the user needs to 
-then follow the instructions at the Section~\ref{deployment} to deploy the system, finally the test can be run with the following command:
-\begin{lstlisting}[language=bash]
-  k6 run test_file.js
-\end{lstlisting}
-
-
 Tests are performed in the production environment (the Kubernetes cluster), so to run them 
 the user needs to:
 \begin{enumerate}
