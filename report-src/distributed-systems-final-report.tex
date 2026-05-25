@@ -593,6 +593,35 @@ the front-end updates on a state change.
 
 \subsection{Automatic Testing}\label{automatic-testing}
 
+
+\subsubsection*{Unit testing}
+
+\subsubsection*{End-to-end testing}
+End-to-end testing is performed throught Grafana K6, a framework that allows the automation
+of load, performance and stress tests. Testing behaviour, users, iterations and checks are 
+defined in JavaScript files and can be run with the K6 CLI.
+
+All the tests are performed in the production environment (the Kubernetes cluster), so to run them 
+the user needs to install K6 from the \href{https://grafana.com/docs/k6/latest/set-up/install-k6/#install-k6}{official documentation}
+then follow the instructions at the Section~\ref{deployment} to deploy the system, finally the test can be run with the following command:
+\begin{lstlisting}[language=bash]
+  k6 run test_file.js
+\end{lstlisting}
+
+All the tests simulate parallel users, open WebSocket connections and send messages to the server,
+in particular:
+\begin{itemize}
+  \item \texttt{newMatch\_test.js} tests the user's registration, login and matchmaking process,
+    verifying that the game is created.
+  \item \texttt{match\_test.js} tests the whole game flow, from registering to playing cards.
+    The users are instructed to play a card coherent to the table's state, otherwise a random card.
+  \item \texttt{failedLogin\_test.js} simulates users trying to login without registering first.
+    This ensures that the systems correctly handles unauthorized access.
+  \item \texttt{wrongMessages\_test.js} simulates the users sending wrong messages without being logged in 
+    to the server such as playing a card or choosing a trump.
+    This check thats the server correctly verifies the identity of the connection before processing a message.
+\end{itemize}
+
 \begin{itemize}
   \item how were individual components \textbf{\emph{unit}-test}ed?
   Unit tests were performend on:
