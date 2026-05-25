@@ -707,6 +707,23 @@ To deploy the application the following software must be installed on the target
 After successful installation the user can proceed to the next section.
 %
 \subsection{Deployment instructions}
+First, the user needs to start the Kubernetes cluster throught \texttt{minikube}:
+\begin{lstlisting}[language=bash]
+  minikube start --nodes 3 --driver=docker -p marafonet-cluster
+\end{lstlisting}
+this will create a local cluster on Docker containers.
+
+Then, the user needs to enable the Ingress controller on the cluster with the following command:
+\begin{lstlisting}[language=bash]
+  	minikube addons enable ingress -p marafonet-cluster
+	kubectl wait --namespace ingress-nginx 
+  \ --for=condition=ready pod 
+  \ --selector=app.kubernetes.io/component=controller
+  \ --timeout=120s
+\end{lstlisting}
+
+\textbf{TODO: ADD SCREENSHOTS OF THE COMMANDS' OUTPUT}
+
 All the Kubernetes' resources are grouped inside a \texttt{kustomize.yaml} file
 that can be used to deploy the system throguht \texttt{kubectl apply} command.
 \begin{lstlisting}[language=bash]
