@@ -4,9 +4,10 @@ import { check } from 'k6';
 import { sleep } from 'k6';
 
 export const options = {
-    vus: 3,
-    iterations: 3,
+    vus: 4,
+    iterations: 4,
     insecureSkipTLSVerify: true,
+    maxDuration: '20m',
 };
 
 export default function () {
@@ -41,7 +42,7 @@ export default function () {
             }
             else if (reply.type == "game_update") {
                 check(reply, {
-                    "game state received": (r) => r.type == "game_state",
+                    "game state received": (r) => r.type == "game_update",
                 })
                 console.log("Game state received for user:", randomUser)
             }
@@ -49,6 +50,16 @@ export default function () {
             if(checkAndChooseTrump(ws, reply, randomUser)) return
 
             checkAndPlayCard(ws, reply, randomUser)
+
+            if(reply.game?.WinnerTeam !== null && reply.game?.WinnerTeam !== undefined) {
+                console.log("Game finished for user:", randomUser, "Winner team:", reply.game.WinnerTeam)
+                check(
+                    reply, {
+                        "game finished": (r) => r.game.WinnerTeam !== null && r.game.WinnerTeam !== undefined,
+                    }
+                )
+                ws.close()
+            }
 
         })
 
