@@ -117,63 +117,18 @@ and take(s) full responsibility for the content of the final report/artifact.
 
 \section{Concept}\label{concept}
 
-The project aims to create a web application that allows users to play the turn-based
-card game Marafone. The physical version of the game is played, under different names
-and with differnt jargon, in various italian regions; this version is based on jargon
-and rules of the Emilia-Romagna's version. 
-Digitalizing the game makes it accessible to expatriate users around the world.
+\subsection*{Product Type}
+This project is a web application accessible via a GUI.
 
-Being turn-based an action is performed every $\sim$30 seconds. The users interact
-with the system through a web interface by registering with a username and a password;
-other than this, no additional data is stored on the database.
-The game is created to be played on a laptop, desktop computer or tablet.
+\subsection*{Use Case}
+The system digitalises the turn-based card game Marafone, applying the Emilia Romagna rules, to provide global accessibility. Users play via a web interface optimised for laptops, desktops, and tablets. The interaction model is turn-based, with players executing an action approximately every 30 seconds. System interaction requires account registration, but data storage is strictly limited to user credentials (username and password), with no additional information retained.
 
-Geographical distribution is not the primary concern, seen that the game has
-a very dense user base in the central italian regions. Other aspects of distributed
-systems such as data integrity, fault tolerance and scalability are characteristics 
-that are beneficial for the final user's experience.
-
-Here you should explain:
-
+\subsection*{Need for Distribution}
+Since the user base is concentrated in central Italy, geographical distribution is a secondary concern. However, a distributed architecture is required to:
 \begin{itemize}
-  \item The type of product developed with that project, for example (non-exhaustive):
-  %
-  \begin{itemize}
-    \item Application (with GUI, be it mobile, web, or desktop)
-    \item Command-line application (CLI could be used by humans or scripts)
-    \item Library
-    \item Web-service(s)
-  \end{itemize}
-
-  \textbf{Answer}: We developed a web application for a turn-based card game typical in italy. 
-
-  \item Use case description:
-  %
-  \begin{itemize}
-    \item \emph{what} is the software doing?
-    \item \emph{where} are the users?
-    \item \emph{when} and \emph{how frequently} do they interact with the system?
-    \item \emph{how} do they \emph{interact} with the system? which \emph{devices} are they using?
-    \item does the system need to \emph{store} user's \textbf{data}? \emph{which}? \emph{where}?
-    \item most likely, there will be \emph{multiple} \textbf{roles}
-  \end{itemize}
-
-  \textbf{Answer}: maybe expand on the previous answer. Digitalizing the game makes it accessible to passionate expat users around the world.
-  Being turn-based, an action is performed every $\sim$30 seconds, on average. The users interact with the system through a web interface by registering with a 
-  username and a password, other than this no additional data is stored on the database. The game is created for a large screen such as a laptop, desktop or tablet.
-
-  \item Why is distribution needed?
-  %
-  \begin{itemize}
-    \item geographically distributed environments?
-    \item computation speedup? -> backend
-    \item resource sharing? -> etcd
-    \item fault tolerance? -> etcd
-    \item other reasons?
-  \end{itemize}
-  %
-  \textbf{Answer}: Being stricly diffused in the central italian regions, geographical distribution is not the primary concern.
-  The distribution favors data integrity allowing to distribute data in a robust way; morover it allows parallelization of computation and overall stability of the system under load.  
+    \item Guarantee \textbf{data integrity} and robust state management across the system.
+    \item Enable \textbf{parallel computation} for game logic and concurrent matches.
+    \item Maintain \textbf{system stability and fault tolerance} under heavy load and in the case of node failures.
 \end{itemize}
 
 \section{Requirements elicitation and analysis}\label{requirements}
