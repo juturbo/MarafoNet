@@ -2,6 +2,7 @@ package service
 
 import (
 	"MarafoNet/internal/model"
+	"MarafoNet/internal/repository"
 	gameLogic "MarafoNet/internal/utils/gamelogic"
 	"context"
 	"encoding/json"
@@ -9,17 +10,17 @@ import (
 )
 
 type GameService struct {
-	etcdService *EtcdService
+	gameRepository repository.GameRepository
 }
 
-func NewGameService(etcdService *EtcdService) *GameService {
+func NewGameService(gameRepository repository.GameRepository) *GameService {
 	return &GameService{
-		etcdService: etcdService,
+		gameRepository: gameRepository,
 	}
 }
 
 func (gameService *GameService) StartGame(ctx context.Context, playerNames []string) (gameId string, err error) {
-	gameId, err = gameService.etcdService.GetNextGameID()
+	gameId, err = gameService.gameRepository.GetNextGameID()
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +35,7 @@ func (gameService *GameService) StartGame(ctx context.Context, playerNames []str
 		return "", err
 	}
 
-	if err := gameService.etcdService.PutNewGame(ctx, gameId, gameJson); err != nil {
+	if err := gameService.gameRepository.PutNewGame(ctx, gameId, gameJson); err != nil {
 		return "", fmt.Errorf("failed to create new game in etcd: %w", err)
 	}
 
@@ -84,7 +85,7 @@ func (gameService *GameService) PlayCard(ctx context.Context, gameId string, pla
 }
 
 func (gameService *GameService) applyUpdate(ctx context.Context, gameId string, updater func(model.Game) (model.Game, error)) error {
-	gameJson, revision, err := gameService.etcdService.GetGameJsonAndRevision(ctx, gameId)
+	gameJson, revision, err := gameService.gameRepository.GetGameJsonAndRevision(ctx, gameId)
 	if err != nil {
 		return err
 	}
@@ -104,5 +105,5 @@ func (gameService *GameService) applyUpdate(ctx context.Context, gameId string, 
 		return err
 	}
 
-	return gameService.etcdService.PutUpdatedGameJsonIfRevisionMatch(ctx, gameId, updatedGameJson, revision)
+	return gameService.gameRepository.PutUpdatedGameJsonIfRevisionMatch(ctx, gameId, updatedGameJson, revision)
 }
