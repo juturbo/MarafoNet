@@ -24,8 +24,6 @@ type GameUpdateMessage struct {
 // Callback function type for when game ID is assigned
 type OnGameIDCallback func(gameID string)
 
-type handler func(ctx context.Context, id string) (<-chan []byte, context.CancelFunc)
-
 // Returns a new Matchmaking hub
 func NewMatchmakingHub(etcdService *service.EtcdService, gameService *service.GameService) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
