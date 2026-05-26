@@ -8,13 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPrintCard(t *testing.T) {
-	card := model.Card{Suit: model.Clubs, Rank: model.Ace}
-	expected := "Asso di Bastoni"
-	actual := card.String()
-	assert.Equal(t, expected, actual, "Expected %s, got %s", expected, actual)
-}
-
 func TestDeckLenght(t *testing.T) {
 	deck := NewShuffledDeck()
 	expectedCardCount := int(model.EndRank) * int(model.EndSuit)

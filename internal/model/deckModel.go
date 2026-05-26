@@ -1,10 +1,4 @@
-//go:generate stringer -type=Suit,Rank
-
 package model
-
-import (
-	"strings"
-)
 
 const (
 	ACE_POINTS      = 3
@@ -54,18 +48,6 @@ type Rank uint8
 type Hand []Card
 
 type Deck []Card
-
-func (card Card) String() string {
-	return card.Rank.String() + " di " + card.Suit.String()
-}
-
-func (hand Hand) String() string {
-	strs := make([]string, len(hand))
-	for i, card := range hand {
-		strs[i] = card.String()
-	}
-	return strings.Join(strs, ", ")
-}
 
 func (card1 Card) Equal(card2 Card) bool {
 	var isValid = false

@@ -2,7 +2,6 @@ package service
 
 import (
 	"MarafoNet/internal/model"
-	"fmt"
 	"math/rand"
 )
 
@@ -38,12 +37,6 @@ func newSortedDeck() model.Deck {
 		}
 	}
 	return deck
-}
-
-func printDeck(deck model.Deck) {
-	for _, card := range deck {
-		fmt.Printf("%s\n", card.String())
-	}
 }
 
 func drawCard(deck model.Deck) (model.Card, model.Deck) {

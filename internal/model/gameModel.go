@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"strings"
 )
 
 const (
@@ -83,19 +82,4 @@ func (game Game) ViewForPlayer(playerName string) (GameView, error) {
 		return GameView{}, fmt.Errorf("player %q not found in game", playerName)
 	}
 	return gameView, nil
-}
-
-// TODO: check
-func (game Game) String() string {
-	var sb strings.Builder
-	for i, player := range game.Players {
-		sb.WriteString("Player " + string(rune(i+1)) + ": " + player.String() + "\n")
-	}
-	sb.WriteString("Table: " + fmt.Sprintf("%+v", game.Table) + "\n")
-	sb.WriteString("Trump Suit: " + game.TrumpSuit.String() + "\n")
-	return sb.String()
-}
-
-func (player Player) String() string {
-	return player.Name + " (Team " + string(rune(player.TeamId+'0')) + ") - Hand: " + player.Hand.String()
 }
