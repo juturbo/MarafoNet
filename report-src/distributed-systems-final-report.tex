@@ -660,14 +660,14 @@ After successful installation the user can proceed to the next section.
 \subsection{Deployment instructions}
 First, the user needs to start the Kubernetes cluster throught \texttt{minikube}:
 \begin{lstlisting}[language=bash]
-  minikube start --nodes 3 --driver=docker -p marafonet-cluster
+  ~$ minikube start --nodes 3 --driver=docker -p marafonet-cluster
 \end{lstlisting}
 this will create a local cluster on Docker containers.
 
 Then, the user needs to enable the Ingress controller on the cluster with the following command:
 \begin{lstlisting}[language=bash]
-  	minikube addons enable ingress -p marafonet-cluster
-	kubectl wait --namespace ingress-nginx 
+  ~$ minikube addons enable ingress -p marafonet-cluster
+	~$ kubectl wait --namespace ingress-nginx 
   \ --for=condition=ready pod 
   \ --selector=app.kubernetes.io/component=controller
   \ --timeout=120s
@@ -675,10 +675,24 @@ Then, the user needs to enable the Ingress controller on the cluster with the fo
 
 \textbf{TODO: ADD SCREENSHOTS OF THE COMMANDS' OUTPUT}
 
+Once the cluster is running, the user needs to create TLS certificates and the
+relative Kubernetes secret that will be used for HTTPS connection, to do this
+\texttt{OpenSSL} can be used. In a temporary directory, run:
+\begin{lstlisting}[language=bash]
+  	~$ openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout \
+    ./tls.key \ 
+    -out ./tls.crt \
+    -subj "/CN=localhost" -days 365
+\end{lstlisting}
+Then the secret can be created with the following command:
+\begin{lstlisting}[language=bash]
+kubectl create secret tls marafonet-tls --key ./tls.key --cert ./tls.crt
+\end{lstlisting}
+
 All the Kubernetes' resources are grouped inside a \texttt{kustomize.yaml} file
 that can be used to deploy the system throguht \texttt{kubectl apply} command.
 \begin{lstlisting}[language=bash]
-  kubectl apply -k github.com/juturbo/marafonet/deployment/kubernetes
+  ~$ kubectl apply -k github.com/juturbo/marafonet/deployment/kubernetes
 \end{lstlisting}
 the command should output the following:
 \begin{figure}[H]
