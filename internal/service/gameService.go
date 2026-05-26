@@ -2,7 +2,7 @@ package service
 
 import (
 	"MarafoNet/internal/model"
-	gameLogic "MarafoNet/internal/utils/gameLogic"
+	gameLogic "MarafoNet/internal/utils/gamelogic"
 	"context"
 	"encoding/json"
 	"fmt"

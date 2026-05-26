@@ -1,7 +1,7 @@
 package service
 
 import (
-	"MarafoNet/model"
+	"MarafoNet/internal/model"
 	"context"
 	"fmt"
 	"os"

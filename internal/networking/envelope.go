@@ -2,7 +2,6 @@ package networking
 
 import (
 	"MarafoNet/internal/model"
-	userModel "MarafoNet/model"
 	"encoding/json"
 )
 
@@ -29,7 +28,7 @@ const (
 type Envelope interface {
 	GetMessageType() MessageType
 	GetPayload() json.RawMessage
-	GetUser() userModel.User
+	GetUser() model.User
 	GetPlayerName() string
 	GetPassword() string
 	EqualsType(otherType MessageType) bool
@@ -39,7 +38,7 @@ type Envelope interface {
 type WSEnvelope struct {
 	MessageType string          `json:"type"`
 	Payload     json.RawMessage `json:"payload"`
-	User        userModel.User  `json:"user"`
+	User        model.User      `json:"user"`
 }
 
 type playCardPayLoad struct {
@@ -69,7 +68,7 @@ func (e WSEnvelope) GetPayload() json.RawMessage {
 	return e.Payload
 }
 
-func (e WSEnvelope) GetUser() userModel.User {
+func (e WSEnvelope) GetUser() model.User {
 	return e.User
 }
 
