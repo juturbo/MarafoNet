@@ -23,16 +23,6 @@ func TestDeckCorrectness(t *testing.T) {
 	}
 }
 
-// Might fail. To be removed after testing.
-func TestDeckShuffling(t *testing.T) {
-	iterations := 100
-	for range iterations {
-		firstDeck := NewShuffledDeck()
-		secondDeck := NewShuffledDeck()
-		assert.NotEqual(t, firstDeck, secondDeck, "Expected shuffled decks to be different")
-	}
-}
-
 func TestDrawCards(t *testing.T) {
 	numberOfCardsToDraw := 10
 	deck := NewShuffledDeck()
