@@ -2,6 +2,7 @@ package main
 
 import (
 	"MarafoNet/internal/matchmaking"
+	"MarafoNet/internal/repository"
 	"MarafoNet/internal/service"
 	"log"
 	"net/http"
@@ -33,7 +34,7 @@ var etcdEndpoint = getEtcdEndpoints()
 
 func main() {
 	printHeader()
-	etcdService, err := service.NewEtcdService(etcdEndpoint, 5*time.Second)
+	etcdService, err := repository.NewEtcdService(etcdEndpoint, 5*time.Second)
 	if err != nil {
 		log.Fatalf("failed to connect to etcd: %v", err)
 	}

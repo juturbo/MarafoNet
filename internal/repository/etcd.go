@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"MarafoNet/internal/model"
@@ -13,22 +13,19 @@ import (
 	concurrency "go.etcd.io/etcd/client/v3/concurrency"
 )
 
-const GAME_COUNTER_PATH = "global/game_counter"
-const GAME_PREFIX = "game/%d"
-const GAME_TIMEOUT_PREFIX = "game_timeout/"
-const GAME_TIMEOUT_PATH = GAME_TIMEOUT_PREFIX + "%s/%s" // game_timeout/{gameId}/{playerName}
-const USER_QUEUE_PATH = "user_queue/"
-const USERS_NAME_PATH = "users/%s"
-const USERS_PASSWORD_PATH = "users/%s/password"
-const USERS_IS_CONNECTED_PATH = "users/%s/is_connected"
-const USERS_CURRENT_GAME_PATH = "users/%s/current_game"
 const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
 const KEEP_ALIVE_TTL = 120
+const DEFAULT_MAX_RETRIES = 3
+const DEFAULT_INITIAL_BACKOFF = 100 * time.Millisecond
+const DEFAULT_MAX_BACKOFF = 10 * time.Second
+const DEFAULT_BACKOFF_MULTIPLIER = 2.0
 
 type EtcdService struct {
-	client *clientv3.Client
+	client         *clientv3.Client
+	pathBuilder    PathBuilder
+	watcherFactory WatcherFactory
 }
 
 // GameTimeoutEvent is emitted by the watcher when a user's game timeout lease expires.
@@ -44,42 +41,48 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 		DialKeepAliveTime:    5 * time.Second,
 		DialKeepAliveTimeout: 3 * time.Hour,
 	}
-
 	client, err := clientv3.New(cfg)
 	if err != nil {
 		return nil, err
 	}
 	return &EtcdService{
-		client: client,
+		client:         client,
+		pathBuilder:    NewPathBuilder(),
+		watcherFactory: NewWatcherFactory(client),
 	}, nil
 }
 
 func (etcdService *EtcdService) GetNextGameID() (gameId string, err error) {
-	key := GAME_COUNTER_PATH
+	ctx := context.Background()
 
-	var next int
-	transactionResponse, err := concurrency.NewSTM(etcdService.client, func(stm concurrency.STM) error {
-		val := stm.Get(key)
-		if val == "" {
-			next = 1
-		} else {
-			current, convErr := strconv.Atoi(val)
-			if convErr != nil {
-				return convErr
+	return gameId, etcdService.retryWithBackoff(ctx, "GetNextGameID", func() error {
+		key := etcdService.pathBuilder.GameCounterPath()
+
+		var next int
+		transactionResponse, err := concurrency.NewSTM(etcdService.client, func(stm concurrency.STM) error {
+			val := stm.Get(key)
+			if val == "" {
+				next = 1
+			} else {
+				current, convErr := strconv.Atoi(val)
+				if convErr != nil {
+					return convErr
+				}
+				next = current + 1
 			}
-			next = current + 1
+			stm.Put(key, strconv.Itoa(next))
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		stm.Put(key, strconv.Itoa(next))
+		if !transactionResponse.Succeeded {
+			return fmt.Errorf("failed to get next game ID")
+		}
+
+		gameId = etcdService.pathBuilder.GamePath(strconv.Itoa(next))
 		return nil
 	})
-	if err != nil {
-		return "", err
-	}
-	if !transactionResponse.Succeeded {
-		return "", fmt.Errorf("failed to get next game ID")
-	}
-
-	return fmt.Sprintf(GAME_PREFIX, next), nil
 }
 
 func (etcdService *EtcdService) PutNewGame(ctx context.Context, key string, gameJson []byte) error {
@@ -128,7 +131,7 @@ func (etcdService *EtcdService) PutUpdatedGameJsonIfRevisionMatch(ctx context.Co
 }
 
 func (etcdService *EtcdService) PutUserIntoQueue(ctx context.Context, playerName string) (err error) {
-	key := USER_QUEUE_PATH + playerName
+	key := etcdService.pathBuilder.UserQueuePath(playerName)
 
 	if err = etcdService.putValue(ctx, key, playerName); err != nil {
 		return err
@@ -138,7 +141,7 @@ func (etcdService *EtcdService) PutUserIntoQueue(ctx context.Context, playerName
 }
 
 func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []string, err error) {
-	key := USER_QUEUE_PATH
+	key := etcdService.pathBuilder.UserQueuePrefix()
 
 	response, err := etcdService.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
@@ -153,22 +156,22 @@ func (etcdService *EtcdService) GetUserQueue(ctx context.Context) (userQueue []s
 }
 
 func (etcdService *EtcdService) RemoveUserFromQueue(ctx context.Context, playerName string) error {
-	key := USER_QUEUE_PATH + playerName
+	key := etcdService.pathBuilder.UserQueuePath(playerName)
 	return etcdService.deleteKey(ctx, key)
 }
 
 func (etcdService *EtcdService) SetUserCurrentGameId(ctx context.Context, playerName string, gameId string) error {
-	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
+	key := etcdService.pathBuilder.UserCurrentGamePath(playerName)
 	return etcdService.putValue(ctx, key, gameId)
 }
 
 func (etcdService *EtcdService) GetUserCurrentGameId(ctx context.Context, playerName string) (string, error) {
-	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
+	key := etcdService.pathBuilder.UserCurrentGamePath(playerName)
 	return etcdService.getValue(ctx, key)
 }
 
 func (etcdService *EtcdService) RemoveUserCurrentGameId(ctx context.Context, playerName string) error {
-	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, playerName)
+	key := etcdService.pathBuilder.UserCurrentGamePath(playerName)
 	return etcdService.deleteKey(ctx, key)
 }
 
@@ -176,9 +179,9 @@ func (etcdService *EtcdService) RegisterUser(ctx context.Context, user model.Use
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	userKey := fmt.Sprintf(USERS_NAME_PATH, user.Name)
-	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
-	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, user.Name)
+	userKey := etcdService.pathBuilder.UserPath(user.Name)
+	passwordKey := etcdService.pathBuilder.UserPasswordPath(user.Name)
+	isConnectedKey := etcdService.pathBuilder.UserConnectionPath(user.Name)
 	hashedPassword, err := user.GeneratePasswordHash()
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
@@ -220,7 +223,8 @@ func (etcdService *EtcdService) LoginUser(ctx context.Context, user model.User) 
 	}
 
 	if etcdService.isUserInAGame(ctx, user.Name) {
-		return etcdService.removeUserTimeout(ctx, user.Name)
+		err := etcdService.removeUserTimeout(ctx, user.Name)
+		return err
 	}
 
 	return nil
@@ -243,98 +247,81 @@ func (etcdService *EtcdService) OnUserDisconnect(ctx context.Context, playerName
 }
 
 func (etcdService *EtcdService) WatchGame(ctx context.Context, gameId string) (<-chan []byte, context.CancelFunc) {
-	return etcdService.watchKey(ctx, gameId)
+	return etcdService.watcherFactory.WatchBytes(ctx, WatcherConfig{
+		Key:       gameId,
+		EventType: clientv3.EventTypePut,
+	})
 }
 
 func (etcdService *EtcdService) WatchUserLobby(ctx context.Context, username string) (<-chan []byte, context.CancelFunc) {
-	key := fmt.Sprintf(USERS_CURRENT_GAME_PATH, username)
-	return etcdService.watchKey(ctx, key)
+	return etcdService.watcherFactory.WatchBytes(ctx, WatcherConfig{
+		Key:       etcdService.pathBuilder.UserCurrentGamePath(username),
+		EventType: clientv3.EventTypePut,
+	})
 }
 
 func (etcdService *EtcdService) WatchUserQueue(ctx context.Context) (<-chan []string, context.CancelFunc) {
-	key := USER_QUEUE_PATH
-
-	channel := make(chan []string)
-	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, key, clientv3.WithPrefix())
-	go func() {
-		defer close(channel)
-		for watchResponse := range watchChannel {
-			if watchResponse.Err() != nil {
-				return
-			}
-			for _, event := range watchResponse.Events {
-				if event.Type == clientv3.EventTypePut {
-					var userQueue, _ = etcdService.GetUserQueue(ctx)
-					channel <- userQueue
-				}
-			}
-		}
-	}()
-
-	return channel, cancel
+	return etcdService.watcherFactory.WatchStrings(ctx, WatcherConfig{
+		Key:       etcdService.pathBuilder.UserQueuePrefix(),
+		Prefix:    true,
+		EventType: clientv3.EventTypePut,
+		Transform: func(eventValue []byte) (interface{}, error) {
+			return etcdService.GetUserQueue(ctx)
+		},
+	})
 }
 
 func (etcdService *EtcdService) WatchUserTimeoutLease(ctx context.Context) (<-chan GameTimeoutEvent, context.CancelFunc) {
-	channel := make(chan GameTimeoutEvent)
-	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, GAME_TIMEOUT_PREFIX, clientv3.WithPrefix())
-	go func() {
-		defer close(channel)
-		for watchResponse := range watchChannel {
-			if watchResponse.Err() != nil {
-				return
-			}
-			for _, event := range watchResponse.Events {
-				if event.Type == clientv3.EventTypeDelete {
-					if event.Kv == nil {
-						continue
-					}
-					timeoutKey := string(event.Kv.Key)
-					if !strings.HasPrefix(timeoutKey, GAME_TIMEOUT_PREFIX) {
-						continue
-					}
-					trimmed := strings.TrimPrefix(timeoutKey, GAME_TIMEOUT_PREFIX) // "{gameId}/{username}"
-					last := strings.LastIndex(trimmed, "/")
-					if last <= 0 {
-						continue
-					}
-					gameId := trimmed[:last]
-					username := trimmed[last+1:]
-					isOnline, err := etcdService.isUserConnected(ctx, username)
-					if err == nil && !isOnline { // If lease expired and user is still offline, notify timeout
-						channel <- GameTimeoutEvent{GameID: gameId, Username: username}
-					}
-				}
-			}
-		}
-	}()
-
-	return channel, cancel
-}
-
-func (etcdService *EtcdService) watchKey(ctx context.Context, key string, opts ...clientv3.OpOption) (<-chan []byte, context.CancelFunc) {
-	channel := make(chan []byte)
-	watchCtx, cancel := context.WithCancel(ctx)
-	watchChannel := etcdService.client.Watch(watchCtx, key, opts...)
-	go func() {
-		defer close(channel)
-		for watchResponse := range watchChannel {
-			if watchResponse.Err() != nil {
-				return
-			}
-			for _, event := range watchResponse.Events {
-				if event.Type == clientv3.EventTypePut {
-					channel <- event.Kv.Value
-				}
-			}
-		}
-	}()
-	return channel, cancel
+	return etcdService.watcherFactory.WatchTimeoutEvents(ctx, WatcherConfig{
+		Key:       etcdService.pathBuilder.GameTimeoutPrefix(),
+		Prefix:    true,
+		EventType: clientv3.EventTypeDelete,
+		Transform: func(keyPath []byte) (interface{}, error) {
+			return etcdService.parseGameTimeoutEvent(keyPath)
+		},
+		Validate: func(event interface{}) bool {
+			timeoutEvent := event.(GameTimeoutEvent)
+			isOnline, err := etcdService.isUserConnected(ctx, timeoutEvent.Username)
+			return err == nil && !isOnline
+		},
+	})
 }
 
 func (etcdService *EtcdService) Close() error {
 	return etcdService.client.Close()
+}
+
+func (etcdService *EtcdService) retryWithBackoff(
+	ctx context.Context,
+	operation string,
+	fn func() error,
+) error {
+	var lastErr error
+	backoff := DEFAULT_INITIAL_BACKOFF
+
+	for attempt := 0; attempt <= DEFAULT_MAX_RETRIES; attempt++ {
+		err := fn()
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		if attempt < DEFAULT_MAX_RETRIES {
+			select {
+			case <-time.After(backoff):
+				if backoff < DEFAULT_MAX_BACKOFF {
+					backoff = time.Duration(float64(backoff) * DEFAULT_BACKOFF_MULTIPLIER)
+					if backoff > DEFAULT_MAX_BACKOFF {
+						backoff = DEFAULT_MAX_BACKOFF
+					}
+				}
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
+
+	return fmt.Errorf("operation %q failed after %d retries: %w", operation, DEFAULT_MAX_RETRIES, lastErr)
 }
 
 func (etcdService *EtcdService) getValue(ctx context.Context, key string) (string, error) {
@@ -389,18 +376,20 @@ func (etcdService *EtcdService) putIfComparison(ctx context.Context, key string,
 }
 
 func (etcdService *EtcdService) verifyUser(ctx context.Context, user model.User) (bool, error) {
-	passwordKey := fmt.Sprintf(USERS_PASSWORD_PATH, user.Name)
+	passwordKey := etcdService.pathBuilder.UserPasswordPath(user.Name)
 
 	hashedPassword, err := etcdService.getValue(ctx, passwordKey)
 	if err != nil {
 		return false, err
 	}
-
+	if hashedPassword == "" {
+		return false, nil
+	}
 	return user.CheckPassword(hashedPassword), nil
 }
 
 func (etcdService *EtcdService) updateUserConnectionStatus(ctx context.Context, playerName string, expect string, newState string) error {
-	isConnectedKey := fmt.Sprintf(USERS_IS_CONNECTED_PATH, playerName)
+	isConnectedKey := etcdService.pathBuilder.UserConnectionPath(playerName)
 
 	txn := etcdService.client.Txn(ctx).
 		If(
@@ -436,11 +425,14 @@ func (etcdService *EtcdService) setUserGameTimeout(ctx context.Context, playerNa
 
 	lease, err := etcdService.client.Grant(ctx, KEEP_ALIVE_TTL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to grant lease: %w", err)
 	}
 
-	gameTimeoutKey := fmt.Sprintf(GAME_TIMEOUT_PATH, gameId, playerName)
+	gameTimeoutKey := etcdService.pathBuilder.GameTimeoutPath(gameId, playerName)
 	_, err = etcdService.client.Put(ctx, gameTimeoutKey, TIMEOUT, clientv3.WithLease(lease.ID))
+	if err != nil {
+		return fmt.Errorf("failed to set game timeout: %w", err)
+	}
 	return nil
 }
 
@@ -450,18 +442,40 @@ func (etcdService *EtcdService) removeUserTimeout(ctx context.Context, playerNam
 		return fmt.Errorf("failed to get user's current game ID: %w", err)
 	}
 
-	gameTimeoutKey := fmt.Sprintf(GAME_TIMEOUT_PATH, gameId, playerName)
+	gameTimeoutKey := etcdService.pathBuilder.GameTimeoutPath(gameId, playerName)
 
 	return etcdService.deleteKey(ctx, gameTimeoutKey)
 }
 
+func (etcdService *EtcdService) parseGameTimeoutEvent(keyPath []byte) (GameTimeoutEvent, error) {
+	timeoutKey := string(keyPath)
+	prefix := etcdService.pathBuilder.GameTimeoutPrefix()
+	if !strings.HasPrefix(timeoutKey, prefix) {
+		return GameTimeoutEvent{}, fmt.Errorf("invalid timeout key: %s", timeoutKey)
+	}
+
+	trimmed := strings.TrimPrefix(timeoutKey, prefix) // "{gameId}/{username}"
+	last := strings.LastIndex(trimmed, "/")
+	if last <= 0 {
+		return GameTimeoutEvent{}, fmt.Errorf("invalid timeout key format: %s", trimmed)
+	}
+
+	gameId := trimmed[:last]
+	username := trimmed[last+1:]
+
+	return GameTimeoutEvent{GameID: gameId, Username: username}, nil
+}
+
 func (etcdService *EtcdService) isUserInAGame(ctx context.Context, playerName string) bool {
 	gameId, err := etcdService.GetUserCurrentGameId(ctx, playerName)
-	return gameId != "" && err == nil
+	if err != nil {
+		return false
+	}
+	return gameId != ""
 }
 
 func (etcdService *EtcdService) isUserConnected(ctx context.Context, playerName string) (bool, error) {
-	key := fmt.Sprintf(USERS_IS_CONNECTED_PATH, playerName)
+	key := etcdService.pathBuilder.UserConnectionPath(playerName)
 	value, err := etcdService.getValue(ctx, key)
 	if err != nil {
 		return false, err
