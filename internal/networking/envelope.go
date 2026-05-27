@@ -28,10 +28,19 @@ const (
 type Envelope interface {
 	GetMessageType() MessageType
 	GetPayload() json.RawMessage
-	GetUser() model.User
 	GetPlayerName() string
-	GetPassword() string
 	EqualsType(otherType MessageType) bool
+}
+
+type Credentials interface {
+	GetPassword() string
+	GetUsername() string
+}
+
+type AuthEnvelope interface {
+	Envelope
+	Credentials
+	GetUser() model.User
 }
 
 // A WebSocket message from the client.
@@ -78,6 +87,10 @@ func (e WSEnvelope) GetPlayerName() string {
 
 func (e WSEnvelope) GetPassword() string {
 	return e.User.Password
+}
+
+func (e WSEnvelope) GetUsername() string {
+	return e.User.Name
 }
 
 // Returns true if the message type of the envelope is equal to the given type.
