@@ -444,16 +444,3 @@ func setMatchWinner(game model.Game, winnerTeam int) model.Game {
 	}
 	return game
 }
-
-func printMatch(game model.Game) {
-	for i := 0; i < len(game.Players); i++ {
-		fmt.Printf("Team %d\t%s\tHand: %v\n", game.Players[i].TeamId+1, game.Players[i].Name, game.Players[i].Hand)
-	}
-	for i := range model.NUMBER_OF_TEAMS {
-		fmt.Printf("Team %d Match Points: %d, Total Points: %d\n", i+1, game.MatchPoints[i], game.TotalPoints[i])
-	}
-	fmt.Printf("Table: %+v\n", game.Table)
-	fmt.Printf("Trump Suit: %s\n", game.TrumpSuit)
-	fmt.Printf("First Player: %s\n\n\n", game.FirstPlayer)
-	//fmt.Printf("Remaining deck: %v\n", deck)
-}
