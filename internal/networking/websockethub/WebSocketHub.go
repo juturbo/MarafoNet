@@ -2,7 +2,7 @@ package websockethub
 
 import (
 	"MarafoNet/internal/matchmaking"
-	"MarafoNet/internal/service"
+	"MarafoNet/internal/repository"
 	"context"
 	"encoding/json"
 	"log"
@@ -14,8 +14,8 @@ import (
 type WebSocketHub struct {
 	Connection             *websocket.Conn
 	WriteChannel           chan json.RawMessage
-	StorageService         *service.EtcdService
-	GameService            *service.GameService
+	WebSocketRepository    repository.WebSocketRepository
+	GameService            repository.GameServicer
 	MatchmakingService     *matchmaking.MatchmakingHub
 	playerName             string
 	playerNameOnce         sync.Once
@@ -29,15 +29,15 @@ type cancelFunc func()
 
 func CreateWebSocketHub(
 	Conn *websocket.Conn,
-	GameService *service.GameService,
-	StorageService *service.EtcdService,
+	GameService repository.GameServicer,
+	WebSocketDeps repository.WebSocketRepository,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) *WebSocketHub {
 	var hub WebSocketHub
 	hub.Connection = Conn
 	hub.WriteChannel = make(chan json.RawMessage, 10)
 	hub.GameService = GameService
-	hub.StorageService = StorageService
+	hub.WebSocketRepository = WebSocketDeps
 	hub.MatchmakingService = MatchmakingService
 	hub.closeOnce = sync.Once{}
 	hub.isAuthenticated = false
@@ -101,6 +101,6 @@ func closeConnection(hub *WebSocketHub) {
 	close(hub.WriteChannel)
 	hub.Connection.Close()
 	hub.CancelWatcher()
-	hub.StorageService.RemoveUserFromQueue(context.Background(), hub.playerName)
-	hub.StorageService.OnUserDisconnect(context.Background(), hub.playerName)
+	hub.WebSocketRepository.RemoveUserFromQueue(context.Background(), hub.playerName)
+	hub.WebSocketRepository.OnUserDisconnect(context.Background(), hub.playerName)
 }

@@ -1,7 +1,7 @@
 package matchmaking
 
 import (
-	"MarafoNet/internal/service"
+	"MarafoNet/internal/repository"
 	"context"
 	"encoding/json"
 	"log"
@@ -11,11 +11,10 @@ import (
 type MatchmakingHub struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
-	etcdService  *service.EtcdService
-	gameService  *service.GameService
+	etcdService  repository.StorageServicer
+	gameService  repository.GameServicer
 	queueWatcher context.CancelFunc
 }
-
 type GameUpdateMessage struct {
 	Type string          `json:"type"`
 	Game json.RawMessage `json:"game"`
@@ -25,7 +24,7 @@ type GameUpdateMessage struct {
 type OnGameIDCallback func(gameID string)
 
 // Returns a new Matchmaking hub
-func NewMatchmakingHub(etcdService *service.EtcdService, gameService *service.GameService) *MatchmakingHub {
+func NewMatchmakingHub(etcdService repository.StorageServicer, gameService repository.GameServicer) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
 	log.Printf("started Matchmaking service")
 	return &MatchmakingHub{
@@ -36,11 +35,11 @@ func NewMatchmakingHub(etcdService *service.EtcdService, gameService *service.Ga
 	}
 }
 
-func (hub *MatchmakingHub) GetStorageService() *service.EtcdService {
+func (hub *MatchmakingHub) GetStorageService() repository.StorageServicer {
 	return hub.etcdService
 }
 
-func (hub *MatchmakingHub) GetGameService() *service.GameService {
+func (hub *MatchmakingHub) GetGameService() repository.GameServicer {
 	return hub.gameService
 }
 
