@@ -3,8 +3,8 @@ package networking
 import (
 	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/networking/websockethub"
-	"MarafoNet/internal/repository"
 	"MarafoNet/internal/service"
+	"MarafoNet/internal/storage"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,7 +21,7 @@ func ServeWS(
 	Conn *websocket.Conn,
 	GracefulShutdownContext context.Context,
 	GameService service.GameService,
-	WebSocketRepository repository.WebSocketRepository,
+	WebSocketRepository storage.WebSocketRepository,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) {
 	hub := websockethub.CreateWebSocketHub(Conn, GameService, WebSocketRepository, MatchmakingService)

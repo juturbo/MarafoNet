@@ -2,7 +2,7 @@ package service
 
 import (
 	"MarafoNet/internal/model"
-	"MarafoNet/internal/repository"
+	"MarafoNet/internal/storage"
 	gameLogic "MarafoNet/internal/utils/gamelogic"
 	"context"
 	"encoding/json"
@@ -19,10 +19,10 @@ type GameService interface {
 }
 
 type gameService struct {
-	storage repository.GameStorage
+	storage storage.GameStorage
 }
 
-func NewGameService(storage repository.GameStorage) GameService {
+func NewGameService(storage storage.GameStorage) GameService {
 	return &gameService{
 		storage: storage,
 	}

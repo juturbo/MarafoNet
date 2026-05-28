@@ -1,4 +1,4 @@
-package repository
+package storage
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 
 // WatcherConfig defines how a watcher should behave
 type WatcherConfig struct {
-	Key       string
-	Prefix    bool
-	EventType mvccpb.Event_EventType
-	Transform func([]byte) (interface{}, error) // Convert event value → output type
-	Validate  func(interface{}) bool            // Optional validation gate before sending
+	Key           string
+	Prefix        bool
+	EventType     mvccpb.Event_EventType
+	StartRevision int64
+	Transform     func([]byte) (interface{}, error) // Convert event value → output type
+	Validate      func(interface{}) bool            // Optional validation gate before sending
 }
 
 type WatcherFactory interface {
@@ -39,6 +40,9 @@ func (w *watcherFactoryImpl) WatchBytes(ctx context.Context, config WatcherConfi
 		opts := []clientv3.OpOption{}
 		if config.Prefix {
 			opts = append(opts, clientv3.WithPrefix())
+		}
+		if config.StartRevision > 0 {
+			opts = append(opts, clientv3.WithRev(config.StartRevision+1))
 		}
 
 		watchChannel := w.etcdClient.Watch(watchCtx, config.Key, opts...)
@@ -67,6 +71,9 @@ func (w *watcherFactoryImpl) WatchStrings(ctx context.Context, config WatcherCon
 		opts := []clientv3.OpOption{}
 		if config.Prefix {
 			opts = append(opts, clientv3.WithPrefix())
+		}
+		if config.StartRevision > 0 {
+			opts = append(opts, clientv3.WithRev(config.StartRevision+1))
 		}
 
 		watchChannel := w.etcdClient.Watch(watchCtx, config.Key, opts...)
@@ -109,6 +116,9 @@ func (w *watcherFactoryImpl) WatchTimeoutEvents(ctx context.Context, config Watc
 		opts := []clientv3.OpOption{}
 		if config.Prefix {
 			opts = append(opts, clientv3.WithPrefix())
+		}
+		if config.StartRevision > 0 {
+			opts = append(opts, clientv3.WithRev(config.StartRevision+1))
 		}
 
 		watchChannel := w.etcdClient.Watch(watchCtx, config.Key, opts...)
