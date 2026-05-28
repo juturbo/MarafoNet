@@ -23,9 +23,8 @@ type EtcdService struct {
 }
 
 type etcdCore struct {
-	client         *clientv3.Client
-	pathBuilder    PathBuilder
-	watcherFactory WatcherFactory
+	client      *clientv3.Client
+	pathBuilder PathBuilder
 }
 
 // GameTimeoutEvent is emitted by the watcher when a user's game timeout lease expires.
@@ -46,18 +45,17 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 		return nil, err
 	}
 	core := &etcdCore{
-		client:         client,
-		pathBuilder:    NewPathBuilder(),
-		watcherFactory: NewWatcherFactory(client),
+		client:      client,
+		pathBuilder: NewPathBuilder(),
 	}
 	userSession := &etcdUserSessionService{core: core}
+	watcherFactory := NewWatcherFactory(client)
 	return &EtcdService{
 		client:                    client,
 		pathBuilder:               core.pathBuilder,
-		watcherFactory:            core.watcherFactory,
 		etcdGameRepositoryService: &etcdGameRepositoryService{core: core},
 		etcdUserSessionService:    userSession,
-		etcdWatcherService:        &etcdWatcherService{core: core, session: userSession},
+		etcdWatcherService:        &etcdWatcherService{core: core, session: userSession, watcherFactory: watcherFactory},
 		core:                      core,
 	}, nil
 }

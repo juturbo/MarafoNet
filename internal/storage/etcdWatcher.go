@@ -9,8 +9,9 @@ import (
 )
 
 type etcdWatcherService struct {
-	core    *etcdCore
-	session *etcdUserSessionService
+	core           *etcdCore
+	session        *etcdUserSessionService
+	watcherFactory WatcherFactory
 }
 
 func (service *etcdWatcherService) WatchGame(ctx context.Context, gameId string) (<-chan []byte, context.CancelFunc) {
@@ -19,7 +20,7 @@ func (service *etcdWatcherService) WatchGame(ctx context.Context, gameId string)
 	if err == nil {
 		startRevision = response.Header.Revision
 	}
-	return service.core.watcherFactory.WatchBytes(ctx, WatcherConfig{
+	return service.watcherFactory.WatchBytes(ctx, WatcherConfig{
 		Key:           gameId,
 		EventType:     clientv3.EventTypePut,
 		StartRevision: startRevision,
@@ -33,7 +34,7 @@ func (service *etcdWatcherService) WatchUserLobby(ctx context.Context, username 
 	if err == nil {
 		startRevision = response.Header.Revision
 	}
-	return service.core.watcherFactory.WatchBytes(ctx, WatcherConfig{
+	return service.watcherFactory.WatchBytes(ctx, WatcherConfig{
 		Key:           key,
 		EventType:     clientv3.EventTypePut,
 		StartRevision: startRevision,
@@ -47,7 +48,7 @@ func (service *etcdWatcherService) WatchUserQueue(ctx context.Context) (<-chan [
 	if err == nil {
 		startRevision = response.Header.Revision
 	}
-	return service.core.watcherFactory.WatchStrings(ctx, WatcherConfig{
+	return service.watcherFactory.WatchStrings(ctx, WatcherConfig{
 		Key:           key,
 		Prefix:        true,
 		EventType:     clientv3.EventTypePut,
@@ -65,7 +66,7 @@ func (service *etcdWatcherService) WatchUserTimeoutLease(ctx context.Context) (<
 	if err == nil {
 		startRevision = response.Header.Revision
 	}
-	return service.core.watcherFactory.WatchTimeoutEvents(ctx, WatcherConfig{
+	return service.watcherFactory.WatchTimeoutEvents(ctx, WatcherConfig{
 		Key:           key,
 		Prefix:        true,
 		EventType:     clientv3.EventTypeDelete,
