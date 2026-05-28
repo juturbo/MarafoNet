@@ -28,7 +28,7 @@ func newTestEtcdService(t *testing.T) *EtcdService {
 	defer cleanupCancel()
 	prefixes := []string{"test/", "users/", "user_queue/", "game_timeout/"}
 	for _, p := range prefixes {
-		_, _ = svc.client.Delete(cleanupCtx, p, clientv3.WithPrefix())
+		_, _ = svc.core.client.Delete(cleanupCtx, p, clientv3.WithPrefix())
 	}
 
 	return svc
@@ -40,7 +40,7 @@ func TestGetNextGameID_Sequential(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, _ = svc.client.Delete(ctx, svc.pathBuilder.GameCounterPath())
+	_, _ = svc.core.client.Delete(ctx, svc.core.pathBuilder.GameCounterPath())
 
 	id1, err := svc.GetNextGameID()
 	require.NoError(t, err)
@@ -445,7 +445,7 @@ func TestWatchGame_ReceivesUpdates(t *testing.T) {
 	defer cancel()
 
 	key := fmt.Sprintf("test/watch_game_%s", t.Name())
-	t.Cleanup(func() { _, _ = svc.client.Delete(context.Background(), key) })
+	t.Cleanup(func() { _, _ = svc.core.client.Delete(context.Background(), key) })
 
 	channel, watchCancel := svc.WatchGame(ctx, key)
 	defer watchCancel()

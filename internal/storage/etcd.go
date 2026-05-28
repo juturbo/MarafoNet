@@ -13,9 +13,6 @@ const TIMEOUT = "1"
 const KEEP_ALIVE_TTL = 120
 
 type EtcdService struct {
-	client         *clientv3.Client
-	pathBuilder    PathBuilder
-	watcherFactory WatcherFactory
 	*etcdGameRepositoryService
 	*etcdUserSessionService
 	*etcdWatcherService
@@ -51,8 +48,6 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 	userSession := &etcdUserSessionService{core: core}
 	watcherFactory := NewWatcherFactory(client)
 	return &EtcdService{
-		client:                    client,
-		pathBuilder:               core.pathBuilder,
 		etcdGameRepositoryService: &etcdGameRepositoryService{core: core},
 		etcdUserSessionService:    userSession,
 		etcdWatcherService:        &etcdWatcherService{core: core, session: userSession, watcherFactory: watcherFactory},
