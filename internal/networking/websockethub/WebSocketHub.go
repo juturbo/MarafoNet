@@ -3,6 +3,7 @@ package websockethub
 import (
 	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/repository"
+	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
 	"log"
@@ -15,7 +16,7 @@ type WebSocketHub struct {
 	Connection             *websocket.Conn
 	WriteChannel           chan json.RawMessage
 	WebSocketRepository    repository.WebSocketRepository
-	GameService            repository.GameServicer
+	GameService            service.GameService
 	MatchmakingService     *matchmaking.MatchmakingHub
 	playerName             string
 	playerNameOnce         sync.Once
@@ -29,7 +30,7 @@ type cancelFunc func()
 
 func CreateWebSocketHub(
 	Conn *websocket.Conn,
-	GameService repository.GameServicer,
+	GameService service.GameService,
 	WebSocketDeps repository.WebSocketRepository,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) *WebSocketHub {

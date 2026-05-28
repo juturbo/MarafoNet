@@ -4,6 +4,7 @@ import (
 	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/networking/websockethub"
 	"MarafoNet/internal/repository"
+	"MarafoNet/internal/service"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,7 +20,7 @@ var once sync.Once
 func ServeWS(
 	Conn *websocket.Conn,
 	GracefulShutdownContext context.Context,
-	GameService repository.GameServicer,
+	GameService service.GameService,
 	WebSocketRepository repository.WebSocketRepository,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) {
