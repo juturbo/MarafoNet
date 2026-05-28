@@ -10,11 +10,11 @@ import (
 )
 
 type MatchmakingHub struct {
-	ctx            context.Context
-	cancel         context.CancelFunc
-	storageService storage.StorageService
-	gameService    service.GameService
-	queueWatcher   context.CancelFunc
+	ctx          context.Context
+	cancel       context.CancelFunc
+	storage      storage.MatchmakingStorage
+	gameService  service.GameService
+	queueWatcher context.CancelFunc
 }
 type GameUpdateMessage struct {
 	Type string          `json:"type"`
@@ -25,19 +25,15 @@ type GameUpdateMessage struct {
 type OnGameIDCallback func(gameID string)
 
 // Returns a new Matchmaking hub
-func NewMatchmakingHub(storageService storage.StorageService, gameService service.GameService) *MatchmakingHub {
+func NewMatchmakingHub(storage storage.MatchmakingStorage, gameService service.GameService) *MatchmakingHub {
 	ctx, cancel := context.WithCancel(context.Background())
 	log.Printf("started Matchmaking service")
 	return &MatchmakingHub{
-		cancel:         cancel,
-		ctx:            ctx,
-		storageService: storageService,
-		gameService:    gameService,
+		cancel:      cancel,
+		ctx:         ctx,
+		storage:     storage,
+		gameService: gameService,
 	}
-}
-
-func (hub *MatchmakingHub) GetStorageService() storage.StorageService {
-	return hub.storageService
 }
 
 func (hub *MatchmakingHub) GetGameService() service.GameService {
@@ -48,8 +44,8 @@ func (hub *MatchmakingHub) GetGameService() service.GameService {
 // It will start to check for players in queue and create games.
 // Can be stopped by calling StopMatchmaking().
 func (hub *MatchmakingHub) StartMatchmaking(wg *sync.WaitGroup) {
-	queueChannel, cancelQueueWatcher := hub.GetStorageService().WatchUserQueue(context.Background())
-	usersQueue, err := hub.GetStorageService().GetUserQueue(context.Background())
+	queueChannel, cancelQueueWatcher := hub.storage.WatchUserQueue(context.Background())
+	usersQueue, err := hub.storage.GetUserQueue(context.Background())
 	if err != nil {
 		log.Printf("- [matchmaking]: Error getting initial user queue: %v", err)
 		return
@@ -76,13 +72,13 @@ func (hub *MatchmakingHub) checkQueueAndStartGame(users []string) {
 		log.Printf("- [matchmaking]: Found 4 players in queue, starting a game with players: %v", users[:4])
 		gameID, _ := hub.GetGameService().StartGame(context.Background(), users[:4])
 		for _, user := range users[:4] {
-			hub.GetStorageService().RemoveUserFromQueue(context.Background(), user)
-			hub.GetStorageService().SetUserCurrentGameId(context.Background(), user, gameID)
+			hub.storage.RemoveUserFromQueue(context.Background(), user)
+			hub.storage.SetUserCurrentGameId(context.Background(), user, gameID)
 		}
-		usersStillInQueue, _ := hub.GetStorageService().GetUserQueue(context.Background())
+		usersStillInQueue, _ := hub.storage.GetUserQueue(context.Background())
 		log.Printf("- [matchmaking]: Current users in queue after matchmaking: %v", usersStillInQueue)
 		for _, user := range users[:4] {
-			gameID, _ := hub.GetStorageService().GetUserCurrentGameId(context.Background(), user)
+			gameID, _ := hub.storage.GetUserCurrentGameId(context.Background(), user)
 			log.Printf("- [matchmaking]: user %s joined game %s", user, gameID)
 		}
 	}
@@ -94,7 +90,7 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 }
 
 func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
-	timeoutWatcher, cancelTimeoutWatcher := hub.GetStorageService().WatchUserTimeoutLease(context.Background())
+	timeoutWatcher, cancelTimeoutWatcher := hub.storage.WatchUserTimeoutLease(context.Background())
 	go func() {
 		log.Printf("- [timeout watcher]: started watching timeout lease")
 		for {
@@ -117,7 +113,7 @@ func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
 				} else {
 					log.Printf("- [timeout watcher]: successfully forfeited game %s for user %s", timeoutEvent.GameID, timeoutEvent.Username)
 				}
-				err = hub.GetStorageService().RemoveUserCurrentGameId(context.Background(), timeoutEvent.Username)
+				err = hub.storage.RemoveUserCurrentGameId(context.Background(), timeoutEvent.Username)
 				if err != nil {
 					log.Printf("- [timeout watcher]: error removing current game ID for user %s: %v", timeoutEvent.Username, err)
 				}
@@ -132,8 +128,8 @@ func (hub *MatchmakingHub) StopTimeoutWatcher() {
 
 // Sets a watcher on the requested game, sending the information down the write channel..
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
-	watchChannel, cancelFunc := hub.GetStorageService().WatchGame(ctx, gameId)
-	gameJSON, _, _ := hub.GetStorageService().GetGameJsonAndRevision(ctx, gameId)
+	watchChannel, cancelFunc := hub.storage.WatchGame(ctx, gameId)
+	gameJSON, _, _ := hub.storage.GetGameJsonAndRevision(ctx, gameId)
 	gameViewJson, err := hub.gameService.GetGameView(gameJSON, playerId)
 	if err != nil {
 		log.Printf("- game watcher: error getting game view for player %s in game %s: %v", playerId, gameId, err)
@@ -159,7 +155,7 @@ func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, pl
 			}
 			if gameOver {
 				log.Printf("- game watcher: game over for game ID: %s, stopping watcher", gameId)
-				hub.GetStorageService().RemoveUserCurrentGameId(ctx, playerId)
+				hub.storage.RemoveUserCurrentGameId(ctx, playerId)
 				cleanUpFunc()
 				cancelFunc()
 				return
@@ -182,8 +178,8 @@ func sendGameView(gameViewJson []byte, writeChannel chan json.RawMessage) {
 // Adds the player to the matchmaking queue, once a game is found, the write channel will be used to create
 // a watcher for the game. The onGameID callback will be called with the gameID once assigned.
 func (hub *MatchmakingHub) JoinQueue(ctx context.Context, playerName string, writeChannel chan json.RawMessage, cleanUpFunc func(), onGameID OnGameIDCallback) *context.CancelFunc {
-	hub.GetStorageService().PutUserIntoQueue(context.Background(), playerName)
-	lobbyChannel, watcherCancelFunc := hub.GetStorageService().WatchUserLobby(ctx, playerName)
+	hub.storage.PutUserIntoQueue(context.Background(), playerName)
+	lobbyChannel, watcherCancelFunc := hub.storage.WatchUserLobby(ctx, playerName)
 	cancelFunc := watcherCancelFunc
 	go func() {
 		log.Printf("- lobby watcher: started watching lobby for player %s", playerName)

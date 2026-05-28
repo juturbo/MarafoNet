@@ -6,18 +6,27 @@ import (
 	"encoding/json"
 )
 
-type WebSocketRepository interface {
-	UserSessionStorage
+type StorageService interface {
+	GameStorage
+	UserAuthStorage
+	UserStateStorage
+	QueueStorage
+	WatchStorage
+	Close() error
+}
+
+type WebSocketStorage interface {
+	UserAuthStorage
+	UserStateStorage
 	QueueStorage
 	GameStorage
 }
 
-type StorageService interface {
-	GameStorage
-	UserSessionStorage
+type MatchmakingStorage interface {
+	UserStateStorage
 	QueueStorage
+	GameStorage
 	WatchStorage
-	Close() error
 }
 
 type GameStorage interface {
@@ -27,9 +36,12 @@ type GameStorage interface {
 	PutUpdatedGameJsonIfRevisionMatch(ctx context.Context, gameId string, gameJson json.RawMessage, lastRevision int64) error
 }
 
-type UserSessionStorage interface {
+type UserAuthStorage interface {
 	RegisterUser(ctx context.Context, user model.User) error
 	LoginUser(ctx context.Context, user model.User) error
+}
+
+type UserStateStorage interface {
 	GetUserCurrentGameId(ctx context.Context, playerName string) (string, error)
 	SetUserCurrentGameId(ctx context.Context, playerName string, gameId string) error
 	RemoveUserCurrentGameId(ctx context.Context, playerName string) error

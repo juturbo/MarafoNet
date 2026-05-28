@@ -21,10 +21,10 @@ func ServeWS(
 	Conn *websocket.Conn,
 	GracefulShutdownContext context.Context,
 	GameService service.GameService,
-	WebSocketRepository storage.WebSocketRepository,
+	Storage storage.WebSocketStorage,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) {
-	hub := websockethub.CreateWebSocketHub(Conn, GameService, WebSocketRepository, MatchmakingService)
+	hub := websockethub.CreateWebSocketHub(Conn, GameService, Storage, MatchmakingService)
 	log.Printf("New WebSocket connection established with client %s", hub.Connection.RemoteAddr())
 	go ServeWrite(hub, GracefulShutdownContext)
 	go ServeRead(hub, GracefulShutdownContext)
@@ -79,7 +79,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 	switch {
 	case envelope.EqualsType(JoinType):
 		log.Printf(" - wss: received join request from player %s", hub.GetPlayerName())
-		gameID, err := hub.WebSocketRepository.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
+		gameID, err := hub.Storage.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
 		log.Printf(" - wss: player %s current game ID is %s", hub.GetPlayerName(), gameID)
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
@@ -112,7 +112,7 @@ func HandleWSEnvelope(envelope Envelope, hub *websockethub.WebSocketHub) (bool, 
 		}
 	case envelope.EqualsType(PlayAgainType) || envelope.EqualsType(QuitType):
 		log.Printf(" - wss: received %s request from player %s", envelope.GetMessageType(), hub.GetPlayerName())
-		gameID, err := hub.WebSocketRepository.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
+		gameID, err := hub.Storage.GetUserCurrentGameId(context.Background(), hub.GetPlayerName())
 		if err != nil {
 			return true, BuildJSONErrorResponse(err.Error())
 		}
@@ -143,7 +143,7 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 	replyMessageBuilder := NewReplyMessageBuilder()
 	switch {
 	case envelope.EqualsType(RegisterType) && isPlayerNew(hub, authEnvelope):
-		err := hub.WebSocketRepository.RegisterUser(context.Background(), authEnvelope.GetUser())
+		err := hub.Storage.RegisterUser(context.Background(), authEnvelope.GetUser())
 		if err != nil {
 			replyMessageBuilder.SetType("register_failed")
 			replyMessageBuilder.SetMessage(fmt.Sprintf("user registration failed for username %s. Error: %s", envelope.GetPlayerName(), err.Error()))
@@ -152,7 +152,7 @@ func checkAuthenticationMessage(hub *websockethub.WebSocketHub, envelope Envelop
 		replyMessageBuilder.SetType("register_success")
 		replyMessageBuilder.SetMessage(fmt.Sprintf("username %s successfully registered", envelope.GetPlayerName()))
 	case envelope.EqualsType(LoginType):
-		err := hub.WebSocketRepository.LoginUser(context.Background(), authEnvelope.GetUser())
+		err := hub.Storage.LoginUser(context.Background(), authEnvelope.GetUser())
 		if err != nil {
 			replyMessageBuilder.SetType("login_failed")
 			replyMessageBuilder.SetMessage(fmt.Sprintf("authentication failed for username %s. Error: %s", envelope.GetPlayerName(), err.Error()))
@@ -176,9 +176,9 @@ func isPlayerNew(hub *websockethub.WebSocketHub, envelope AuthEnvelope) bool {
 }
 
 func isGameOver(hub *websockethub.WebSocketHub, gameId string) bool {
-	game, _, err := hub.WebSocketRepository.GetGameJsonAndRevision(context.Background(), gameId)
+	game, _, err := hub.Storage.GetGameJsonAndRevision(context.Background(), gameId)
 	if err != nil {
-		log.Printf("error fetching game data for game ID %s: %v", gameId, err.Error())
+		log.Printf("error checking if game is over for game ID %s: %v", gameId, err.Error())
 		return false
 	}
 	result, err := hub.GameService.IsGameEnded(game)

@@ -15,7 +15,7 @@ import (
 type WebSocketHub struct {
 	Connection             *websocket.Conn
 	WriteChannel           chan json.RawMessage
-	WebSocketRepository    storage.WebSocketRepository
+	Storage                storage.WebSocketStorage
 	GameService            service.GameService
 	MatchmakingService     *matchmaking.MatchmakingHub
 	playerName             string
@@ -31,14 +31,14 @@ type cancelFunc func()
 func CreateWebSocketHub(
 	Conn *websocket.Conn,
 	GameService service.GameService,
-	WebSocketDeps storage.WebSocketRepository,
+	Storage storage.WebSocketStorage,
 	MatchmakingService *matchmaking.MatchmakingHub,
 ) *WebSocketHub {
 	var hub WebSocketHub
 	hub.Connection = Conn
 	hub.WriteChannel = make(chan json.RawMessage, 10)
 	hub.GameService = GameService
-	hub.WebSocketRepository = WebSocketDeps
+	hub.Storage = Storage
 	hub.MatchmakingService = MatchmakingService
 	hub.closeOnce = sync.Once{}
 	hub.isAuthenticated = false
@@ -102,6 +102,6 @@ func closeConnection(hub *WebSocketHub) {
 	close(hub.WriteChannel)
 	hub.Connection.Close()
 	hub.CancelWatcher()
-	hub.WebSocketRepository.RemoveUserFromQueue(context.Background(), hub.playerName)
-	hub.WebSocketRepository.OnUserDisconnect(context.Background(), hub.playerName)
+	hub.Storage.RemoveUserFromQueue(context.Background(), hub.playerName)
+	hub.Storage.OnUserDisconnect(context.Background(), hub.playerName)
 }
