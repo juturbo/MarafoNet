@@ -10,7 +10,7 @@ import (
 
 type etcdWatcherService struct {
 	core           *etcdCore
-	session        *etcdUserSessionService
+	userSession    *etcdUserSessionService
 	watcherFactory WatcherFactory
 }
 
@@ -54,7 +54,7 @@ func (service *etcdWatcherService) WatchUserQueue(ctx context.Context) (<-chan [
 		EventType:     clientv3.EventTypePut,
 		StartRevision: startRevision,
 		Transform: func(eventValue []byte) (interface{}, error) {
-			return service.session.GetUserQueue(ctx)
+			return service.userSession.GetUserQueue(ctx)
 		},
 	})
 }
@@ -76,7 +76,7 @@ func (service *etcdWatcherService) WatchUserTimeoutLease(ctx context.Context) (<
 		},
 		Validate: func(event interface{}) bool {
 			timeoutEvent := event.(GameTimeoutEvent)
-			isOnline, err := service.session.isUserConnected(ctx, timeoutEvent.Username)
+			isOnline, err := service.userSession.isUserConnected(ctx, timeoutEvent.Username)
 			return err == nil && !isOnline
 		},
 	})

@@ -50,7 +50,7 @@ func NewEtcdService(endpoints []string, dialTimeout time.Duration) (*EtcdService
 	return &EtcdService{
 		etcdGameRepositoryService: &etcdGameRepositoryService{core: core},
 		etcdUserSessionService:    userSession,
-		etcdWatcherService:        &etcdWatcherService{core: core, session: userSession, watcherFactory: watcherFactory},
+		etcdWatcherService:        &etcdWatcherService{core: core, userSession: userSession, watcherFactory: watcherFactory},
 		core:                      core,
 	}, nil
 }
