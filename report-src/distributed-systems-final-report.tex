@@ -266,10 +266,9 @@ watches the user's queue so it will be provisioned with far lower resources.
 %\end{itemize}
 
 \subsection{Infrastructure}\label{infrastructure}
-
-As specified in the implementation requirements it has been decided
-to manage the infrastructure through Kubernetes. This facilitates the
-deployment and the network management of the system.
+Given the microservices architecture of the backend and the need for
+distributed systems features, the appropriate approach to infrastructure
+is to distribute the services in a cluster of nodes.
 The components that need to be introduced are:
 \begin{itemize}
   \item the clients, obviously, that interact with the server
@@ -282,7 +281,7 @@ The components that need to be introduced are:
     This component may also serve as terminator for SSL/TLS connections before entering the cluster. 
 \end{itemize}
 
-The services are distributed in a Kubernetes cluster composed of three nodes. These
+The services are distributed in a cluster composed of three or more nodes. These
 nodes could be deployed through a cloud provider or on bare metal machines.
 They must not live in the same node to ensure fault tolerance.
 Considering it is a popular game in Emilia-Romagna and neighbor regions most
@@ -291,15 +290,10 @@ from expatriates.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{figures/design/deployment.png}
+  \includegraphics[width=0.75\textwidth]{figures/design/infrastructure.png}
   \caption{Deployment diagram of the system}
-  \label{fig:deployment}
+  \label{fig:infrastructure}
 \end{figure}
-
-Due to the ephemeral nature of Kubernetes' pods their address is not always
-the same so the platform's internal DNS manages the addresses resolution.
-For instance, creating the connection of the game server to the database 
-only a URL-like address is needed. 
 
 \subsection{Modelling}\label{modelling}
 
