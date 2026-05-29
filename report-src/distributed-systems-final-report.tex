@@ -527,7 +527,32 @@ Please report here all the implementation (technology-dependent) choices you mad
 \end{itemize}
 
 For the front-end we used React, as mentioned in the requirements, so that
-the front-end updates on a state change.
+the front-end updates on a state change.ù
+
+\subsubsection*{Kubernetes}
+Kubernetes fits perfectly the needs for the system's infrastructure
+specified in the Section~\ref{infrastructure}. It provides an API to
+managing the cluster and its components and features such as load balancing, 
+automatic scaling and recovery.
+Resources are defined Infrastructure-as-Code style in YAML files, which is
+is beneficial for versioning.
+
+The infrastructure lightly changes with respect to the design and new components are
+introduced:
+\begin{itemize}
+  \item Ingress: a component that redirects incoming traffic to the services and
+    acts as TLS terminator for the connections.
+  \item Service: a component that exposes multiple instances of a microservice
+    as a single endpoint
+  \item Horizontal Pod Autoscaler: automatically scales the services depending on resource
+    usage
+\end{itemize}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/implementation/kubernetes-deployment.png}
+  \caption{Deployment diagram of the Kubernetes cluster}
+  \label{fig:infrastructure}
+\end{figure}
 
 \section{Validation}\label{validation}
 
