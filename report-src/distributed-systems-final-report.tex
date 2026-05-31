@@ -690,7 +690,7 @@ First, the user needs to start the Kubernetes cluster throught \texttt{minikube}
 \begin{lstlisting}[language=bash]
   ~$ minikube start --nodes 3 --driver=docker -p marafonet-cluster
 \end{lstlisting}
-this will create a local cluster on Docker containers.
+this will pull images for the nodes and create a local cluster based on Docker containers.
 
 Then, the user needs to enable the Ingress controller on the cluster with the following command:
 \begin{lstlisting}[language=bash]
