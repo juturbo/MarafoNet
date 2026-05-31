@@ -587,10 +587,19 @@ the user needs to:
   \item clone the \href{https://github.com/juturbo/MarafoNet}{project's repository}
   \item follow the instructions at the Section~\ref{deployment} to deploy the system
 \end{enumerate}
-Finally, the afromentioned tests can be run with the following command:
+Finally, the aforementioned tests can be run with the following command:
 \begin{lstlisting}[language=bash]
   k6 run test_file.js
 \end{lstlisting}
+For instance, running the \texttt{failedLogin\_test.js} will output the test parameters
+and results as shown in the Figure~\ref{fig:test-output}.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/testing/test_results.png}
+  \caption{Deployment command output}
+  \label{fig:test-output}
+\end{figure}
+
 
 \begin{itemize}
   \item how were individual components \textbf{\emph{unit}-test}ed?
