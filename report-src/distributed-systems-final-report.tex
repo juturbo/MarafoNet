@@ -729,6 +729,12 @@ the command should output the following:
   \caption{Deployment command output}
   \label{fig:instructions-output}
 \end{figure}
+Then, before accessing the application at \texttt{https://localhost:8080}, the user needs
+to port-forward the Ingress to the local machine with the following command:
+\begin{lstlisting}[language=bash]
+  ~$ kubectl port-forward \ 
+  -n ingress-nginx svc/ingress-nginx-controller 8080:443
+\end{lstlisting}
 
 \section{User Guide}\label{user-guide}
 
