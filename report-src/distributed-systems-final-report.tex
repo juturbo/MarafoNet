@@ -700,8 +700,8 @@ Then, the user needs to enable the Ingress controller on the cluster with the fo
   \ --selector=app.kubernetes.io/component=controller
   \ --timeout=120s
 \end{lstlisting}
-
-\textbf{TODO: ADD SCREENSHOTS OF THE COMMANDS' OUTPUT}
+The second command will wait until the Ingress controller is ready so that the deployment
+will go without errors.
 
 Once the cluster is running, the user needs to create TLS certificates and the
 relative Kubernetes secret that will be used for HTTPS connection, to do this
