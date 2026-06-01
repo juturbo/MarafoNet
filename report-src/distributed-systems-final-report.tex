@@ -296,49 +296,54 @@ from expatriates.
 \end{figure}
 
 \subsection{Modelling}\label{modelling}
+This section formalizes the system's structural design through UML class diagrams, focusing exclusively on the core domain entities and the service-layer dependencies.
 
-\textbf{TODO: CLASS DIAGRAM: player, game with hand and cards}
-
+\subsubsection*{Domain Model}
+The domain model encapsulates the strict ruleset and state of the Marafone game (Figure~\ref{fig:model-diagram}):
 \begin{itemize}
-  \item which \textbf{domain entities} are there?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{users}, \emph{products}, \emph{orders}, \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } all the entities in model: player=user, game, hand, card. WebSocketHub
-  
-  \item how do \emph{domain entities} \textbf{map to/used by} \emph{infrastructural components}?
-  %
-  \begin{itemize}
-    \item e.g.~state of a video game on central server, while inputs/representations on clients
-    \item e.g.~where to store messages in an IM app? for how long?
-  \end{itemize}
-  \textbf{Answer: } state of a video game on database (server is stateless), while inputs/representations on clients.
-  matchmaking service scans queue and creates game entities on the database and the game server alerts clients of the new game.
+    \item \textbf{Game and Players:} A \texttt{Game} entity aggregates exactly four \texttt{Player} objects to form a 2v2 match.
+    \item \textbf{Identity Decoupling:} The persistent account entity (\texttt{User}) is intentionally omitted from the core domain model. The system enforces strict decoupling between authentication and gameplay. A \texttt{Player} exists exclusively in the context of a \texttt{Game}. It identifies the participant via a string name, completely isolating the game rules and state from the user credentials.
+    \item \textbf{Deck and Cards:} The \texttt{Deck} is a strict composition of 40 \texttt{Card} entities. Each \texttt{Card} is defined by a numeric value and a \texttt{Suit}.
+    \item \textbf{State Encapsulation:} The \texttt{Game} struct serves as the aggregate root. It uniquely manages the current turn logic, the active Trump suit, and the trick score, preventing invalid mutations from external services.
+\end{itemize}
 
-  \item which \textbf{domain events} are there?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{user registered}, \emph{product added to cart}, \emph{order placed}, \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } almost everything in the functional requirements. user registered, logged in, joined the queue
-  left the queue, join a game, quit game, play again, play a card, choose a trump suit, player reconnection, game ended.
-  
-  \item which sorts of \textbf{messages} are exchanged?
-  %
-  \begin{itemize}
-    \item e.g.~\emph{commands}, \emph{events}, \emph{queries}, \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } almost all domain events trigger messages, because everything has to be communicated to the clients.
-  different queries to the database\ldots.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/design/ModelClassDiagram.png}
+    \caption{UML Class Diagram: Core Domain Model}
+    \label{fig:model-diagram}
+\end{figure}
 
-  \item what information does the \textbf{state} of the system comprehend
-  %
-  \begin{itemize}
-    \item e.g.~\emph{users' data}, \emph{products' data}, \emph{orders' data}, \emph{etc.}
-  \end{itemize}
-  \textbf{Answer: } WebSocketHub holds information about the state of the connection and the client's identity.
-  Only the database holds the state of the ongoing games, the matchmaking queue and the users' credentials.
+\subsubsection*{Service Architecture}
+The service layer orchestrates system behaviour, network interactions, and state persistence (Figure~\ref{fig:service-diagram}). The architecture enforces strict separation of concerns via distinct managers:
+\begin{itemize}
+    \item \textbf{MatchmakingHub:} Manages the queuing logic and the forfeit. It aggregates incoming user requests and instantiates a new \texttt{Game} context strictly when four players are available.
+    \item \textbf{ConnectionServer:} Manages client connections. It is responsible for routing incoming payloads (actions) to the relevant services and broadcasting state updates back to connected clients.
+    \item \textbf{GameService:} It receives processed actions, validates them against the domain model rules, and mutates the game state.
+    \item \textbf{StorageService:} Abstracts the distributed key-value store interactions. \texttt{GameService} depends on this component to fetch and persist the game state to guarantee data integrity.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/design/ServiceClassDiagram.png}
+    \caption{UML Class Diagram: Service Layer Dependencies}
+    \label{fig:service-diagram}
+\end{figure}
+
+\subsubsection*{State Management and Infrastructure Mapping}
+The architecture enforces a strict separation between transient connection data and persistent application state:
+\begin{itemize}
+    \item \textbf{Client Layer:} Clients handle the visual representation and user inputs but hold no authoritative game state.
+    \item \textbf{Application Server (Stateless):} The core services (\texttt{GameService} and \texttt{MatchmakingHub}) execute logic statelessly. The \texttt{ConnectionServer} only holds transient routing information to map active connections to users.
+    \item \textbf{Storage Layer (Stateful):} The distributed database serves as the single source of truth. It exclusively holds the authoritative state of ongoing \texttt{Game} entities, the matchmaking queue, and user credentials.
+\end{itemize}
+
+\subsubsection*{Domain Events and Messaging}
+System interactions rely on a message-driven architecture to communicate state changes across the distributed components. The exchanged messages fall into three categories:
+\begin{itemize}
+    \item \textbf{Commands:} Actions initiated by the client requesting a state mutation. Event examples include \textit{RegisterUser}, \textit{LoginUser}, \textit{JoinQueue}, \textit{PlayCard}, \textit{ChooseTrumpSuit}, \textit{PlayAgain}, \textit{Quit}.
+    \item \textbf{Messages:} Server-generated messages notifying clients that a move was invalid or that the game state was updated.
+    \item \textbf{Queries:} Internal server requests directed to the \texttt{StorageService} to read or monitor data, such as fetching the current game state or checking the matchmaking queue size.
 \end{itemize}
 
 \subsection{Interaction}\label{interaction}
