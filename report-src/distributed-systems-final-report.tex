@@ -317,8 +317,9 @@ The domain model encapsulates the strict ruleset and state of the Marafone game 
 \subsubsection*{Service Architecture}
 The service layer orchestrates system behaviour, network interactions, and state persistence (Figure~\ref{fig:service-diagram}). The architecture enforces strict separation of concerns via distinct managers:
 \begin{itemize}
-    \item \textbf{MatchmakingHub:} Manages the queuing logic and the forfeit. It aggregates incoming user requests and instantiates a new \texttt{Game} context strictly when four players are available.
     \item \textbf{ConnectionServer:} Manages client connections. It is responsible for routing incoming payloads (actions) to the relevant services and broadcasting state updates back to connected clients.
+    \item \textbf{MatchmakingHub:} Manages the queuing logic. It aggregates incoming user requests and instantiates a new \texttt{Game} context strictly when four players are available.
+    \item \textbf{TimeoutWatcher:} Monitors the storage layer for expired user connection leases. Upon detecting a timeout event for a disconnected player, it commands the \texttt{GameService} to forfeit the match, ensuring games do not stall indefinitely.
     \item \textbf{GameService:} It receives processed actions, validates them against the domain model rules, and mutates the game state.
     \item \textbf{StorageService:} Abstracts the distributed key-value store interactions. \texttt{GameService} depends on this component to fetch and persist the game state to guarantee data integrity.
 \end{itemize}
