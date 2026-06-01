@@ -11,6 +11,9 @@ straight:
 matchmaking:
 	go run ./cmd/matchmaking
 
+timeout-watcher:
+	go run ./cmd/timeout-watcher
+
 etcd:
 	docker run -d --name etcd-test -p 2379:2379 -e ALLOW_NONE_AUTHENTICATION=yes -e ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379" -e ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379" quay.io/coreos/etcd:v3.6.8
 
@@ -25,12 +28,15 @@ react:
 build: test react
 	docker build -f deployment/marafonet/Dockerfile -t marafonet:latest .
 	docker build -f deployment/matchmaking/Dockerfile -t matchmaking:latest .
+	docker build -f deployment/timeout-watcher/Dockerfile -t timeout-watcher:latest .
 
 push:
 	docker tag marafonet:latest ghcr.io/juturbo/marafonet:latest
 	docker push ghcr.io/juturbo/marafonet:latest
 	docker tag matchmaking:latest ghcr.io/juturbo/mf-matchmaking:latest
 	docker push ghcr.io/juturbo/mf-matchmaking:latest
+	docker tag timeout-watcher:latest ghcr.io/juturbo/mf-timeout-watcher:latest
+	docker push ghcr.io/juturbo/mf-timeout-watcher:latest
 
 # Test targets
 
