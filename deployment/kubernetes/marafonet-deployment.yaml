@@ -7,7 +7,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 100%
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
     matchLabels:
       app: marafonet
@@ -17,7 +18,7 @@ spec:
         app: marafonet
     spec:
       affinity:
-        # ⬇⬇⬇ This ensures pods will land on separate hosts
+        # Ensures pods will land on separate hosts
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 1
@@ -41,4 +42,4 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-      terminationGracePeriodSeconds: 1
+      terminationGracePeriodSeconds: 30

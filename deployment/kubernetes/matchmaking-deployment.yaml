@@ -7,7 +7,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 100%
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: matchmaking
@@ -32,4 +33,4 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-      terminationGracePeriodSeconds: 1
+      terminationGracePeriodSeconds: 30
