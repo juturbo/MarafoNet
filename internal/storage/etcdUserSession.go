@@ -9,6 +9,8 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+const KEEP_ALIVE_TTL = 120
+
 type etcdUserSessionService struct {
 	core *etcdCore
 }

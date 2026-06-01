@@ -10,7 +10,6 @@ import (
 const IS_ONLINE = "1"
 const IS_OFFLINE = "0"
 const TIMEOUT = "1"
-const KEEP_ALIVE_TTL = 120
 
 type EtcdService struct {
 	*etcdGameRepositoryService
