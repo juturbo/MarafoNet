@@ -1,5 +1,5 @@
 services:
-  timeout-watcher:
+  timeoutwatcher:
     build:
       context: ../..
       dockerfile: deployment/timeoutwatcher/Dockerfile
