@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: timeout-watcher
+  name: timeoutwatcher
 spec:
   replicas: 1
   strategy:
@@ -11,15 +11,15 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: timeout-watcher
+      app: timeoutwatcher
   template:
     metadata:
       labels:
-        app: timeout-watcher
+        app: timeoutwatcher
     spec:
       containers:
-        - name: timeout-watcher
-          image: ghcr.io/juturbo/mf-timeout-watcher:latest
+        - name: timeoutwatcher
+          image: ghcr.io/juturbo/mf-timeoutwatcher:latest
           env:
             - name: ETCD_ENDPOINTS
               value: "etcd-client:2379"
