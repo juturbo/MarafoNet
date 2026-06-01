@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+bin/
+dist/
+.build/
+
+# Node
+node_modules
+npm-debug.log
+
+# Go
+vendor/
+*.out
+.env

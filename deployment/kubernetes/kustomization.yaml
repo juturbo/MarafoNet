@@ -6,5 +6,6 @@ resources:
   - etcd-cluster.yaml
   - marafonet-deployment.yaml
   - matchmaking-deployment.yaml
+  - timeout-watcher-deployment.yaml
   - marafonet-hpa.yaml
   - marafonet-service.yml

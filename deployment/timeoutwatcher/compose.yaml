@@ -1,0 +1,7 @@
+services:
+  timeout-watcher:
+    build:
+      context: ../..
+      dockerfile: deployment/timeout-watcher/Dockerfile
+      target: final
+    restart: unless-stopped
