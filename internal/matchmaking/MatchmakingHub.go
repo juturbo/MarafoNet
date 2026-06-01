@@ -89,43 +89,6 @@ func (hub *MatchmakingHub) StopMatchmaking() {
 	hub.cancel()
 }
 
-func (hub *MatchmakingHub) StartTimeoutWatcher(wg *sync.WaitGroup) {
-	timeoutWatcher, cancelTimeoutWatcher := hub.storage.WatchUserTimeoutLease(context.Background())
-	go func() {
-		log.Printf("- [timeout watcher]: started watching timeout lease")
-		for {
-			select {
-			case <-hub.ctx.Done():
-				cancelTimeoutWatcher()
-				wg.Done()
-				log.Printf("- [timeout watcher]: Stopping timeout watcher service")
-				return
-			default:
-				timeoutEvent, ok := <-timeoutWatcher
-				if !ok {
-					log.Printf("- [timeout watcher]: timeout channel closed")
-					return
-				}
-				log.Printf("- [timeout watcher]: received timeout event for user %s in game %s", timeoutEvent.Username, timeoutEvent.GameID)
-				err := hub.GetGameService().ForfeitGame(context.Background(), timeoutEvent.GameID, timeoutEvent.Username)
-				if err != nil {
-					log.Printf("- [timeout watcher]: error forfeiting game %s for user %s: %v", timeoutEvent.GameID, timeoutEvent.Username, err)
-				} else {
-					log.Printf("- [timeout watcher]: successfully forfeited game %s for user %s", timeoutEvent.GameID, timeoutEvent.Username)
-				}
-				err = hub.storage.RemoveUserCurrentGameId(context.Background(), timeoutEvent.Username)
-				if err != nil {
-					log.Printf("- [timeout watcher]: error removing current game ID for user %s: %v", timeoutEvent.Username, err)
-				}
-			}
-		}
-	}()
-}
-
-func (hub *MatchmakingHub) StopTimeoutWatcher() {
-	hub.cancel()
-}
-
 // Sets a watcher on the requested game, sending the information down the write channel..
 func (hub *MatchmakingHub) SetGameWatcher(ctx context.Context, gameId string, playerId string, cleanUpFunc func(), writeChannel chan json.RawMessage) *context.CancelFunc {
 	watchChannel, cancelFunc := hub.storage.WatchGame(ctx, gameId)

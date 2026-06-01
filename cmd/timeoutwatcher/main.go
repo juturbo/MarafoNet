@@ -1,34 +1,15 @@
 package main
 
 import (
-	"MarafoNet/internal/matchmaking"
 	"MarafoNet/internal/service"
 	"MarafoNet/internal/storage"
+	"MarafoNet/internal/timeoutwatcher"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-const rootPath string = "/"
-
-// FOR LOCAL DEVELOPMENT ONLY: CHANGE WHEN CREATING DOCKER IMAGE
-const indexPath string = "./frontend/build/index.html"
-const localFilePath string = "./frontend/build"
-
-const webSocketPath = "/ws"
 
 var etcdEndpoint = getEtcdEndpoints()
 
@@ -46,24 +27,24 @@ func main() {
 	}()
 
 	log.Printf("connected to etcd at %v", etcdEndpoint)
-	log.Printf("starting matchmaking services...")
+	log.Printf("starting timeout watcher service...")
 
 	gameService := service.NewGameService(etcdService)
-	matchMakingService := matchmaking.NewMatchmakingHub(etcdService, gameService)
+	timeoutWatcherService := timeoutwatcher.NewTimeoutWatcher(etcdService, gameService)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	matchMakingService.StartMatchmaking(&wg)
+	timeoutWatcherService.Start(&wg)
 
+	log.Printf("timeout watcher service is running. Press Ctrl+C to stop.")
 	wg.Wait()
-
 }
 
 func getEtcdEndpoints() []string {
 	env := os.Getenv("ETCD_ENDPOINTS")
 	if env == "" {
-		// Fallback per 'make test' e 'make dev' in locale
+		// Fallback for local development
 		return []string{"localhost:2379"}
 	}
 	return strings.Split(env, ",")
@@ -71,6 +52,6 @@ func getEtcdEndpoints() []string {
 
 func printHeader() {
 	log.Println("====================================")
-	log.Println("        Matchmaking Server          ")
+	log.Println("      Timeout Watcher Service       ")
 	log.Println("====================================")
 }
