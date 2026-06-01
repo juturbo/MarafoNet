@@ -5,30 +5,11 @@ import (
 	"MarafoNet/internal/service"
 	"MarafoNet/internal/storage"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-const rootPath string = "/"
-
-// FOR LOCAL DEVELOPMENT ONLY: CHANGE WHEN CREATING DOCKER IMAGE
-const indexPath string = "./frontend/build/index.html"
-const localFilePath string = "./frontend/build"
-
-const webSocketPath = "/ws"
 
 var etcdEndpoint = getEtcdEndpoints()
 
