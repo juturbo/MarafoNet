@@ -376,37 +376,31 @@ System state transitions are strictly event-driven and operate under a request-v
 \end{itemize}
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
+The system relies on a centralised storage layer to maintain strict consistency across the distributed microservices.
 
+\subsubsection*{Stored Data and Storage Persistency}
+The system requires the persistence of four distinct logical data categories to satisfy operational and state requirements:
 \begin{itemize}
-  \item Is there any data that needs to be stored?
-  %
-  \begin{itemize}
-    \item \emph{what} data? \emph{where}? \emph{why}?
-  \end{itemize}
-  \textbf{Answer: }game state on database to store ongoing games. data is registered as key-value
-  
-  \item how should \emph{persistent data} be \textbf{stored}?
-  %
-  \begin{itemize}
-    \item e.g.~relations, documents, key-value, graph, etc.
-    \item why?
-  \end{itemize}
-  \textbf{Answer: } as key-value.
-  
-  \item Which components perform queries on the database?
-  %
-  \begin{itemize}
-    \item \emph{when}? \emph{which} queries? \emph{why}?
-    \item concurrent read? concurrent write? why?
-  \end{itemize}
-  \textbf{Answer: } game server and microservices. Which queries, how many, when? explain.
-  
-  \item Is there any data that needs to be shared between components?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{what} data?
-  \end{itemize}
-  \textbf{Answer: } yes the game state is shared throguht the DB
+    \item \textbf{Authentication}: Contains registered user credentials (usernames and cryptographic password hashes). This data requires permanent persistence.
+    \item \textbf{Matchmaking Queue}: Tracks the ordered list of active players waiting for a match. This data is highly dynamic and shared across matchmaking operations.
+    \item \textbf{Player Session State}: Maps active players to their current game context and connection status to handle unexpected disconnections.
+    \item \textbf{Game State}: Comprises the full structural state of ongoing matches, including player hands, trick history, points, and turn progression indicators.
+\end{itemize}
+To ensure loose coupling and horizontal scalability of the application services, all data is stored externally using a \textbf{Key-Value storage model}. This paradigm is optimal for this architecture because the system manages distinct, easily serialisable entities (e.g., mapping a unique Game ID to a serialised game state) and requires high-throughput, low-latency read/write operations to maintain real-time responsiveness during gameplay.
+
+\subsubsection*{Database Interactions and Concurrency}
+Direct access to the database is strictly limited to the backend microservices. The interactions are structured as follows:
+\begin{itemize}
+    \item \textbf{Connection Server}: Executes read and write queries during user authentication (registration and login) to verify and persist credentials. Additionally, upon match initialisation, it instantiates watcher queries on specific game identifiers to intercept state changes and immediately stream them to the connected clients.
+    \item \textbf{Matchmaking Hub}: Monitors the matchmaking queue registry for new player entries. When the total number of independent user records reaches the required threshold of four, it atomically removes these players from the queue and triggers the match creation sequence.
+    \item \textbf{Game Service}: When a game is created, it queries the database to provide a unique match identifier atomically. During active gameplay, every time a player submits an action, it fetches the current game state for rule validation and saves the updated payload in the storage.
+    \item \textbf{Timeout Watcher}: Maintains a passive, event-driven observation query on active user connection leases. If a lease expires, it intercepts the notification event and requests a write query to mutate the target game state to a forfeit status.
+\end{itemize}
+The distributed system architecture exhibits distinct concurrent access patterns across the shared key-value storage layer:
+\begin{itemize}
+    \item \textbf{Concurrent Reads}: Read operations are executed in parallel across distinct keys. Multiple microservice instances can simultaneously retrieve independent data entities—such as separate game states or user records—without mutual blocking, maximising system throughput.
+    \item \textbf{Event-Driven Observation}: Watcher components maintain real-time state visibility by subscribing to asynchronous event channels dispatched directly by the key-value database. Instead of polling, these components listen to dedicated streams to intercept data transitions immediately upon mutation.
+    \item \textbf{Concurrent Writes and Atomicity}: Write operations involving match identifier generation and user session modifications are executed via atomic transactions. This transactional design guarantees isolation during the read-modify-write cycle, ensuring that no intervening modification occurs between the initial fetch of a value and its subsequent update, thereby preventing race conditions and lost updates. Game state modifications are managed through an optimistic concurrency control (OCC) approach. A read operation retrieves the state payload along with an associated revision identifier. After applying the game logic, the updated version is accepted by the storage layer only if the submitted revision identifier matches the current revision saved. If a revision conflict occurs, the operation is rejected, preserving integrity.
 \end{itemize}
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
