@@ -348,6 +348,26 @@ System interactions rely on a message-driven architecture to communicate state c
 \end{itemize}
 
 \subsection{Interaction}\label{interaction}
+Interactions in the system can be broken down into:
+\begin{itemize}
+  \item \textbf{Client-Server Interactions:} the commuications happen through the classic Request-Response pattern
+  \item \textbf{Server-Storage Interactions:} these interactions are based on queries to the database, the underlying
+    implementation of the commucations is up to the technology chosen during the implementation phase
+  \item \textbf{Server-Server Interactions:} the microservices will interact with each other to coordinate the game's
+    dynamics but they must not interact directly, instead they will interact through the database. This is because
+    the components are desinged to be stateless and distributed so keeping track of a state in memory would be a
+    problem.
+\end{itemize}
+An example of interaction of the first point is when a client plays a card, represented in the Figure~\ref{fig:interaction-card},
+from this diagram we can see that, once the play is deemed legal, the update to the database and the notification to the client
+passes through the database.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/design/interaction-card.png}
+  \caption{Interaction diagram for the 'Play Card' action}
+  \label{fig:interaction-card}
+\end{figure}
+Another example of indirect interaction between microservices is when the matchmaking microservice creates a new...
 
 \textbf{TODO: SEQUENCE DIAGRAM of matchmaking + timeout concurrent, playing a card}
 
