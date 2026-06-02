@@ -417,29 +417,16 @@ The distributed system architecture exhibits distinct concurrent access patterns
 \end{itemize}
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
+Data federation must be implemented by the storage service, it must be able to replicate
+data across the instances.
+The same goes for the microservices replication, load balancing and scaling. 
+Mechanisms for heart-beating and graceful shutdown must be implemented to ensure liveness
+and to avoid data corruption in case of unexpected shutdowns or panics.
 
-\begin{itemize}
-  \item Is there any form of data \textbf{replication} / federation / sharing?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{how} does it work?
-  \end{itemize}
-  \textbf{Answer: } yes, it is what we do with Kubernetes replication.
-  
-  \item Is there any \textbf{heart-beating}, \textbf{timeout}, \textbf{retry mechanism}?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{among} which components? \emph{how} does it work?
-  \end{itemize}
-  \textbf{Answer: } yes, it is to be integrated with the database client connection and kubernetes liveness.
-  
-  \item Is there any form of \textbf{error handling}?
-  %
-  \begin{itemize}
-    \item \emph{what} happens when a component fails? \emph{why}? \emph{how}?
-  \end{itemize}
-  \textbf{Answer: } it panics and is recreated.
-\end{itemize}
+Nowadays, different technologies provide this kind of features out of the box, both for
+data federation and distribution of microservices. So the implementation of this features is 
+mostly a problem of configuration and integration with the requirements of the system and will be discussed
+in the Section~\ref{implementation} about implementation.
 
 \subsection{Availability}\label{availability}
 
