@@ -455,27 +455,18 @@ in the Section~\ref{implementation} about implementation.
 Game state is consistent when a partition from the user's side happens.
 
 \subsection{Security}\label{security}
+The system design incorporates security measures focused on identity verification, game state isolation, and data protectionn.
 
 \begin{itemize}
-  \item Is there any form of \textbf{authentication}?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
-
-  \item Is there any form of \textbf{authorization}?
-  %
-  \begin{itemize}
-    \item which sort of \emph{access control}?
-    \item which sorts of users / \emph{roles}? which \emph{access rights}?
-  \end{itemize}
-
-  \item Are \textbf{cryptographic schemas} being used?
-  %
-  \begin{itemize}
-    \item e.g.~token verification,
-    \item e.g.~data encryption, etc.
-  \end{itemize}
+    \item \textbf{Authentication}: The system implements a password-based authentication mechanism. Users must register an account and authenticate to access the matchmaking queue and participate in games. This mechanism verifies player identity, ensures accountability for game actions, and prevents unauthorized access to the application's core logic. The authentication process is fully decoupled from the game domain model and managed independently by the connection and storage services.
+    
+    \item \textbf{Authorization and Access Control}: All authenticated users share the same standard player privileges, eliminating the need for complex role-based access control. The \texttt{ConnectionServer} validates every incoming command to ensure it originates from the \texttt{Current Player}, rejecting out-of-turn actions or unauthorized state mutation attempts.
+    
+    \item \textbf{Cryptographic Schemas}:
+    \begin{itemize}
+        \item \textbf{Data in transit}: All client-server communications are encrypted using secure transport protocols, ensuring that all data packets, including credentials and real-time game updates, are protected against man-in-the-middle attacks before entering the internal network.
+        \item \textbf{Data stored}: The system prohibits the storage of plaintext passwords. User credentials are secured using cryptographic hashing algorithms combined with unique salts before being persisted in the distributed database.
+    \end{itemize}
 \end{itemize}
 
 \section{Implementation}\label{implementation}
