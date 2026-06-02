@@ -369,14 +369,7 @@ passes through the database.
 \end{figure}
 Another example of indirect interaction between microservices is when the matchmaking microservice creates a new...
 
-\textbf{TODO: SEQUENCE DIAGRAM of matchmaking + timeout concurrent, playing a card}
-
-\begin{itemize}
-  \item how do components \emph{communicate}? \emph{when}? \emph{what}?
-  \item \emph{which} \textbf{interaction patterns} do they enact?
-\end{itemize}
-\textbf{Answer: }the microservices communicate with the database through queries. Whereas the clients and the game server
-communicat throughs WebSockets. Different message types are used to communicate client's intention and to update the client's game state.
+\textbf{To-Do: Add sequence diagram of matchmaking + timeout concurrent here}
 
 \subsection{Behaviour}\label{behaviour}
 This section defines the dynamic behaviour and state characteristics of the core architectural components, classifying them into stateful and stateless entities, and outlining the state update lifecycle.
