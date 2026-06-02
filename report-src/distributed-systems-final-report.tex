@@ -359,17 +359,21 @@ System interactions rely on a message-driven architecture to communicate state c
 communicat throughs WebSockets. Different message types are used to communicate client's intention and to update the client's game state.
 
 \subsection{Behaviour}\label{behaviour}
+This section defines the dynamic behaviour and state characteristics of the core architectural components, classifying them into stateful and stateless entities, and outlining the state update lifecycle.
 
+\subsubsection*{Component Classification}
+To maximize horizontal scalability and fault tolerance, the architecture enforces a strict separation between processing logic and data persistence:
 \begin{itemize}
-  \item how does \emph{each} component \textbf{behave} individually (e.g.~in \emph{response} to \emph{events} or messages)?
-  \begin{itemize}
-    \item some components may be \emph{stateful}, others \emph{stateless}
-  \end{itemize}
-
-  \item which components are in charge of updating the \textbf{state} of the system? \emph{when}? \emph{how}?
+    \item \textbf{Stateless Components:} The application layer services, GameService, MatchmakingHub, TimeoutWatcher and ConnectionServer, do not retain internal state memory across interactions. They treat each incoming network message or system event as an independent operation, executing logic based entirely on the payload and the authoritative data fetched dynamically from the storage layer.
+    \item \textbf{Stateful Components:} The storage layer (abstracted via the \texttt{StorageService}) serves as the sole stateful entity and single source of truth in the system. It permanently holds the authoritative state of active matchmaking queues, ongoing matches, and user credentials.
 \end{itemize}
-\textbf{Answer: }game server, martchamking and timeout are stateless, database is stateful.
-database and clients change the state of the system: for instance clients make a move and the game state changes or matchmaking creates a game.
+
+\subsubsection*{State Mutation Lifecycle}
+System state transitions are strictly event-driven and operate under a request-validation-persistence cycle, avoiding polling.
+\begin{itemize}
+    \item \textbf{Client-Driven Actions:} A client application cannot directly mutate the system state. When a player executes an action (e.g., playing a card or choosing the Trump suit), it transmits a command to the \texttt{ConnectionServer}, which dispatches it to the \texttt{GameService}. The \texttt{GameService} fetches the current game state from storage, validates the action against the domain rules, computes the new state, and persists the updated record back to the database. A watcher of the game state will notify the update back to the clients in the lobby waiting to display it.
+    \item \textbf{System-Driven Actions:} State mutations are also triggered automatically by internal sub-systems based on lifecycle events. The \texttt{MatchmakingHub} receives queue state updates every time a user joins the queue and atomically initialises a new \texttt{Game} context in storage as soon as four players are available. Similarly, the \texttt{TimeoutWatcher} passively monitors active connection leases; upon receiving an expiration, it forces a state transition to a forfeit status through the \texttt{GameService}, updating the persistence layer accordingly.
+\end{itemize}
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
