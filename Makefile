@@ -59,7 +59,7 @@ cluster:
 	minikube addons enable ingress -p marafonet-cluster
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
 
-kube: secrets
+kube:
 	kubectl get nodes
 	kubectl apply -k deployment/kubernetes/
 	kubectl get pods
