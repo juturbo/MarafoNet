@@ -447,6 +447,13 @@ mostly a problem of configuration and integration with the requirements of the s
 in the Section~\ref{implementation} about implementation.
 
 \subsection{Availability}\label{availability}
+The system must implement mechanisms to ensure high availability and minimize downtime.
+This include strategies to handle node failures and network issues such as network partitioning.
+The statelessness of the microservices and the use of a distributed database contribute to this goal
+by allowing a user to connect and recover its state from another node in case of a failure.
+
+Similarly as Section~\ref{fault-tolerance}, this feature is already implemented in different ways so
+the implementation will likely be delegate to suitable technologies.
 
 \begin{itemize}
   \item Is there any \textbf{caching} mechanism?
