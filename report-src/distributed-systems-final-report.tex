@@ -537,13 +537,12 @@ Please report here all the implementation (technology-dependent) choices you mad
 
 \subsection{Technological details}\label{technological-details}
 
-\begin{itemize}
-  \item any particular \emph{framework} / \emph{technology} being exploited goes here
-\end{itemize}
-
-For the front-end we used React, as mentioned in the requirements, so that
-the front-end updates on a state change.ù
-
+\subsubsection*{React}
+The client's web interface is implemented in React, a JavaScript framework for designing fron-end
+applications that meets the requirement of real-time updates and state management.
+This library allows to declaratively define UI views and let the framework handle the updates
+when the state changes, which is perfect for the stateless nature of the client and the updates
+pushed by the server. 
 \subsubsection*{Kubernetes}
 Kubernetes fits perfectly the needs for the system's infrastructure
 specified in the Section~\ref{infrastructure}. It provides an API to
