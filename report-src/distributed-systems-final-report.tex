@@ -455,30 +455,6 @@ by allowing a user to connect and recover its state from another node in case of
 Similarly as Section~\ref{fault-tolerance}, this feature is already implemented in different ways so
 the implementation will likely be delegate to suitable technologies.
 
-\begin{itemize}
-  \item Is there any \textbf{caching} mechanism?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
-  \textbf{Answer: } No
-  
-  \item Is there any form of \textbf{load balancing}?
-  %
-  \begin{itemize}
-    \item \emph{where}? \emph{why}?
-  \end{itemize}
-  \textbf{Answer: } Yes, Kubernetes
-
-  \item In case of \textbf{network partitioning}, how does the system behave?
-  %
-  \begin{itemize}
-    \item \emph{why}? \emph{how}?
-  \end{itemize}
-\end{itemize}
-\textbf{Answer: } The state is mantained on the database and the users can recconect to another node automatically.
-Game state is consistent when a partition from the user's side happens.
-
 \subsection{Security}\label{security}
 The system design incorporates security measures focused on identity verification, game state isolation, and data protectionn.
 
