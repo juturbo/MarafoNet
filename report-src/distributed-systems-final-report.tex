@@ -471,6 +471,25 @@ The system design incorporates security measures focused on identity verificatio
 \end{itemize}
 
 \section{Implementation}\label{implementation}
+\subsection*{Network protocols and data representation}
+For network communications it has been chosen to use WebSockets for the persistent connection needed
+to push update to the clients and support for secure connections through TLS.%
+
+The data representation for the messages exchanged between the clients and the server is JSON,
+as it is easy to handle both in the front-end and in the back-end given that Go provides 
+built-in support for JSON encoding and decoding of data structures.
+
+The WebSocket connections are served throught a HTTP server that also serves the static files for the
+frontend. The server uses the \href{https://gin-gonic.com/}{Gin framework} to handle the HTTP requests
+togheter with the \href{https://github.com/gorilla/websocket}{Gorilla WebSocket library}.
+
+The web server is implemented in the \texttt{main.go} file, where the routes are defined and the connections
+are opened and upgraded to WebSockets. The connection management is handled by the \texttt{networking} package
+which defines the message types and the logic for sending and receiving messages.
+
+The TLS protocol is not implemented in the application's logic but is instead handled by the cluster's
+ingress controller that terminates the TLS connection at the edge of the cluster and forwards HTTP traffic
+to the web server. This makes both the implementation and the certificate's management easier.
 
 Please report here all the implementation (technology-dependent) choices you made while implementing your design.
 
