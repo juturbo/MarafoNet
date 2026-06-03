@@ -657,14 +657,21 @@ recall to test corner cases (crashes, errors, etc.)
 \end{quote}
 
 \subsection{Acceptance test}\label{acceptance-test}
+Some tests were performed manually to rapidly check the behaviour of the application during the
+development phase, as it was faster than writing automated tests and the features were intuitively simple to test.
+The automated tests mentioned in the Section~\ref{automatic-testing} were instead written to verify the final
+infrastructure of the system.
 
+To perform these tests, the application was containerized and deployed on a Docker container
+and accessed through the browser.
+
+The features tested include:
 \begin{itemize}
-  \item did you perform any \emph{manual} testing?
-  %
-  \begin{itemize}
-    \item what did you test?
-    \item why wasn't it automatic?
-  \end{itemize}
+  \item connection and disconnection: simply check if a page is returned when connecting to the server
+  \item messages exchanged: check if the format of the messages sent and received by the client matches the ones on the server
+  \item user registration and login: register and log in with a new user, try to check in with an unregistered user
+  \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case
+  \item check the correct behaviour of the frontend upon updates and 
 \end{itemize}
 
 \section{Deployment}\label{deployment}
