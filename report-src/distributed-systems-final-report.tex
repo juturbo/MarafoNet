@@ -8,7 +8,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{caption}
-\usepackage{subcaption}
+\usepackage{subfig}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \definecolor{codegreen}{RGB}{193, 193, 193}
@@ -761,22 +761,68 @@ to port-forward the Ingress to the local machine with the following command:
 After following the instructions at the Section~\ref{deployment}
 the user can acess the application at \texttt{https://localhost:8080}.
 
-\textbf{Add screenshot of login page here}
+\subsection{Logging in}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/guide/login-page.png}
+  \caption{Login page, the initial page of the application}
+  \label{fig:login-page}
+\end{figure}
 
-The user will be presented with a login page, before logging in the user needs to register
-an account by pressing the appropriate button and filling the form with a username and password. 
+The user will be presented with a login page (as in Figure~\ref{fig:login-page}), before logging in the user needs to register
+an account by pressing the 
+`\texttt{Don't have an account? Register}` button and filling the form at Figure~\ref{fig:register-page} with a username and password. 
 After successful registration, the user will be redirected to the login page where they can use the
 credentials to log in.
 
-\textbf{Add screenshot of lobby page here}
+\begin{figure}[H]
+  \centering
+  \subfloat[Registration page]{\includegraphics[width=0.75\textwidth]{figures/guide/register.PNG}\label{fig:register-page}}
+
+  \subfloat[Lobby page]{\includegraphics[width=0.75\textwidth]{figures/guide/lobby.PNG}\label{fig:lobby-page}}
+  \caption{The pages of the application}
+\end{figure}
 
 After logging in, the user will be automatically placed in the matchmaking queue
-and will be redirected to the lobby page where they will be waiting for other players to join the queue.
-Once the required number of players is reached, the game will start and the user will be redirected to the game page.
+and will be redirected to the lobby page, as at Figure~\ref{fig:lobby-page}, where they will be waiting for other players to join the queue.
 
-\textbf{Add screenshot of game page here}
+Once the required number of players is reached, the game will start and the user will be redirected to the game page where
+they can play the game.
 
-\textbf{Add screentshot and explanation of game}
+\subsection*{UI elements}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/guide/game.PNG}
+  \caption{Game page}
+  \label{fig:game-page}
+\end{figure}
+
+As shown in Figure~\ref{fig:game-page}, the UI presents the following elements:
+\begin{itemize}
+  \item at the top left corner, the match's points, they are updated at the end of each hand
+  \item at the bottom center, the current player's hand
+  \item at top, left and right, are placed the other players' cards. The player on the top is the user's teammate
+  \item a yellow circle with `Di mano' written on it indicates the player that has choosen the trump suit for the current hand
+  \item a yellow circle with `Tocca a te' written on it indicates the player that has to play a card
+  \item at the top right corner, a container with the last trick's cards togheter with the name of the player's who played it
+\end{itemize}
+
+\subsection{Playing the game}
+At the beginning of each hand, the player that has the `Di mano' circle can choose the trump suit for that hand,
+the trump choosen will beat any card of the other suits, even if they are of higher rank. A pop-up as shown
+in the Figure~\ref{fig:trump-popup} will appear to the player to let them choose the trump suit.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/guide/choose-trump.PNG}
+  \caption{Trump suit selection pop-up}
+  \label{fig:trump-popup}
+\end{figure}
+
+The game is played in couples, one against the other, teammates facing each other. 
+The game is played in a series of hands, which is composed of 10 tricks. In every trick each player plays one card.
+The first player to play a card can choose whatever card they want, while the other players must play, if they have it, 
+a card with the same suit as the first card played; otherwise they can play another card.
 
 \section{Self-evaluation}\label{self-evaluation}
 
