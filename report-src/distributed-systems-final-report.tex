@@ -466,6 +466,7 @@ The system design incorporates security measures focused on identity verificatio
 \end{itemize}
 
 \section{Implementation}\label{implementation}
+This section details the technology-dependent choices made to realize the architectural design outlined in Section~\ref{design}.
 \subsection*{Network protocols and data representation}
 For network communications it has been chosen to use WebSockets for the persistent connection needed
 to push update to the clients and support for secure connections through TLS.%
@@ -486,49 +487,10 @@ The TLS protocol is not implemented in the application's logic but is instead ha
 ingress controller that terminates the TLS connection at the edge of the cluster and forwards HTTP traffic
 to the web server. This makes both the implementation and the certificate's management easier.
 
-Please report here all the implementation (technology-dependent) choices you made while implementing your design.
+\subsection*{Database and authentication}
+Consistent with the design requirement for a distributed key-value store (Section~\ref{data-and-consistency-issues}), \textbf{Etcd} is utilized as the distributed key-value store. It implements the Raft consensus algorithm to guarantee Consistency and Partition tolerance (CP), which simplifies the deployment and synchronization of a multi-node database cluster. Etcd natively supports atomic transactions and versioning for safe concurrency control, leases for tracking active user session timeouts, and watchers to trigger asynchronous state updates across the microservices.
 
-\begin{quote}
-  If you run out of time for this project, you may consider leaving some aspect unimplemented, 
-  and simply discuss how you would have implemented them.
-  %
-  In this case, better would be to discuss unimplemented features in \cref{future-works}.
-\end{quote}
-
-\begin{itemize}
-  \item which \textbf{network protocols} to use?
-  %
-  \begin{itemize}
-    \item e.g.~UDP, TCP, HTTP, WebSockets, gRPC, XMPP, AMQP, MQTT, etc.
-  \end{itemize}
-
-  \textbf{Answer:} we used HTTPS and WebSockets for delivering the web page
-  and communicating the updates to the clients in a persistent way. 
-  
-  \item how should \emph{in-transit data} be \textbf{represented}?
-  %
-  \begin{itemize}
-    \item e.g.~JSON, XML, YAML, Protocol Buffers, etc.
-  \end{itemize}
-  \textbf{Answer:} We used JSON for the messages to deliver updates
-  and for the clients to send their moves.
-  
-  \item how should \emph{databases} be \textbf{queried}?
-  %
-  \begin{itemize}
-    \item e.g.~SQL, NoSQL, etc.
-  \end{itemize}
-  \textbf{Answer:} NoSQL in particular queries to Etcd key-value storage.
-  
-  \item how should components be \emph{authenticated}?
-  %
-  \begin{itemize}
-    \item e.g.~OAuth, JWT, etc.
-  \end{itemize}
-  \textbf{Answer:} the clients are authenticated throught classic password
-  hashing comparing, also adding salt to enhance security. The password
-  exchange security is backed by the TLS protocol implemented in the cluster.
-\end{itemize}
+Authentication is implemented via standard password verification. User credentials are submitted via a secure TLS channel. The backend hashes the received password with a unique cryptographic salt before comparing it to or storing it in the Etcd database.
 
 \subsection{Technological details}\label{technological-details}
 
@@ -537,7 +499,9 @@ The client's web interface is implemented in React, a JavaScript framework for d
 applications that meets the requirement of real-time updates and state management.
 This library allows to declaratively define UI views and let the framework handle the updates
 when the state changes, which is perfect for the stateless nature of the client and the updates
-pushed by the server. 
+pushed by the server.
+\subsubsection*{Go}
+The microservices are developed in Go. This language is highly effective for backend development due to its native and lightweight concurrency model. By utilizing goroutines and channels, the system efficiently manages numerous concurrent tasks, such as handling persistent WebSocket connections. Furthermore, Go provides an official and robust client library that simplifies integration with Etcd.
 \subsubsection*{Kubernetes}
 Kubernetes fits perfectly the needs for the system's infrastructure
 specified in the Section~\ref{infrastructure}. It provides an API to
