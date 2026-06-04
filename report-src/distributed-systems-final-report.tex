@@ -362,7 +362,7 @@ Interactions in the system can be broken down into:
     problem.
 \end{itemize}
 An example of interaction of the first point is when a client plays a card, represented in the Figure~\ref{fig:interaction-card},
-from this diagram we can see that, once the play is deemed legal, the update to the database and the notification to the client
+from this diagram we can see that, once the play is confirmed legal, the update to the database and the notification to the client
 passes through the database.
 \begin{figure}[H]
   \centering
@@ -407,7 +407,7 @@ System state transitions are strictly event-driven and operate under a request-v
 \end{itemize}
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
-The system relies on a centralised storage layer to maintain strict consistency across the distributed microservices.
+The system relies on a distributed storage layer to maintain strict consistency across the microservices.
 
 \subsubsection*{Stored Data and Storage Persistency}
 The system requires the persistence of four distinct logical data categories to satisfy operational and state requirements:
@@ -429,31 +429,26 @@ Direct access to the database is strictly limited to the backend microservices. 
 \end{itemize}
 The distributed system architecture exhibits distinct concurrent access patterns across the shared key-value storage layer:
 \begin{itemize}
-    \item \textbf{Concurrent Reads}: Read operations are executed in parallel across distinct keys. Multiple microservice instances can simultaneously retrieve independent data entities—such as separate game states or user records—without mutual blocking, maximising system throughput.
+    \item \textbf{Concurrent Reads}: Read operations are executed in parallel across distinct keys. Multiple microservice instances can simultaneously retrieve independent data entities, such as separate game states or user records, without mutual blocking, maximising system throughput.
     \item \textbf{Event-Driven Observation}: Watcher components maintain real-time state visibility by subscribing to asynchronous event channels dispatched directly by the key-value database. Instead of polling, these components listen to dedicated streams to intercept data transitions immediately upon mutation.
     \item \textbf{Concurrent Writes and Atomicity}: Write operations involving match identifier generation and user session modifications are executed via atomic transactions. This transactional design guarantees isolation during the read-modify-write cycle, ensuring that no intervening modification occurs between the initial fetch of a value and its subsequent update, thereby preventing race conditions and lost updates. Game state modifications are managed through an optimistic concurrency control (OCC) approach. A read operation retrieves the state payload along with an associated revision identifier. After applying the game logic, the updated version is accepted by the storage layer only if the submitted revision identifier matches the current revision saved. If a revision conflict occurs, the operation is rejected, preserving integrity.
 \end{itemize}
 
 \subsection{Fault-Tolerance}\label{fault-tolerance}
-Data federation must be implemented by the storage service, it must be able to replicate
-data across the instances.
-The same goes for the microservices replication, load balancing and scaling. 
-Mechanisms for heart-beating and graceful shutdown must be implemented to ensure liveness
-and to avoid data corruption in case of unexpected shutdowns or panics.
+The storage layer must manage data replication across instances to ensure state consistency and availability using a Raft algorithm. This replication strategy guarantees that all nodes maintain a consistent state, even in the event of node failures, by electing a leader to manage write operations and ensuring that changes are replicated to follower nodes before being committed.
 
-Nowadays, different technologies provide this kind of features out of the box, both for
-data federation and distribution of microservices. So the implementation of this features is 
-mostly a problem of configuration and integration with the requirements of the system and will be discussed
-in the Section~\ref{implementation} about implementation.
+Furthermore, mechanisms for heart-beating and graceful shutdown must be implemented to ensure liveness and to avoid data corruption in case of unexpected shutdowns or panics.
+
+Incase of a node failure, the system must automatically detect the failure and reroute traffic to healthy nodes to maintain uninterrupted service. The stateless design of the microservices allows for seamless failover, as any instance can handle incoming requests without dependency on local state.
+
+Nowadays, different technologies provide this kind of features out of the box, for both distributed storage and microservices orchestration. So the implementation of this features is mostly a problem of configuration and integration with the requirements of the system and will be discussed in the Section~\ref{implementation} about implementation.
 
 \subsection{Availability}\label{availability}
-The system must implement mechanisms to ensure high availability and minimize downtime.
+The system must implement mechanisms to ensure high availability and minimize downtime. To do so, the architecture make use of replication, load balancing, and scaling of the microservices.
 This include strategies to handle node failures and network issues such as network partitioning.
-The statelessness of the microservices and the use of a distributed database contribute to this goal
-by allowing a user to connect and recover its state from another node in case of a failure.
+The statelessness of the microservices and the use of a distributed database contribute to this goal by allowing a user to connect and recover its state from another node in case of a failure.
 
-Similarly as Section~\ref{fault-tolerance}, this feature is already implemented in different ways so
-the implementation will likely be delegate to suitable technologies.
+Similarly as Section~\ref{fault-tolerance}, this feature is implementable in different ways.
 
 \subsection{Security}\label{security}
 The system design incorporates security measures focused on identity verification, game state isolation, and data protectionn.
