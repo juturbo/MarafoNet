@@ -530,9 +530,17 @@ introduced:
 \section{Validation}\label{validation}
 
 \subsection{Automatic Testing}\label{automatic-testing}
-
-
 \subsubsection*{Unit testing}
+Unit tests validate the correctness of individual components, ensuring that the game rules, state management and database interactions function as expected. They are implemented using Go's built-in \texttt{testing} package alongside the \texttt{testify} assertion library. 
+
+The test suite is executed via the \texttt{make test} command from the route of the project. This command automatically provisions a temporary Etcd instance via Docker to allow integration testing of the storage layer, runs the tests, and destroys the container upon completion.
+
+The tests cover the following core areas:
+\begin{itemize}
+  \item \textbf{Model and Game Logic:} Tests verify the strict implementation of Marafone rules. This includes card ranking and power, trick winner evaluation, point calculations, and the "Marafona" bonus logic. They validate move legality, such as enforcing the leading suit, and ensure that the game view generation accurately hides opponent cards to prevent data leaks.
+  \item \textbf{Etcd and Concurrency:} Tests verify the \texttt{EtcdService} methods to ensure robust distributed state management (for example game creation and modification). The tests verify atomic operations, user session management, optimistic concurrency control (by simulating revision mismatches) and the correct behaviour of asynchronous database watchers.
+  \item \textbf{Networking:} Tests ensure the proper parsing, typing, and construction of WebSocket message envelopes used for client-server communication.
+\end{itemize}
 
 \subsubsection*{End-to-end testing}
 End-to-end testing is performed throught Grafana K6, a framework that allows the automation
