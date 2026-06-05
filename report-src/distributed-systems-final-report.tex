@@ -775,7 +775,7 @@ It should be noted that each student is only responsible for their own section.
 \section{Future works}\label{future-works}
 The current architecture meets core requirements, but it can be perfected by addressing the following optimisations and features.
 \subsection{Architectural optimizations}
-\subsubsection*{Datastore migration:}
+\subsubsection*{Datastore migration}
 Migrating the dynamic game storage from etcd to Redis resolves performance bottlenecks caused by etcd's consensus overhead. While etcd is ideal for static configurations, Redis is optimised for the high-frequency state mutations required by a real-time multiplayer game.
 \begin{itemize}
     \item \textbf{Write throughput and disc I/O:} etcd requires disc I/O and Raft consensus for every game move, causing latency under load. Redis operates entirely in memory (RAM), reducing write latency to sub-millisecond levels and drastically increasing system capacity.
@@ -787,12 +787,12 @@ Migrating the dynamic game storage from etcd to Redis resolves performance bottl
     \item \textbf{Session Timeouts and Leases:} etcd manages user inactivity via continuous, network-heavy keep-alive leases. Redis simplifies this using Time-To-Live (TTL) keys. Upon client disconnection, the TTL expires and triggers a Keyspace Notification, immediately alerting the \texttt{TimeoutWatcher} to handle forfeits.
 \end{itemize}
 \subsubsection*{State payload reduction:} The \texttt{GameService} transmits the complete \texttt{GameView} JSON object to clients on every move. The system must implement delta payloads (e.g. JSON Patch) to transmit only state mutations, reducing network bandwidth consumption.
-\subsubsection*{Session management:} Authentication relies on credential hashes stored in Etcd. Implementing JSON Web Tokens (JWT) will eliminate database queries for session verification, moving validation entirely to the stateless \texttt{ConnectionServer} level.
+\subsubsection*{Session management} Authentication relies on credential hashes stored in Etcd. Implementing JSON Web Tokens (JWT) will eliminate database queries for session verification, moving validation entirely to the stateless \texttt{ConnectionServer} level.
 
 \subsection{Unimplemented Features and Extensions}
-\subsubsection*{Custom lobbies:} Implement private matchmaking by generating unique, shareable lobby codes. This requires modifying the matchmaking hub to allow players to bypass the standard public queue and join isolated game sessions.
-\subsubsection*{Historical Match Database:} Integrate a dedicated relational database (e.g. MongoSB) to archive completed match results and player statistics. This isolates persistent and long-term record history from the dynamic game states managed by the key-value store.
-\subsubsection*{Elo-Based Matchmaking:} Replace the current first-in, first-out queue with a skill-based system. Player records will store ratings to match users of similar skill levels.
+\subsubsection*{Custom lobbies} Implement private matchmaking by generating unique, shareable lobby codes. This requires modifying the matchmaking hub to allow players to bypass the standard public queue and join isolated game sessions.
+\subsubsection*{Historical Match Database} Integrate a dedicated relational database (e.g. MongoSB) to archive completed match results and player statistics. This isolates persistent and long-term record history from the dynamic game states managed by the key-value store.
+\subsubsection*{Elo-Based Matchmaking} Replace the current first-in, first-out queue with a skill-based system. Player records will store ratings to match users of similar skill levels.
 
 %\bibliographystyle{plain}
 %bibliography{references}
