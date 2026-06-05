@@ -553,20 +553,18 @@ in particular:
 \begin{itemize}
   \item \texttt{newMatch\_test.js} tests the user's registration, login and matchmaking process,
     verifying that the game is created. (\ref{f:account-registration}, \ref{f:authentication}, \ref{f:matchmaking})
-  \item \texttt{match\_test.js} tests the whole game flow, from registering to playing cards. (\ref{f:game-interaction}, \ref{f:game-resolution})
-    The users are instructed to play a card coherent to the table's state, otherwise a random card.
+  \item \texttt{match\_test.js} tests the whole game flow, from registering to playing cards.
+    The users are instructed to play a card coherent to the table's state, otherwise a random card. (\ref{f:game-interaction}, \ref{f:game-resolution})
   \item \texttt{failedLogin\_test.js} simulates users trying to login without registering first.
     This ensures that the systems correctly handles unauthorized access.
   \item \texttt{wrongMessages\_test.js} simulates the users sending wrong messages without being logged in 
     to the server such as playing a card or choosing a trump.
     This check thats the server correctly verifies the identity of the connection before processing a message.
 \end{itemize}
-
 Tests are performed in the production environment (the Kubernetes cluster), so to run them 
 the user needs to:
 \begin{enumerate}
   \item install K6 from the \href{https://grafana.com/docs/k6/latest/set-up/install-k6/#install-k6}{official documentation}
-  \item clone the \href{https://github.com/juturbo/MarafoNet}{project's repository}
   \item follow the instructions at the Section~\ref{deployment} to deploy the system
 \end{enumerate}
 Finally, the aforementioned tests can be run with the following command:
@@ -596,8 +594,8 @@ The features tested include:
   \item connection and disconnection: simply check if a page is returned when connecting to the server.
   \item messages exchanged: check if the format of the messages sent and received by the client matches the ones on the server.
   \item user registration and login: register and log in with a new user, try to check in with an unregistered user.
-  \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case. Requirement checked: \ref{f:move-validation}, \ref{f:game-resolution}, \ref{f:post-game}
-  \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements. \ref{f:state-visibility}
+  \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case. Requirements checked: \ref{f:move-validation}, \ref{f:game-resolution}, \ref{f:post-game}
+  \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements. Requirement checked: \ref{f:state-visibility}
   \item timeout watcher: start a game, make a player disconnect, wait for two minutes and then check if every player sees an endgame screen. Requirement checked: \ref{f:timeout-managment}
 \end{itemize}
 
@@ -630,59 +628,42 @@ To deploy the application the following software must be installed on the target
   \item \href{https://docs.docker.com/engine/install}{Docker} (depending on the operating system, it may be necessary to install Docker Desktop)
   \item \href{https://minikube.sigs.k8s.io/docs/start}{minikube}
   \item \href{https://kubernetes.io/docs/tasks/tools/#kubectl}{kubectl}
+  \item \texttt{make}: usually comes installed in Linux or Mac, or by downloading the Windows version
 \end{itemize}
 After successful installation the user can proceed to the next section.
 %
 \subsection{Deployment instructions}
-First, the user needs to start the Kubernetes cluster throught \texttt{minikube}:
+First, the user needs to clone the \href{https://github.com/juturbo/MarafoNet}{project's repository}:
 \begin{lstlisting}[language=bash]
-  ~$ minikube start --nodes 3 --driver=docker -p marafonet-cluster
+  ~$ git clone https://github.com/juturbo/MarafoNet.git
 \end{lstlisting}
-this will pull images for the nodes and create a local cluster based on Docker containers.
+this will pull the entire codebase and the makefiles to start both production and testing environments.
 
-Then, the user needs to enable the Ingress controller on the cluster with the following command:
-\begin{lstlisting}[language=bash]
-  ~$ minikube addons enable ingress -p marafonet-cluster
-	~$ kubectl wait --namespace ingress-nginx 
-  \ --for=condition=ready pod 
-  \ --selector=app.kubernetes.io/component=controller
-  \ --timeout=120s
+Then, the user can position at the root of the project and run the \texttt{deploy} target:%
+\begin{lstlisting}[language=bash,label=lst:deploy]
+  $ make deploy
 \end{lstlisting}
-The second command will wait until the Ingress controller is ready so that the deployment
-will go without errors.
+This command will take some time to pull and start the node images, initialize the minikube ingress add-on,
+create the TLS certificates in \texttt{deployment/kubernetes/certs} and deploy the Kubernetes resources.
 
-Once the cluster is running, the user needs to create TLS certificates and the
-relative Kubernetes secret that will be used for HTTPS connection, to do this
-\texttt{OpenSSL} can be used. In a temporary directory, run:
-\begin{lstlisting}[language=bash]
-  	~$ openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout \
-    ./tls.key \ 
-    -out ./tls.crt \
-    -subj "/CN=localhost" -days 365
-\end{lstlisting}
-Then the secret can be created with the following command:
-\begin{lstlisting}[language=bash]
-kubectl create secret tls marafonet-tls --key ./tls.key --cert ./tls.crt
-\end{lstlisting}
+All the Kubernetes resources are grouped inside a \texttt{kustomize.yaml} file
+that is used to deploy the system throguht \texttt{kubectl apply}.
 
-All the Kubernetes' resources are grouped inside a \texttt{kustomize.yaml} file
-that can be used to deploy the system throguht \texttt{kubectl apply} command.
-\begin{lstlisting}[language=bash]
-  ~$ kubectl apply -k github.com/juturbo/marafonet/deployment/kubernetes
-\end{lstlisting}
-the command should output the following:
+The command at Listing~\ref{lst:deploy}, in the end, should output the following:
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{figures/deployment/deployment-instructions.png}
   \caption{Deployment command output}
   \label{fig:instructions-output}
 \end{figure}
-Then, before accessing the application at \texttt{https://localhost:8080}, the user needs
-to port-forward the Ingress to the local machine with the following command:
-\begin{lstlisting}[language=bash]
-  ~$ kubectl port-forward \ 
-  -n ingress-nginx svc/ingress-nginx-controller 8080:443
-\end{lstlisting}
+
+From the final lines of the command's output the user can check if the pods are deployed correctly
+(some may be still in \texttt{pending} or \texttt{container creation} states) and can see that the 
+tunnel to the ingress has been opened.
+
+Opening the tunnel is necessary in this instance due to the use of \texttt{minikube} to virtualize
+the Kubernetes cluser but is not done in real-world production clusters.
+
 
 \section{User Guide}\label{user-guide}
 After following the instructions at the Section~\ref{deployment}
