@@ -581,48 +581,6 @@ and results as shown in the Figure~\ref{fig:test-output}.
   \label{fig:test-output}
 \end{figure}
 
-
-\begin{itemize}
-  \item how were individual components \textbf{\emph{unit}-test}ed?
-  Unit tests were performend on:
-  \begin{itemize}
-    \item DB querying components to validate the correct querying, and the connection itself
-    \item the Model to validate the game logic, corner cases and point system
-    \item the message service to check the correct message types
-  \end{itemize}
-
-  to test these you command \texttt{make test}.
-  
-  \item how to \textbf{\emph{end-to-end}-test} the system?
-  %
-  \begin{itemize}
-    \item e.g.~production vs.~test environment
-  \end{itemize}
-  Testing end-to-end is automated throught Grafana K6 automatic testing
-  in which the K6 framework simulates users registering, logging in and
-  playing a few cards.
-  To run this test one must first deploy the cluster by following the
-  instruction at the Section~\ref{deployment} and then run:
-  \texttt{k6 run register\_test.js}.
-
-  \item for each test specify:
-  %
-  \begin{itemize}
-    \item rationale of individual tests
-    \item how were the test automated
-    \item how to run them
-    \item which requirement they are testing, if any
-  \end{itemize}
-\end{itemize}
-
-\begin{quote}
-recall that \emph{deployment} \textbf{automation} is commonly used to \emph{test} the system in \emph{production-like} environment
-\end{quote}
-
-\begin{quote}
-recall to test corner cases (crashes, errors, etc.)
-\end{quote}
-
 \subsection{Acceptance test}\label{acceptance-test}
 Some tests were performed manually to rapidly check the behaviour of the application during the
 development phase, as it was faster than writing automated tests and the features were intuitively simple to test.
@@ -638,7 +596,7 @@ The features tested include:
   \item messages exchanged: check if the format of the messages sent and received by the client matches the ones on the server
   \item user registration and login: register and log in with a new user, try to check in with an unregistered user
   \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case
-  \item check the correct behaviour of the frontend upon updates and 
+  \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements
 \end{itemize}
 
 \section{Deployment}\label{deployment}
