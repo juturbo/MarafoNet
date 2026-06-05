@@ -217,6 +217,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,go,goland,godot,visualstudiocode,react
 
-# Ignore TLS certificates directory
-deployment/kubernetes/certs
 acert
