@@ -538,8 +538,8 @@ The test suite is executed via the \texttt{make test} command from the root of t
 
 The tests cover the following core areas:
 \begin{itemize}
-  \item \textbf{Model and Game Logic:} Tests verify the strict implementation of Marafone rules, indicated by the Requirement~\ref{f:game-interaction}. This includes card ranking and power, trick winner evaluation, point calculations, and the "Marafona" bonus logic. They validate move legality, such as enforcing the leading suit, and ensure that the game view generation accurately hides opponent cards to prevent data leaks.
-  \item \textbf{Etcd and Concurrency:} Tests verify the \texttt{EtcdService} methods to ensure robust distributed state management (for example game creation and modification). The tests verify atomic operations, user session management, optimistic concurrency control (by simulating revision mismatches) and the correct behaviour of asynchronous database watchers.
+  \item \textbf{Model and Game Logic:} Tests verify the strict implementation of Marafone rules, indicated by the Requirement~\ref{f:game-interaction}, \ref{f:move-validation}. This includes card ranking and power, trick winner evaluation, point calculations, and the "Marafona" bonus logic. They validate move legality, such as enforcing the leading suit, and ensure that the game view generation accurately hides opponent cards to prevent data leaks.
+  \item \textbf{Etcd and Concurrency:} Tests verify the \texttt{EtcdService} methods to ensure robust distributed state management (for example game creation and modification). The tests verify atomic operations, user session management, optimistic concurrency control (by simulating revision mismatches) and the correct behaviour of asynchronous database watchers. Functional requirements satisfied: \ref{f:account-registration}, \ref{f:authentication}, 
   \item \textbf{Networking:} Tests ensure the proper parsing, typing, and construction of WebSocket message envelopes used for client-server communication.
 \end{itemize}
 
