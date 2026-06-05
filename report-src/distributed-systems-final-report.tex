@@ -9,6 +9,7 @@
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{subfig}
+\usepackage{enumitem}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \definecolor{codegreen}{RGB}{193, 193, 193}
@@ -147,7 +148,7 @@ Since the user base is concentrated in central Italy, geographical distribution 
 
 \subsection*{Functional Requirements}
 The system must allow the user to perform the following actions. Each requirement is tied to a specific acceptance criterion (AC) for validation purposes:
-\begin{enumerate}
+\begin{enumerate}[label=F\arabic*.,ref=F\arabic*]
     \item \textbf{Account Registration:}
     \begin{itemize}
         \item Register a new account using a unique username and password.
@@ -198,7 +199,7 @@ The system must allow the user to perform the following actions. Each requiremen
 \subsection*{Non-Functional Requirements}
 The system must guarantee the following properties:
 
-\begin{enumerate}
+\begin{enumerate}[label=NF\arabic*.,ref=NF\arabic*]
     \item \textbf{Consistency:} The game state must be identical for all players at any given time. Following a network partition, reconnecting users must retrieve the exact or most recent valid game state.
     \item \textbf{Fault Tolerance:} The system must withstand node failures without data corruption or loss. In the event of a crash, users must be able to reconnect seamlessly and resume their game without interruption.
     \item \textbf{Availability:} The service must remain accessible; if a node fails, traffic must be routed to another available source to maintain uptime.
