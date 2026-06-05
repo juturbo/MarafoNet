@@ -552,8 +552,8 @@ All the tests simulate parallel users, open WebSocket connections and send messa
 in particular:
 \begin{itemize}
   \item \texttt{newMatch\_test.js} tests the user's registration, login and matchmaking process,
-    verifying that the game is created.
-  \item \texttt{match\_test.js} tests the whole game flow, from registering to playing cards.
+    verifying that the game is created. (\ref{f:account-registration}, \ref{f:authentication}, \ref{f:matchmaking})
+  \item \texttt{match\_test.js} tests the whole game flow, from registering to playing cards. (\ref{f:game-interaction}, \ref{f:game-resolution})
     The users are instructed to play a card coherent to the table's state, otherwise a random card.
   \item \texttt{failedLogin\_test.js} simulates users trying to login without registering first.
     This ensures that the systems correctly handles unauthorized access.
