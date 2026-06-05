@@ -165,7 +165,7 @@ The system must allow the user to perform the following actions. Each requiremen
     \end{itemize}
     \item \textbf{Game Interaction:}
     \begin{itemize}
-        \item Execute valid in-game actions (e.g., playing a card, choosing the Trump suit) during the user's turn.
+        \item Execute valid in-game actions (e.g. playing a card, choosing the Trump suit) during the user's turn.
         \item \textit{AC:} The system accepts the action, updates the game state, and passes the turn to the next player.
     \end{itemize}
     \item \textbf{State Visibility:}
@@ -402,7 +402,7 @@ To maximize horizontal scalability and fault tolerance, the architecture enforce
 \subsubsection*{State Mutation Lifecycle}
 System state transitions are strictly event-driven and operate under a request-validation-persistence cycle, avoiding polling.
 \begin{itemize}
-    \item \textbf{Client-Driven Actions:} A client application cannot directly mutate the system state. When a player executes an action (e.g., playing a card or choosing the Trump suit), it transmits a command to the \texttt{ConnectionServer}, which dispatches it to the \texttt{GameService}. The \texttt{GameService} fetches the current game state from storage, validates the action against the domain rules, computes the new state, and persists the updated record back to the database. A watcher of the game state will notify the update back to the clients in the lobby waiting to display it.
+    \item \textbf{Client-Driven Actions:} A client application cannot directly mutate the system state. When a player executes an action (e.g. playing a card or choosing the Trump suit), it transmits a command to the \texttt{ConnectionServer}, which dispatches it to the \texttt{GameService}. The \texttt{GameService} fetches the current game state from storage, validates the action against the domain rules, computes the new state, and persists the updated record back to the database. A watcher of the game state will notify the update back to the clients in the lobby waiting to display it.
     \item \textbf{System-Driven Actions:} State mutations are also triggered automatically by internal sub-systems based on lifecycle events. The \texttt{MatchmakingHub} receives queue state updates every time a user joins the queue and atomically initialises a new \texttt{Game} context in storage as soon as four players are available. Similarly, the \texttt{TimeoutWatcher} passively monitors active connection leases; upon receiving an expiration, it forces a state transition to a forfeit status through the \texttt{GameService}, updating the persistence layer accordingly.
 \end{itemize}
 
@@ -417,7 +417,7 @@ The system requires the persistence of four distinct logical data categories to 
     \item \textbf{Player Session State}: Maps active players to their current game context and connection status to handle unexpected disconnections.
     \item \textbf{Game State}: Comprises the full structural state of ongoing matches, including player hands, trick history, points, and turn progression indicators.
 \end{itemize}
-To ensure loose coupling and horizontal scalability of the application services, all data is stored externally using a \textbf{Key-Value storage model}. This paradigm is optimal for this architecture because the system manages distinct, easily serialisable entities (e.g., mapping a unique Game ID to a serialised game state) and requires high-throughput, low-latency read/write operations to maintain real-time responsiveness during gameplay.
+To ensure loose coupling and horizontal scalability of the application services, all data is stored externally using a \textbf{Key-Value storage model}. This paradigm is optimal for this architecture because the system manages distinct, easily serialisable entities (e.g. mapping a unique Game ID to a serialised game state) and requires high-throughput, low-latency read/write operations to maintain real-time responsiveness during gameplay.
 
 \subsubsection*{Database Interactions and Concurrency}
 Direct access to the database is strictly limited to the backend microservices. The interactions are structured as follows:
@@ -802,10 +802,26 @@ a card with the same suit as the first card played; otherwise they can play anot
 It should be noted that each student is only responsible for their own section.
 
 \section{Future works}\label{future-works}
+The current architecture meets core requirements, but it can be perfected by addressing the following optimisations and features.
+\subsection{Architectural optimizations}
+\subsubsection*{Datastore migration:}
+Migrating the dynamic game storage from etcd to Redis resolves performance bottlenecks caused by etcd's consensus overhead. While etcd is ideal for static configurations, Redis is optimised for the high-frequency state mutations required by a real-time multiplayer game.
+\begin{itemize}
+    \item \textbf{Write throughput and disc I/O:} etcd requires disc I/O and Raft consensus for every game move, causing latency under load. Redis operates entirely in memory (RAM), reducing write latency to sub-millisecond levels and drastically increasing system capacity.
+    
+    \item \textbf{Concurrency Control and Atomicity:} Instead of etcd's network-heavy Compare-And-Swap (CAS) transactions, Redis prevents race conditions naturally through its single-threaded architecture. Game state updates can be handled via atomic Lua scripts directly on the server, eliminating network round-trips.
+    
+    \item \textbf{Event Broadcasting and Watchers:} etcd relies on heavy gRPC watchers traversing historical logs. Redis replaces this with a lightweight, native Pub/Sub engine. Mapping each match to a unique channel (\texttt{game:events:\{gameId\}}) ensures low-overhead state broadcasting.
+    
+    \item \textbf{Session Timeouts and Leases:} etcd manages user inactivity via continuous, network-heavy keep-alive leases. Redis simplifies this using Time-To-Live (TTL) keys. Upon client disconnection, the TTL expires and triggers a Keyspace Notification, immediately alerting the \texttt{TimeoutWatcher} to handle forfeits.
+\end{itemize}
+\subsubsection*{State payload reduction:} The \texttt{GameService} transmits the complete \texttt{GameView} JSON object to clients on every move. The system must implement delta payloads (e.g. JSON Patch) to transmit only state mutations, reducing network bandwidth consumption.
+\subsubsection*{Session management:} Authentication relies on credential hashes stored in Etcd. Implementing JSON Web Tokens (JWT) will eliminate database queries for session verification, moving validation entirely to the stateless \texttt{ConnectionServer} level.
 
-Discuss possible future works, improvements, extensions, optimizations, etc.
-
-Also discuss here any unimplemented feature, and how you would have implemented it.
+\subsection{Unimplemented Features and Extensions}
+\subsubsection*{Custom lobbies:} Implement private matchmaking by generating unique, shareable lobby codes. This requires modifying the matchmaking hub to allow players to bypass the standard public queue and join isolated game sessions.
+\subsubsection*{Historical Match Database:} Integrate a dedicated relational database (e.g. MongoSB) to archive completed match results and player statistics. This isolates persistent and long-term record history from the dynamic game states managed by the key-value store.
+\subsubsection*{Elo-Based Matchmaking:} Replace the current first-in, first-out queue with a skill-based system. Player records will store ratings to match users of similar skill levels.
 
 %\bibliographystyle{plain}
 %bibliography{references}
