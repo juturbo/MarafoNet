@@ -598,6 +598,7 @@ The features tested include:
   \item user registration and login: register and log in with a new user, try to check in with an unregistered user
   \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case
   \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements
+  \item timeout watcher: start a game, make a player disconnect, wait for two minutes and then check if every player sees an endgame screen. Requirement checked: \ref{f:timeout-managment}
 \end{itemize}
 
 \section{Deployment}\label{deployment}
