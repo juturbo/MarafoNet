@@ -791,7 +791,7 @@ Migrating the dynamic game storage from etcd to Redis resolves performance bottl
 
 \subsection{Unimplemented Features and Extensions}
 \subsubsection*{Custom lobbies} Implement private matchmaking by generating unique, shareable lobby codes. This requires modifying the matchmaking hub to allow players to bypass the standard public queue and join isolated game sessions.
-\subsubsection*{Historical Match Database} Integrate a dedicated relational database (e.g. MongoSB) to archive completed match results and player statistics. This isolates persistent and long-term record history from the dynamic game states managed by the key-value store.
+\subsubsection*{Historical Match Database} Integrate a dedicated relational database (e.g. MongoDB) to archive completed match results and player statistics. This isolates persistent and long-term record history from the dynamic game states managed by the key-value store.
 \subsubsection*{Elo-Based Matchmaking} Replace the current first-in, first-out queue with a skill-based system. Player records will store ratings to match users of similar skill levels.
 
 %\bibliographystyle{plain}
