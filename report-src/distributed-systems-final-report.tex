@@ -593,11 +593,11 @@ and accessed through the browser.
 
 The features tested include:
 \begin{itemize}
-  \item connection and disconnection: simply check if a page is returned when connecting to the server
-  \item messages exchanged: check if the format of the messages sent and received by the client matches the ones on the server
-  \item user registration and login: register and log in with a new user, try to check in with an unregistered user
-  \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case
-  \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements
+  \item connection and disconnection: simply check if a page is returned when connecting to the server.
+  \item messages exchanged: check if the format of the messages sent and received by the client matches the ones on the server.
+  \item user registration and login: register and log in with a new user, try to check in with an unregistered user.
+  \item matchmaking and game flow: start a game, play correct and wrong cards to test if the logic missed any corner case. Requirement checked: \ref{f:move-validation}, \ref{f:game-resolution}, \ref{f:post-game}
+  \item frontend behaviour: check the correct update of the game's upon the receiving of messages and the shape and size of UI's elements. \ref{f:state-visibility}
   \item timeout watcher: start a game, make a player disconnect, wait for two minutes and then check if every player sees an endgame screen. Requirement checked: \ref{f:timeout-managment}
 \end{itemize}
 
