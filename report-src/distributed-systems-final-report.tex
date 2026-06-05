@@ -149,47 +149,47 @@ Since the user base is concentrated in central Italy, geographical distribution 
 \subsection*{Functional Requirements}
 The system must allow the user to perform the following actions. Each requirement is tied to a specific acceptance criterion (AC) for validation purposes:
 \begin{enumerate}[label=F\arabic*.,ref=F\arabic*]
-    \item \textbf{Account Registration:}
+    \item \label{f:account-registration} \textbf{Account Registration:}
     \begin{itemize}
         \item Register a new account using a unique username and password.
         \item \textit{AC:} The system stores the credentials and allows the user to log in immediately after.
     \end{itemize}
-    \item \textbf{Authentication:}
+    \item \label{f:authentication} \textbf{Authentication:}
     \begin{itemize}
         \item Log in using registered credentials.
         \item \textit{AC:} The system grants access upon submitting correct credentials and explicitly denies access upon incorrect ones.
     \end{itemize}
-    \item \textbf{Matchmaking:} 
+    \item \label{f:matchmaking} \textbf{Matchmaking:} 
     \begin{itemize}
         \item Join a queue to participate in a Game, and leave the queue if desired.
         \item \textit{AC:} The system places the user in an active Game as soon as the required number of players is reached in the queue.
     \end{itemize}
-    \item\label{f:game-interaction} \textbf{Game Interaction:}
+    \item \label{f:game-interaction} \textbf{Game Interaction:}
     \begin{itemize}
         \item Execute valid in-game actions (e.g. playing a card, choosing the Trump suit) during the user's turn.
         \item \textit{AC:} The system accepts the action, updates the game state, and passes the turn to the next player.
     \end{itemize}
-    \item \textbf{State Visibility:}
+    \item \label{f:state-visibility} \textbf{State Visibility:}
     \begin{itemize}
         \item View the real-time game state, including the current turn, active Trump suit, current score, and the cards played in the last Trick.
         \item \textit{AC:} The client interface accurately reflects the server-side state without requiring manual page reloads.
     \end{itemize}
-    \item \textbf{Move Validation:}
+    \item \label{f:move-validation} \textbf{Move Validation:}
     \begin{itemize}
         \item Receive immediate feedback if an attempted move violates the game rules.
         \item \textit{AC:} The system rejects the action, maintains the current turn, and displays an error message explaining the rule violation.
     \end{itemize}
-    \item \textbf{Game Resolution:}
+    \item \label{f:game-resolution} \textbf{Game Resolution:}
     \begin{itemize}
         \item View the final results when a Game concludes.
         \item \textit{AC:} The system halts gameplay and displays the winning team along with the final score differential.
     \end{itemize}
-    \item \textbf{Timeout Management:}
+    \item \label{f:timeout-managment} \textbf{Timeout Management:}
     \begin{itemize}
         \item Resolve the game without waiting indefinitely if an opponent disconnects.
         \item \textit{AC:} The system starts a grace period timer upon a player's disconnection. If the player fails to reconnect before the timer expires, the system ends the game, registers a forfeit for the disconnected player, and declares the opposing team the winner.
     \end{itemize}
-    \item \textbf{Post-Game Actions:}
+    \item \label{f:post-game} \textbf{Post-Game Actions:}
     \begin{itemize}
         \item Choose to queue for a new Game or quit to the main menu after a Game ends.
         \item \textit{AC:} The system routes the user to the matchmaking queue or to the login page based on their explicit selection.
@@ -200,10 +200,10 @@ The system must allow the user to perform the following actions. Each requiremen
 The system must guarantee the following properties:
 
 \begin{enumerate}[label=NF\arabic*.,ref=NF\arabic*]
-    \item \textbf{Consistency:} The game state must be identical for all players at any given time. Following a network partition, reconnecting users must retrieve the exact or most recent valid game state.
-    \item \textbf{Fault Tolerance:} The system must withstand node failures without data corruption or loss. In the event of a crash, users must be able to reconnect seamlessly and resume their game without interruption.
-    \item \textbf{Availability:} The service must remain accessible; if a node fails, traffic must be routed to another available source to maintain uptime.
-    \item \textbf{Client Statelessness:} The client application must not store internal game state memory. It must depend entirely on state updates pushed by the server, ensuring the server remains the single source of truth and preventing client-side state manipulation.
+    \item \label{nf:consistency} \textbf{Consistency:} The game state must be identical for all players at any given time. Following a network partition, reconnecting users must retrieve the exact or most recent valid game state.
+    \item \label{nf:fault-tolerance} \textbf{Fault Tolerance:} The system must withstand node failures without data corruption or loss. In the event of a crash, users must be able to reconnect seamlessly and resume their game without interruption.
+    \item \label{nf:availability} \textbf{Availability:} The service must remain accessible; if a node fails, traffic must be routed to another available source to maintain uptime.
+    \item \label{nf:client-statelessness} \textbf{Client Statelessness:} The client application must not store internal game state memory. It must depend entirely on state updates pushed by the server, ensuring the server remains the single source of truth and preventing client-side state manipulation.
 \end{enumerate}
 
 %\subsection*{Implementation}
