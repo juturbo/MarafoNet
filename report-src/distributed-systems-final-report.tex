@@ -786,7 +786,7 @@ Migrating the dynamic game storage from etcd to Redis resolves performance bottl
     
     \item \textbf{Session Timeouts and Leases:} etcd manages user inactivity via continuous, network-heavy keep-alive leases. Redis simplifies this using Time-To-Live (TTL) keys. Upon client disconnection, the TTL expires and triggers a Keyspace Notification, immediately alerting the \texttt{TimeoutWatcher} to handle forfeits.
 \end{itemize}
-\subsubsection*{State payload reduction:} The \texttt{GameService} transmits the complete \texttt{GameView} JSON object to clients on every move. The system must implement delta payloads (e.g. JSON Patch) to transmit only state mutations, reducing network bandwidth consumption.
+\subsubsection*{State payload reduction} The \texttt{GameService} transmits the complete \texttt{GameView} JSON object to clients on every move. The system must implement delta payloads (e.g. JSON Patch) to transmit only state mutations, reducing network bandwidth consumption.
 \subsubsection*{Session management} Authentication relies on credential hashes stored in Etcd. Implementing JSON Web Tokens (JWT) will eliminate database queries for session verification, moving validation entirely to the stateless \texttt{ConnectionServer} level.
 
 \subsection{Unimplemented Features and Extensions}
