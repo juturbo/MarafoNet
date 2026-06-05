@@ -724,16 +724,16 @@ they can play the game.
 
 As shown in Figure~\ref{fig:game-page}, the UI presents the following elements:
 \begin{itemize}
-  \item at the top left corner, the match's points, they are updated at the end of each hand
-  \item at the bottom center, the current player's hand
+  \item at the top left corner, the game's points, they are updated at the end of each match
+  \item at the bottom center, the user's hand
   \item at top, left and right, are placed the other players' cards. The player on the top is the user's teammate
-  \item a yellow circle with `Di mano' written on it indicates the player that has choosen the trump suit for the current hand
+  \item a yellow circle with `Di mano' written on it indicates the player that has choosen the trump suit for the current match
   \item a yellow circle with `Tocca a te' written on it indicates the player that has to play a card
-  \item at the top right corner, a container with the last trick's cards togheter with the name of the player's who played it
+  \item at the top right corner, a container with the latest trick's cards togheter with the name of the player's who played it
 \end{itemize}
 
 \subsection{Playing the game}
-At the beginning of each hand, the player that has the `Di mano' circle can choose the trump suit for that hand,
+At the beginning of each hand, the player that has the `Di mano' circle can choose the trump suit for that match,
 the trump choosen will beat any card of the other suits, even if they are of higher rank. A pop-up as shown
 in the Figure~\ref{fig:trump-popup} will appear to the player to let them choose the trump suit.
 
@@ -745,8 +745,8 @@ in the Figure~\ref{fig:trump-popup} will appear to the player to let them choose
 \end{figure}
 
 The game is played in couples, one against the other, teammates facing each other. 
-The game is played in a series of hands, which is composed of 10 tricks. In every trick each player plays one card.
-The first player to play a card can choose whatever card they want, while the other players must play, if they have it, 
+The game is played in a series of matches, which is composed of 10 tricks. In every trick each player plays one card.
+In a trick, the first player to play a card can choose whatever card they want, while the other players must play, if they have it, 
 a card with the same suit as the first card played; otherwise they can play another card.
 
 \section{Self-evaluation}\label{self-evaluation}
