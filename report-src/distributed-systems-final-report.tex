@@ -736,6 +736,8 @@ As shown in Figure~\ref{fig:game-page}, the UI presents the following elements:
 At the beginning of each hand, the player that has the `Di mano' circle can choose the trump suit for that match,
 the trump choosen will beat any card of the other suits, even if they are of higher rank. A pop-up as shown
 in the Figure~\ref{fig:trump-popup} will appear to the player to let them choose the trump suit.
+If the player has Ace, Two and Three of the suit, chooses that suit and plays the Ace as the first card, its team is awarded with
+three bonus points.  
 
 \begin{figure}[H]
   \centering
@@ -748,6 +750,12 @@ The game is played in couples, one against the other, teammates facing each othe
 The game is played in a series of matches, which is composed of 10 tricks. In every trick each player plays one card.
 In a trick, the first player to play a card can choose whatever card they want, while the other players must play, if they have it, 
 a card with the same suit as the first card played; otherwise they can play another card.
+
+The game ends once a team reaches 41 or more points, wins the team that has the most points. In case of draw another match
+may be played. If a player disconnects for more than 2 minutes its team will automatically lose the entire game.
+In either scenarios, a pop-up with the winning team and the score will appear, as shown in Figure~\ref{fig:win-popup}.
+
+\textbf{ADD SCREENSHOT END GAME}
 
 \section{Self-evaluation}\label{self-evaluation}
 
