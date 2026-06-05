@@ -533,7 +533,7 @@ introduced:
 \subsubsection*{Unit testing}
 Unit tests validate the correctness of individual components, ensuring that the game rules, state management and database interactions function as expected. They are implemented using Go's built-in \texttt{testing} package alongside the \texttt{testify} assertion library. 
 
-The test suite is executed via the \texttt{make test} command from the route of the project. This command automatically provisions a temporary Etcd instance via Docker to allow integration testing of the storage layer, runs the tests, and destroys the container upon completion.
+The test suite is executed via the \texttt{make test} command from the root of the project. This command automatically provisions a temporary Etcd instance via Docker to allow integration testing of the storage layer, runs the tests, and destroys the container upon completion.
 
 The tests cover the following core areas:
 \begin{itemize}
