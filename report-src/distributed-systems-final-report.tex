@@ -749,9 +749,19 @@ In either scenarios, a pop-up with the winning team and the score will appear, a
 \section{Self-evaluation}\label{self-evaluation}
 
 \subsection*{Federico Bagattoni}
-my role: what i brought to the project
-strenght and weaknesees of the product, one of the first real full-stack projects i did that includes thinking about
-deployment, network and replication other than design and implementation. 
+Considering that this is one of the first \textit{big} and complete projects in which we developed from backend to frontend
+with a lot of different technologies and a serious amount of work, I'm really satisfied of the outcome.
+Although the project lacks some additional features, thinking of the integration between technologies made me appreciate
+the complexity in developing this kind of systems from scratch.
+
+The roles in the project were balanced, with each member bringing experience with different technologies and ability
+to bring up problems that the other member had not seen coming. 
+My role covered the frontend as well as the WebSocket connection and messages management, finally I took care of most of the Kubernetes
+deployment. Overall, the server side and Kubernetes was solid work. Although I am not passionate about this topic I could have done a better job at the frontend by 
+studying recurrent patterns and best practises.
+Addressing and testing performances, apart from being an optimization to be mentioned in Section~\ref{future-works}, could have
+been done differently by exploring resource usage and performing stress tests.
+
 
 \begin{itemize}
   \item An individual section is required for each member of the group
@@ -764,6 +774,13 @@ It should be noted that each student is only responsible for their own section.
 \section{Future works}\label{future-works}
 The current architecture meets core requirements, but it can be perfected by addressing the following optimisations and features.
 \subsection{Architectural optimizations}
+\subsubsection*{Perfomance testing, resource utilization and scaling}
+The system currently lacks in-depth studies on resource utilization, by doing these we could fine-tune the Kubernetes' CPU requests, limits
+and horizontal scaling behaviour to maximize concurrent connection and prevent congestion.
+
+This process would start by first investigating the maximum concurrent connections that a single Game Server can support and then
+understand in depth how Kubernetes manages resources. Go provides environment variables (\texttt{GOMAXPROCS} and \texttt{GOMEMLIMIT}) to manage memory and CPU allocation so that
+it can regulate how much concurrent threads (and so Goroutines) it can run concurrently without being throttled by the operating system.
 \subsubsection*{Datastore migration}
 Migrating the dynamic game storage from etcd to Redis resolves performance bottlenecks caused by etcd's consensus overhead. While etcd is ideal for static configurations, Redis is optimised for the high-frequency state mutations required by a real-time multiplayer game.
 \begin{itemize}
