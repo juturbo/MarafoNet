@@ -775,14 +775,23 @@ studying recurrent patterns and best practises.
 Addressing and testing performances, apart from being an optimization to be mentioned in Section~\ref{future-works}, could have
 been done differently by exploring resource usage and performing stress tests.
 
+\subsection*{Jacopo Turchi}
+My role in the project focused on backend design and domain logic development. I implemented the core game logic and model, enforcing the Marafone rules through move validation, trick evaluation, and score calculation. I developed the game service responsible for processing commands and managing match state transitions. For the storage layer, I designed the interaction with the etcd distributed database to handle match creation, user credentials persistence, and session leases. I also implemented the \texttt{TimeoutWatcher} to monitor connection states and resolve disconnections via forfeits. Finally, I defined the internal communication logic and method signatures between services to orchestrate the overall game flow.
 
+\subsubsection*{Product Strengths}
 \begin{itemize}
-  \item An individual section is required for each member of the group
-  \item Each member must self-evaluate their work, listing the strengths and weaknesses of the product
-  \item Each member must describe their role within the group as objectively as possible.
+    \item \textbf{Separation of Concerns:} The domain model is strictly encapsulated and decoupled from user identity and transport layers. Application services are completely stateless.
+    \item \textbf{Concurrency Control:} The use of optimistic concurrency control (OCC) and atomic transactions on etcd effectively prevents race conditions during simultaneous state mutations.
+    \item \textbf{State Integrity:} The architecture centralises the source of truth in the database. The client holds no state memory, preventing unauthorised alterations of the game flow.
 \end{itemize}
 
-It should be noted that each student is only responsible for their own section.
+\subsubsection*{Product Weaknesses}
+The main weaknesses of my choices concern:
+\begin{itemize}
+    \item \textbf{Storage Protocol Overhead:} Using etcd introduces a performance bottleneck. Although the game is turn-based, the Raft consensus and disk I/O required for every state mutation still introduce suboptimal overhead in case of scaling.
+    \item \textbf{Bandwidth Inefficiency:} The system currently retransmits the entire JSON state object (\texttt{GameView}) on every update. The absence of delta payloads (e.g., JSON Patch) results in redundant bandwidth usage.
+    \item \textbf{Database-Coupled Messaging:} Using the key-value datastore to orchestrate internal notifications (e.g., triggers for the \texttt{TimeoutWatcher}) increases the database load. A dedicated Pub/Sub system or message broker would better separate the data flow from the event flow.
+\end{itemize}
 
 \section{Future works}\label{future-works}
 The current architecture meets core requirements, but it can be perfected by addressing the following optimisations and features.
