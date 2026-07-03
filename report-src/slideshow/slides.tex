@@ -1,0 +1,97 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+
+\title[MarafoNet]{MarafoNet: Marafone on the Net}
+\subtitle{Architecture and implementation of a distributed, turn-based game}
+
+\author[F. Bagattoni, J. Turchi]{Bagattoni Federico\and Turchi Jacopo}
+\institute[UniBo]{Alma Mater Studiorum - Università di Bologna}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{Table of Contents}
+\tableofcontents
+\end{frame}
+
+\section{Principles}\label{sec:principles}
+
+\begin{frame}
+\frametitle{Principles}
+Which principles have we decided to respect in our project?
+Talk about CAP theorem.
+\end{frame}
+
+\begin{frame}
+\frametitle{Principles II}
+what about the features of dependable systems?
+Fault tolerance, availabiliy, reliability, redundancy, failover?
+\end{frame}
+
+\begin{frame}
+\frametitle{Principles III}
+Which components are introduced to do so? which nature?
+\end{frame}
+
+\section{Architecture}\label{sec:arch}
+
+\begin{frame}
+\frametitle{Architectural style}
+Show off the architecture and discuss the relationship with the architecture styles shown in the course:
+layered, dataspace and event-based.
+
+the similarities are more: the system is loosely coupled and the components are totally
+stateless (apart from the server that manages the persistent connections), all the communication
+is done throught the dataspace, that's etcd. Seen that is divided in microservices, the
+components can have their lifecycle managed separately and problems can be directly attributed
+to such components.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Architectural choices}
+Justify architectural choices, statelessness and other.
+\begin{block}{Remark}
+Sample text
+\end{block}
+
+\begin{alertblock}{Important theorem}
+Sample text in red box
+\end{alertblock}
+
+\begin{examples}
+Sample text in green box. The title of the block is `Examples'.
+\end{examples}
+
+\end{frame}
+
+\section{Storage choices}\label{sec:storage-choices}
+
+\begin{frame}
+\frametitle{Storage choice: \texttt{etcd}}
+Etcd implements Raft, the fault-tolerant algorithm to distribute data and ensure consensus, so that
+the game's data remains consistent even in case of server crashes.
+
+Raft ensures that a cluster with $n=2f+1$ can survive $f$ failures.
+
+\begin{block}{Remark}
+Etcd \alert{is not protected by Byzantine Failures}: in Raft every node assumes that all the other
+nodes are honest, so a malicious behavior may result in the breaking of the vote.
+\end{block}
+The best practice to (partially) solve this is to TODO
+\end{frame}
+
+\begin{frame}
+\frametitle{Storage Considerations}
+Considerations about the storage choices (is it good? is it bad?) and other possible choices that
+could be made.
+\end{frame}
+
+\end{document}
