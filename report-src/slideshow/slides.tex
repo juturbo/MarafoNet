@@ -1,4 +1,5 @@
 \documentclass{beamer}
+\usepackage[dvipsnames]{xcolor}
 \usepackage[utf8]{inputenc}
 
 \usetheme{Madrid}
@@ -21,77 +22,124 @@
 \tableofcontents
 \end{frame}
 
-\section{Principles}\label{sec:principles}
-
-\begin{frame}
-\frametitle{Principles}
-Which principles have we decided to respect in our project?
-Talk about CAP theorem.
-\end{frame}
-
-\begin{frame}
-\frametitle{Principles II}
-what about the features of dependable systems?
-Fault tolerance, availabiliy, reliability, redundancy, failover?
-\end{frame}
-
-\begin{frame}
-\frametitle{Principles III}
-Which components are introduced to do so? which nature?
-\end{frame}
-
 \section{Architecture}\label{sec:arch}
 
 \begin{frame}
 \frametitle{Architectural style}
-Show off the architecture and discuss the relationship with the architecture styles shown in the course:
-layered, dataspace and event-based.
+The system merges the \textbf{data-centric} and \textbf{event-based} architectures. In this way the system has:
+\begin{itemize}
+    \item \textbf{decoupled communications}: user interactions are asynchronous
+    \item \textbf{transparency}: components don't know each other's existence, coordination is managed
+        throught the dataspace. Communications and events are delivered throught the dataspace.
+    \item \textbf{single source of truth}: the dataspace serves as single source of truths, making the system consistent
+\end{itemize}
 
-the similarities are more: the system is loosely coupled and the components are totally
-stateless (apart from the server that manages the persistent connections), all the communication
-is done throught the dataspace, that's etcd. Seen that is divided in microservices, the
-components can have their lifecycle managed separately and problems can be directly attributed
-to such components.
+The server's architecture is divided in stateless microservices, this enables for scalability and
+easier lifecycle management. 
 
 \end{frame}
 
 \begin{frame}
 \frametitle{Architectural choices}
-Justify architectural choices, statelessness and other.
-\begin{block}{Remark}
-Sample text
-\end{block}
+The stateless microservices architecture solves issues from the shared dataspace architectural style, mainly:
+\begin{itemize}
+    \item {\color{ForestGreen}\textbf{No single point of failure}}: statelessness allows for replication, avoiding a
+        single point of failure
+    \item {\color{ForestGreen}\textbf{Scalability}}: multiple stateless microservices can be scaled without data races
+    \item {\color{ForestGreen}\textbf{Modularity}}: dividing in microservices makes debugging and lifecycle management easier 
+\end{itemize}
+Other issues still remain:
+\begin{itemize}
+    \item {\color{Bittersweet}\textbf{Performance overhead and concurrency}}: multiple services accessing the same 
+        dataspace increase overhead and slows down perfomance, making it harder to maintain a consistent state
+\end{itemize}
 
-\begin{alertblock}{Important theorem}
-Sample text in red box
-\end{alertblock}
 
-\begin{examples}
-Sample text in green box. The title of the block is `Examples'.
-\end{examples}
+% \begin{block}{Remark}
+% Sample text
+% \end{block}
+
+% \begin{alertblock}{Important theorem}
+% Sample text in red box
+% \end{alertblock}
+
+% \begin{examples}
+% Sample text in green box. The title of the block is `Examples'.
+% \end{examples}
 
 \end{frame}
 
-\section{Storage choices}\label{sec:storage-choices}
+\section{Principles and components}\label{sec:principles}
+
+\begin{frame}
+\frametitle{Principles}
+In real-world systems network partitions happen often so choosing the P (\textbf{\color{ForestGreen}Partition Tolerance}) of the CAP 
+thorem is fundamental.
+
+Having to choose one between \textbf{Availability} and \textbf{Consistency}, we chose to have \textbf{\color{ForestGreen}consistent game data} at the cost
+of making the service unavailable in case of a fault.
+
+Availability can be {\color{Bittersweet}eventually built in the infrastructure} through \textit{restart policies, replication and load balancing}.
+\end{frame}
+
+\begin{frame}
+\frametitle{System's features}
+Our design implements features from distributed systems:
+\begin{itemize}
+    \item \textbf{Consistency and Integrity}: game's data is strongly consistent and integrity is ensured by the use 
+        of \texttt{etcd} together with \texttt{Kubernetes}
+    \item \textbf{Availability}: even thought it's not a priority, Kubernetes employs restart policies
+        and replication mechanisms to maximise Availability
+    \item \textbf{Maintainability}: the stateless microservices architecture distributed on Kubernetes makes 
+        updates rollout and debugging easier
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Kubernetes}
+\begin{figure}[H]
+  \includegraphics[width=0.75\textwidth]{../figures/design/infrastructure.png}
+\end{figure}
+\end{frame}
+
+\section{Storage}\label{sec:storage}
+
+\begin{frame}
+    \frametitle{Storage}
+    Needing \textbf{strong consistency}, we needed a technology implementing a consensus algorithm
+    such as Paxos or Raft.
+
+    These algorithms enable consistency in data by managing \textbf{consensus} between nodes, ensuring they all store the same data.
+    
+    This feature is used to guarantee fault-tolerant consensus and replication.
+\end{frame}
 
 \begin{frame}
 \frametitle{Storage choice: \texttt{etcd}}
-Etcd implements Raft, the fault-tolerant algorithm to distribute data and ensure consensus, so that
-the game's data remains consistent even in case of server crashes.
+Etcd implements Raft, ensuring that a cluster with $n=2f+1$ nodes can survive $f$ failures.
 
-Raft ensures that a cluster with $n=2f+1$ can survive $f$ failures.
+The Go etcd library also offers publish-subscribe notifications on data changes and leases.
 
 \begin{block}{Remark}
-Etcd \alert{is not protected by Byzantine Failures}: in Raft every node assumes that all the other
-nodes are honest, so a malicious behavior may result in the breaking of the vote.
+Etcd \alert{is not protected by Byzantine Failures}: in Raft every node \textbf{assumes that all the other
+nodes are honest}, so a malicious behavior may result in the breaking of the vote.
 \end{block}
-The best practice to (partially) solve this is to TODO
+Byzantine failures usually occour on components exposed to an external network, vulnerable to malicious attacks.
+The etcd cluster is inside a private and trusted network, behind the backend so it's not vulernable.
 \end{frame}
 
 \begin{frame}
-\frametitle{Storage Considerations}
-Considerations about the storage choices (is it good? is it bad?) and other possible choices that
-could be made.
+\frametitle{Storage alternatives}
+Even thought geographical distribution is not a concern, etcd lacks scalability and concurrency features on large
+amounts of data.
+
+Another choice could have been CockroadDB. This choice would add complexity but enable for better scalability:
+\begin{itemize}
+    \item {\color{ForestGreen}\textbf{multi-Raft}}: multiple leaders can write concurrently to different \textbf{data shards}
+    \item {\color{ForestGreen}\textbf{linear scalability}}: adding nodes actually boosts performance on data accessing
+    \item {\color{ForestGreen}\textbf{CDC (Change Data Capture)}}: like etcd watchers, can be connected to external pub-sub brokers
+    \item {\color{Bittersweet}\textbf{relational database}}: more complex design and access than simple key-value storage
+\end{itemize}
 \end{frame}
 
 \end{document}
