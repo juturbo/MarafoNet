@@ -97,9 +97,21 @@ Our design implements features from distributed systems:
 
 \begin{frame}
 \frametitle{Kubernetes}
-\begin{figure}[H]
-  \includegraphics[width=0.75\textwidth]{../figures/design/infrastructure.png}
-\end{figure}
+\begin{columns}
+    \begin{column}{0.5\textwidth}
+        \begin{figure}[H]
+        \includegraphics[width=\textwidth]{../figures/design/infrastructure.png}
+        \end{figure}
+    \end{column}
+        \begin{column}{0.5\textwidth}
+        Kubernetes plays a central role in the architecture.
+        The game's stateless microservices can be easily deployed, updated and hot-swapped with K8s API.
+        Pod allocation can also be decided.
+
+        Traffic is automatically \textbf{load-balanced} to the pods with lower resouce usage. \textbf{Scaling} rules are created
+        to react to resource usage spikes.
+    \end{column}
+\end{columns}
 \end{frame}
 
 \section{Storage}\label{sec:storage}
