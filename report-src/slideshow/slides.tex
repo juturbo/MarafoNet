@@ -43,15 +43,15 @@ easier lifecycle management.
 \frametitle{Architectural choices}
 The stateless microservices architecture solves issues from the shared dataspace architectural style, mainly:
 \begin{itemize}
-    \item {\color{ForestGreen}\textbf{No single point of failure}}: statelessness allows for replication, avoiding a
-        single point of failure
+    \item {\color{ForestGreen}\textbf{No single point of failure}}: stateless microservices and distributed database nodes
+        avoid the presence of a single point of failure
     \item {\color{ForestGreen}\textbf{Scalability}}: multiple stateless microservices can be scaled without data races
     \item {\color{ForestGreen}\textbf{Modularity}}: dividing in microservices makes debugging and lifecycle management easier 
 \end{itemize}
 Other issues still remain:
 \begin{itemize}
     \item {\color{Bittersweet}\textbf{Performance overhead and concurrency}}: multiple services accessing the same 
-        dataspace increase overhead and slows down perfomance, making it harder to maintain a consistent state
+        dataspace increase overhead and slow down perfomance, making it harder to maintain a consistent state
 \end{itemize}
 
 
