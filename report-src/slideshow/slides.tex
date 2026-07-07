@@ -131,7 +131,7 @@ Our design implements features from distributed systems:
 \frametitle{Storage choice: \texttt{etcd}}
 Etcd implements Raft, ensuring that a cluster with $n=2f+1$ nodes can survive $f$ failures.
 
-The Go etcd library also offers publish-subscribe notifications on data changes and leases.
+The Go etcd library also offers notifications on data changes and leases throught Watchers, based on gRPC channels.
 
 \begin{block}{Remark}
 Etcd \alert{is not protected by Byzantine Failures}: in Raft every node \textbf{assumes that all the other
