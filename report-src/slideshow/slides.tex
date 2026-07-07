@@ -73,13 +73,14 @@ Other issues still remain:
 
 \begin{frame}
 \frametitle{Principles}
-In real-world systems network partitions happen often so choosing the P (\textbf{\color{ForestGreen}Partition Tolerance}) of the CAP 
+In real-world systems network partitions happen often, so choosing the P (\textbf{\color{ForestGreen}Partition Tolerance}) of the CAP 
 thorem is fundamental.
 
 Having to choose one between \textbf{Availability} and \textbf{Consistency}, we chose to have \textbf{\color{ForestGreen}consistent game data} at the cost
 of making the service unavailable in case of a fault.
 
-Availability can be {\color{Bittersweet}eventually built in the infrastructure} through \textit{restart policies, replication and load balancing}.
+Even tought {\color{Bittersweet}it can't be totally achieved}, throught \textit{restart policies, replication and load balancing},
+{\color{Bittersweet}Availability} can be increased. 
 \end{frame}
 
 \begin{frame}
