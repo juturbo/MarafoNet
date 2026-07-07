@@ -145,13 +145,33 @@ The etcd cluster is inside a private and trusted network, behind the backend so 
 Even thought geographical distribution is not a concern, etcd lacks scalability and concurrency features on large
 amounts of data.
 
-Another choice could have been CockroadDB. This choice would add complexity but enable for better scalability:
+Another choice could have been CockroachDB. This choice would add complexity but enable for better scalability:
 \begin{itemize}
     \item {\color{ForestGreen}\textbf{multi-Raft}}: multiple leaders can write concurrently to different \textbf{data shards}
     \item {\color{ForestGreen}\textbf{linear scalability}}: adding nodes actually boosts performance on data accessing
     \item {\color{ForestGreen}\textbf{CDC (Change Data Capture)}}: like etcd watchers, can be connected to external pub-sub brokers
     \item {\color{Bittersweet}\textbf{relational database}}: more complex design and access than simple key-value storage
 \end{itemize}
+\end{frame}
+
+\section{Future works}\label{sec:future}
+
+\begin{frame}
+    \frametitle{Future works}
+    Future works include:
+    \begin{itemize}
+        \item \textbf{Performance testing and scaling}: test the system's resource utilization, using
+            Prometheus and Grafana, to tweak the scaling settings and support as much connections
+            as possible
+        \item \textbf{Datastore migration}: evaluate migration of the game storage from etcd to CockroachDB to
+            scale more effectively
+        \item \textbf{Client-side predictions} to make changes smooth and instanteneous
+    \end{itemize}
+\end{frame}
+
+\begin{frame} 
+    \centering
+    \Huge{Thank you!}
 \end{frame}
 
 \end{document}
