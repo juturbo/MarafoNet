@@ -138,7 +138,8 @@ Etcd \alert{is not protected by Byzantine Failures}: in Raft every node \textbf{
 nodes are honest}, so a malicious behavior may result in the breaking of the vote.
 \end{block}
 Byzantine failures usually occour on components exposed to an external network, vulnerable to malicious attacks.
-The etcd cluster is inside a private and trusted network, behind the backend so it's not vulernable.
+The etcd cluster is inside the private Kubernetes network (which is trusted) and only accessed from backend
+service after input validation, so it's not vulernable.
 \end{frame}
 
 \begin{frame}
